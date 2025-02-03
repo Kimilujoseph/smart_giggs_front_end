@@ -288,7 +288,7 @@ const OutletInventoryView: React.FC = () => {
         setCurrentUser(response.data.user);
         setShop(assignedShop);
         setOutletFormData({
-          name: assignedShop.name,
+          name: assignedShop.shopName,
           address: assignedShop.address,
           _id: assignedShop._id,
         });
@@ -345,7 +345,7 @@ const OutletInventoryView: React.FC = () => {
         setNewStockTally(pendingPhoneItemsCount + pendingAccessoryItemsCount);
 
         setOutletFormData({
-          name: outlet.name,
+          name: outlet.shopName,
           address: outlet.address,
           _id: outlet._id,
         });
@@ -390,7 +390,7 @@ const OutletInventoryView: React.FC = () => {
         alert('Shop updated successfully!');
         let outletUpdated = { ...response.data.shop };
         setOutletFormData({
-          name: outletUpdated.name,
+          name: outletUpdated.shopName,
           address: outletUpdated.address,
           _id: outletUpdated._id,
         });
@@ -1101,7 +1101,7 @@ const OutletInventoryView: React.FC = () => {
           </div>
         )}
       </div>
-      <Breadcrumb pageName="Inventory" header={`${shopname || shop?.name || ''}`} />
+      <Breadcrumb pageName="Inventory" header={`${shopname || shop?.shopName || ''}`} />
       {/* Horizontal Navigation */}
       <div className="mb-6">
         {/* Navigation Menu */}

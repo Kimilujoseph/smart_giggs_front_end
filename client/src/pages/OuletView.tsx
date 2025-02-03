@@ -270,11 +270,11 @@ const OutletView: React.FC = () => {
         setCurrentUser(response.data.user);
         setShop(assignedShop);
         setOutletFormData({
-          name: assignedShop.name,
+          name: assignedShop.shopName,
           address: assignedShop.address,
           _id: assignedShop._id,
         });
-        setShopName(assignedShop.name);
+        setShopName(assignedShop.shopName);
       }
     } catch (error: any) {
       
@@ -1136,7 +1136,7 @@ const OutletView: React.FC = () => {
           </div>
         )}
       </div>
-      <Breadcrumb pageName="Inventory" header={`${shopname || shop?.name}`} />
+      <Breadcrumb pageName="Inventory" header={`${shopname || shop?.shopName}`} />
       {!currentUser && userPermissions === 'seller' && (
         <span className="flex items-center gap-2 text-slate-500 p-2">
           <InfoIcon size={16} />

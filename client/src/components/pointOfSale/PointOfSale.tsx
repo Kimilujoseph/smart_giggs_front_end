@@ -186,7 +186,7 @@ const PointOfSales = () => {
   const fetchInventoryData = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${outletData.name}`,
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${outletData.shopName}`,
         {
           withCredentials: true,
         },
@@ -754,7 +754,6 @@ const PointOfSales = () => {
                           key={product.categoryId._id}
                           className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between"
                         >
-                          {errors}
                           <div className="flex-grow">
                             <h3 className="font-semibold text-black dark:text-slate-200">
                               {product.categoryId.itemName}

@@ -314,8 +314,8 @@ const ProductView = () => {
             >
               <option value="">Select a shop</option>
               {outlets.map((shop) => (
-                <option key={shop._id} value={shop.name}>
-                  {shop.name} -- {shop.address}
+                <option key={shop._id} value={shop.shopName}>
+                  {shop.shopName} -- {shop.address}
                 </option>
               ))}
             </select>
@@ -491,7 +491,7 @@ const ProductView = () => {
                   {outlets.map((shop) => (
                     <tr key={shop._id}>
                       <td className="text-gray-800 dark:text-white">
-                        {shop.name}
+                        {shop.shopName}
                       </td>
                       <td className="text-gray-800 dark:text-white">
                         {shop.location}

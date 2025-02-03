@@ -134,7 +134,7 @@ const OutletView2: React.FC = () => {
           name: sellerName,
           fromDate: dates.fromDate,
           toDate: dates.toDate,
-          shopname: shop.name,
+          shopname: shop.shopName,
         },
         {
           withCredentials: true,
@@ -155,7 +155,7 @@ const OutletView2: React.FC = () => {
         `${import.meta.env.VITE_SERVER_HEAD}/api/shop/assignment/remove`,
         {
           name: seller.name,
-          shopname: shop.name,
+          shopname: shop.shopName,
         },
         {
           withCredentials: true,
@@ -652,7 +652,7 @@ const OutletView2: React.FC = () => {
           </div>
         )}
 
-        <Breadcrumb pageName={`Outlet: ${shop.name}`} />
+        <Breadcrumb pageName={`Outlet: ${shop.shopName}`} />
 
         {/* MODAL HERE */}
 
