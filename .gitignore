@@ -1,6 +1,5 @@
 node_modules/
 .env
 captectprojj/node_modules/
-dashboard/
 captect/node_modules/
 .env.dev
