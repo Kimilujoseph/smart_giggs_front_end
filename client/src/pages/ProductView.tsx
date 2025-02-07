@@ -492,11 +492,6 @@ const ProductView = () => {
         );
 
       case 'shops_in_stock':
-        // return (
-        //   <span className="text-yellow-500 w-full h-24 flex justify-center items-center gap-2">
-        //     <Bolt /> Under Maintenance
-        //   </span>
-        // );
 
         return (
           <div className="bg-white dark:bg-boxdark rounded-lg shadow-md p-6">
