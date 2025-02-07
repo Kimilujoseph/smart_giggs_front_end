@@ -69,7 +69,6 @@ const Dashboard: React.FC = () => {
 
   // Calculate sales meter percentage (example)
   const salesTarget = 1000000;
-  const currentSales = 6000;
   const meterPercentage = (analyticsData.totalSales / salesTarget) * 100 || 0;
 
   const fetchAnalyticsData = async () => {
