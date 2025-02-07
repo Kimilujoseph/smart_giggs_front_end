@@ -1,2 +1,2 @@
-# captechfrontend
-contains frontend code 
+# merchantsportal
+Full stack merchants portal for the business
