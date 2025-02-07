@@ -130,12 +130,12 @@ const ProductDetail = ({
         CategoryId: productId,
         IMEI,
         serialNumber: newserialNumber,
+        batchNumber: newBatchNumber,
         availableStock: 1,
         supplierName,
         productcost,
         color,
         stockStatus: 'Available',
-        faultyItems: 0,
         commission,
         discount,
       };
@@ -226,7 +226,7 @@ const ProductDetail = ({
     const matchesSearch =
       searchQuery.toLowerCase() === '' ||
       item.serialNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.IMEI?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       selectedStatus === 'all' ||
@@ -395,7 +395,7 @@ const ProductDetail = ({
                           </div>
                         )}
                         {/* Serial Number */}
-                        <div>
+                        {/* <div>
                           <label
                             htmlFor="serialNumber"
                             className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -410,7 +410,7 @@ const ProductDetail = ({
                             placeholder="1111-2222-XXXX"
                             className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
                           />
-                        </div>
+                        </div> */}
                         {/* Batch Number */}
                         <div>
                           <label
@@ -594,142 +594,90 @@ const ProductDetail = ({
               {/* Units List - More Responsive */}
               <div className="overflow-x-auto -mx-4 sm:mx-0 overflow-y-auto h-[500px] border border-slate-700 rounded-lgs">
                 <div className="inline-block min-w-full align-middle">
-                  <div className="">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-strokedark">
-                      <thead className="bg-bodydark1 dark:bg-meta-4 sticky top-0 z-10">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-strokedark">
+                    <thead className="bg-bodydark1 dark:bg-meta-4 sticky top-0 z-10">
+                      <tr>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                          IMEI
+                        </th>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                          Batch Number
+                        </th>
+                        {product.itemType === 'mobiles' ? (
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                            Color
+                          </th>
+                        ) : (
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                            Units
+                          </th>
+                        )}
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                          Last Updated
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-strokedark">
+                      {!filteredUnits || filteredUnits.length === 0 ? (
                         <tr>
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Serial Number / ID
-                          </th>
-                          {product.itemType === 'mobiles' ? (
-                            <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
-                              IMEI
-                            </th>
-                          ) : (
-                            <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
-                              Batch Number
-                            </th>
-                          )}
-                          {product.itemType === 'mobiles' ? (
-                            <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
-                              Color
-                            </th>
-                          ) : (
-                            <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
-                              Units
-                            </th>
-                          )}
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
-                            Last Updated
-                          </th>
-                          {/* <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Actions
-                          </th> */}
+                          <td
+                            colSpan={6}
+                            className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                          >
+                            No items available
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-strokedark">
-                        {!filteredUnits || filteredUnits.length === 0 ? (
-                          <tr>
-                            <td
-                              colSpan={6}
-                              className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
-                            >
-                              No items available
+                      ) : (
+                        filteredUnits.map((item) => (
+                          <tr
+                            key={item.id}
+                            className="hover:bg-bodydark1 dark:hover:bg-meta-4"
+                          >
+                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                              {item.IMEI}
+                            </td>
+                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                              {item.batchNumber || '-'}
+                            </td>
+                            {product.itemType === 'mobiles' ? (
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                {item.color}
+                              </td>
+                            ) : (
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                {item.availableStock}
+                              </td>
+                            )}
+                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                              <span
+                                className={getStatusBadgeClass(
+                                  item.stockStatus,
+                                )}
+                              >
+                                {item.stockStatus
+                                  .replace('_', ' ')
+                                  .toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                              {item.updatedAt
+                                ? format(
+                                    new Date(item.updatedAt),
+                                    'MMM dd, HH:mm',
+                                  )
+                                : 'N/A'}
                             </td>
                           </tr>
-                        ) : (
-                          filteredUnits.map((item) => (
-                            <tr
-                              key={item._id}
-                              className="hover:bg-bodydark1 dark:hover:bg-meta-4"
-                            >
-                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <Smartphone className="w-4 h-4 mr-2 text-primary" />
-                                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {item.serialNumber || item._id}
-                                  </span>
-                                </div>
-                              </td>
-                              {product.itemType === 'mobiles' ? (
-                                <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 hidden sm:table-cell">
-                                  {item.IMEI}
-                                </td>
-                              ) : (
-                                <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 hidden sm:table-cell">
-                                  {item.batchNumber}
-                                </td>
-                              )}
-                              {product.itemType === 'mobiles' ? (
-                                <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 hidden sm:table-cell">
-                                  {item.color}
-                                </td>
-                              ) : (
-                                <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 hidden sm:table-cell">
-                                  {item.availableStock}
-                                </td>
-                              )}
-                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
-                                <span
-                                  className={getStatusBadgeClass(
-                                    item.stockStatus,
-                                  )}
-                                >
-                                  {item.stockStatus
-                                    .replace('_', ' ')
-                                    .toUpperCase()}
-                                </span>
-                              </td>
-                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 hidden lg:table-cell">
-                                {item.updatedAt
-                                  ? format(
-                                      new Date(item.updatedAt),
-                                      'MMM dd, HH:mm',
-                                    )
-                                  : 'N/A'}
-                              </td>
-                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                                {/* <select
-                                  onChange={(e) =>
-                                    handleStatusChange(item.id, e.target.value)
-                                  }
-                                  defaultValue=""
-                                  className="px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white text-sm"
-                                >
-                                  <option value="" disabled>
-                                    Change Status
-                                  </option>
-                                  <option value="in_stock">
-                                    Mark In Stock
-                                  </option>
-                                  <option value="sold">Mark Sold</option>
-                                  <option value="defective">
-                                    Mark Defective
-                                  </option>
-                                </select> */}
-                                {/* {actionMenuOpen ? (
-                                  <ChevronUpIcon
-                                    onClick={() => toggleActionsMenu(item._id)}
-                                    className="h-4 w-4"
-                                  />
-                                ) : (
-                                  <ChevronDownIcon
-                                    onClick={() => toggleActionsMenu(item._id)}
-                                    className="h-4 w-4"
-                                  />
-                                )} */}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
+              
             </div>
           )}
 

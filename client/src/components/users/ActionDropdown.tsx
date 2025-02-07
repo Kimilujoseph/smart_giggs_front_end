@@ -115,7 +115,7 @@ const ActionDropdown: React.FC<ActionDropdownProps> = ({
                 setDropdownOpen(false);
                 handleAction({
                   action: 'view',
-                  user_id: selectedUser._id,
+                  user_id: selectedUser.id,
                   email: selectedUser.email,
                 });
               }}

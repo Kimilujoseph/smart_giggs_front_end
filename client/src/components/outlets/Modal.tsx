@@ -11,14 +11,14 @@ interface ProductItem {
   transferId: any;
   id: React.Key;
   productID: {
-    _id: any;
+    id: any;
     itemName: string;
     itemModel: string;
     minprice: string;
     maxprice: string;
   };
   stock?: {
-    _id: any;
+    id: any;
     itemName: string;
     itemModel: string;
     minprice: string;
@@ -89,7 +89,10 @@ const Modal: React.FC<ModalProps> = ({
 
   const renderItems = () => {
     const items =
-      filter === 'phone' ? shopData.newPhoneItem.filter((item) => item.status === 'pending') : shopData.newAccessory.filter((item) => item.status === 'pending');
+      filter === 'phone'
+        ? shopData.newPhoneItem.filter((item) => item.status === 'pending')
+        : shopData.newAccessory.filter((item) => item.status === 'pending');
+    console.log("items", items);
     return items?.map((item: ProductItem | any, index: number) => (
       // <div
       //   key={index}
@@ -136,7 +139,7 @@ const Modal: React.FC<ModalProps> = ({
       //     onClick={() =>
       //       handleApprove({
       //         transferId: item.transferId,
-      //         productID: item.productID?._id || item.stock?._id,
+      //         productID: item.productID?.id || item.stock?.id,
       //       })
       //     }
       //   >
@@ -149,7 +152,7 @@ const Modal: React.FC<ModalProps> = ({
       >
         <td>{item.categoryId.itemModel}</td>
         <td>{item.categoryId.itemName}</td>
-        <td>{item.productID?.IMEI || '-'}</td>
+        <td>{item.stock?.IMEI || '-'}</td>
         <td>
           <span
             className={`${
@@ -169,7 +172,7 @@ const Modal: React.FC<ModalProps> = ({
             onClick={() =>
               handleApprove({
                 transferId: item.transferId,
-                productID: item.productID?._id,
+                productID: item.stock?.id,
               })
             }
           >
@@ -235,7 +238,7 @@ const Modal: React.FC<ModalProps> = ({
                   shopData.newPhoneItem.map((item: any) => {
                     handleApprove({
                       transferId: item.transferId,
-                      productID: item.productID?._id,
+                      productID: item.stock.id,
                     });
                   });
                 }}

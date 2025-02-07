@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 
 interface Outlet {
-  _id: string;
+  id: string;
   name: string;
   location?: string;
   contact?: string;
@@ -35,12 +35,16 @@ const OutletsTable: React.FC<OutletTableProps> = () => {
           },
         );
         if (res.data) {
+          console.log('Outlets:', res.data.shops);
+          
           const mappedOutlets = res.data.shops.map((shop: any) => ({
             ...shop,
-            location: shop.location || '--',
-            contact: shop.contact || '--',
-            availableStock: shop.availableStock || 0,
+            // location: shop.location || '--',
+            // contact: shop.contact || '--',
+            // availableStock: shop.availableStock || 0,
           }));
+          console.log('Mapped Outlets:', mappedOutlets);
+          
           setOutlets(mappedOutlets);
         }
       } catch (error) {
@@ -53,7 +57,7 @@ const OutletsTable: React.FC<OutletTableProps> = () => {
 
   const filteredOutlets = outlets.filter(
     (outlet) =>
-      outlet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      outlet.shopName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       outlet?.address?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
@@ -132,12 +136,12 @@ const OutletsTable: React.FC<OutletTableProps> = () => {
               ) : (
                 currentOutlets.map((outlet) => (
                   <tr
-                    key={outlet._id}
+                    key={outlet.id}
                     className="border-b border-[#eee] dark:border-strokedark hover:bg-gray-50 dark:hover:bg-meta-4/30 transition-colors duration-150"
                   >
                     <td className="py-4 px-6">
                       <h5 className="font-medium text-black dark:text-white">
-                        {outlet.name}
+                        {outlet.shopName}
                       </h5>
                     </td>
                     <td className="py-4 px-6">
@@ -154,7 +158,7 @@ const OutletsTable: React.FC<OutletTableProps> = () => {
                             'selectedOutlet',
                             JSON.stringify(outlet),
                           );
-                          navigate(`/outlets/${outlet.name}`);
+                          navigate(`/outlets/${outlet.shopName}`);
                         }}
                         className="group p-2 rounded-full hover:bg-gray-100 dark:hover:bg-meta-4 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-boxdark"
                       >

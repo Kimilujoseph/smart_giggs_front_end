@@ -323,7 +323,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   productType,
 }) => {
   const [product, setProduct] = useState<Product>({
-    _id: null,
+    id: null,
     itemName: '',
     itemModel: '',
     itemType: productType,
@@ -364,8 +364,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
           itemModel: product.itemModel,
           itemType: product.itemType.toLowerCase(),
           brand: product.brand,
-          minPrice: product.minPrice,
-          maxPrice: product.maxPrice,
+          minPrice: Number(product.minPrice),
+          maxPrice: Number(product.maxPrice),
           category: product.category.toLowerCase(),
         },
         { withCredentials: true },
@@ -378,7 +378,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     } finally {
       setSubmitting(false);
       setProduct({
-        _id: null,
+        id: null,
         itemName: '',
         itemModel: '',
         itemType: productType,

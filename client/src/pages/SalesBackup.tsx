@@ -313,18 +313,17 @@ const SalesBackup = () => {
           icon={TrendingUp}
         />
         <StatCard
-          title="Units Sold"
-          value={metrics.totalUnits?.toLocaleString()}
+          title="Commission Paid"
+          value={metrics.totalCommission?.toLocaleString() || '-'}
+          valueType="currency"
+          icon={TrendingUp}
+        />
+        <StatCard
+          title="Products Sold / Total Units"
+          value={`${metrics.productMetrics.length} / ${metrics.totalUnits?.toLocaleString()}`}
           valueType="number"
           secondaryValue={`Avg. ticket: ${metrics.avgTicketSize?.toLocaleString()}`}
           icon={Package}
-        />
-        <StatCard
-          title="Products"
-          value={metrics.productMetrics.length}
-          // secondaryValue={`Total products: ${metrics.productMetrics.length}`}
-          icon={Store}
-          valueType="number"
         />
       </div>
 

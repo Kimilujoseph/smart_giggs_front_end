@@ -78,7 +78,7 @@ const ProductsTable: React.FC<ProductTableProps> = () => {
             <tbody>
               {inventory.map((product) => (
                 <tr
-                  key={product._id}
+                  key={product.id}
                   className="border-b border-[#eee] dark:border-strokedark"
                 >
                   <td className="py-1.5 px-4 pl-9">
@@ -120,7 +120,7 @@ const ProductsTable: React.FC<ProductTableProps> = () => {
                           'product',
                           JSON.stringify(product),
                         );
-                        navigate(`/inventory/${product._id}`);
+                        navigate(`/inventory/${product.id}`);
                       }}
                       className="flex justify-center font-medium text-gray p-2"
                     >

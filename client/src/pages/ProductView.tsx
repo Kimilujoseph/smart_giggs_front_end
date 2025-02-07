@@ -10,6 +10,9 @@ import {
   Shuffle,
   List,
   Bolt,
+  Store,
+  ShoppingBag,
+  ArrowRight,
 } from 'lucide-react';
 import ProductTransferHistory from './product/TransferHistory';
 import ProductDetail from './product/ProductDetail';
@@ -20,7 +23,7 @@ import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
 import { getUserProfile } from '../api/user_manager';
 
 interface Outlet {
-  _id: string;
+  id: string;
   name: string;
   location?: string;
   contact?: string;
@@ -43,6 +46,7 @@ const ProductView = () => {
     isMobile: string;
   }>();
   const token = localStorage.getItem('tk');
+  const [state, setState] = useState(useLocation().state as any);
   const user: DecodedToken | null = token ? jwt_decode(token) : null;
   const [currentUser, setCurrentUser] = useState<any>(null);
 
@@ -60,6 +64,7 @@ const ProductView = () => {
   const [quantity, setQuantity] = useState<number>();
   const [remarks, setRemarks] = useState<string>('');
   const [outlets, setOutlets] = useState<Outlet[]>([]);
+  const [outletListings, setOutletListings] = useState<Outlet[]>([]);
   const [showMessage, setShowMessage] = useState<string>('');
   const [distributeError, setDistributeError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -96,7 +101,7 @@ const ProductView = () => {
           contact: shop.contact || '--',
           availableStock: shop.availableStock || 0,
         }));
-        setOutlets(mappedOutlets);
+        setOutletListings(mappedOutlets);
       }
     } catch (error) {
       console.error('Error fetching outlets:', error);
@@ -104,12 +109,24 @@ const ProductView = () => {
   }, []);
 
   const fetchProduct = useCallback(async () => {
+    if (user.role === 'seller' && !currentUser) {
+      return;
+    }
     try {
       setLoading(true);
+      console.log(shopName);
+      
+      // console.log(`/api/category/get-category/shop/${currentUser.assignedShop.shopName}/${productId}`);
+      console.log(user.role, currentUser.role);
+      
       const response = await axios.get(
-        `${
-          import.meta.env.VITE_SERVER_HEAD
-        }/api/category/get-category/${productId}`,
+        currentUser.role === 'seller'
+          ? `${
+              import.meta.env.VITE_SERVER_HEAD
+            }/api/category/get-category/shop/${currentUser.assignedShop.shopName}/${productId}`
+          : `${
+              import.meta.env.VITE_SERVER_HEAD
+            }/api/category/get-category/${productId}`,
         {
           withCredentials: true,
         },
@@ -118,20 +135,35 @@ const ProductView = () => {
         throw new Error(response.data.message || 'Failed to fetch product');
       }
       const fetchedProduct = response.data.data;
-      if (user.role === 'seller') {
-        fetchedProduct.Items = fetchedProduct.Items.filter((item: any) =>
-          item.transferHistory.some(
-            (history: any) => history.confirmedBy === user.name,
-          ),
-        );
-      }
+      console.log(fetchedProduct);
+
+      // if (user.role === 'seller') {
+      //   fetchedProduct.Items = fetchedProduct.Items.filter(
+      //     (item: any) => item.stockStatus?.toLowerCase() === 'distributed',
+      //   );
+      // }
+      const uniqueOutlets = new Set();
+      fetchedProduct.Items.forEach((item: any) => {
+        item.mobileItems.forEach((mobileItem: any) => {
+          console.log(
+            mobileItem.shops.shopName,
+            shopName,
+            mobileItem.shops.shopName === shopName,
+          );
+
+          if (mobileItem.shops.shopName !== shopName) {
+            uniqueOutlets.add(JSON.stringify(mobileItem.shops));
+          }
+        });
+      });
+      setOutlets(Array.from(uniqueOutlets).map((shop) => JSON.parse(shop)));
       setProduct(fetchedProduct);
     } catch (error: any) {
       console.error('Error fetching product:', error);
     } finally {
       setLoading(false);
     }
-  }, [productId, user.role, user.name]);
+  }, [productId, user.role, currentUser]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -150,7 +182,7 @@ const ProductView = () => {
   useEffect(() => {
     fetchOutlets();
     fetchProduct();
-  }, [fetchOutlets, fetchProduct]);
+  }, [fetchProduct]);
 
   const selectRandomItems = useCallback(
     (n: number) => {
@@ -177,9 +209,9 @@ const ProductView = () => {
         ),
       ].sort(() => 0.5 - Math.random());
       const selected = shuffled.slice(0, n).map((item) => ({
-        stockId: item._id,
+        stockId: item.id,
         category: product.itemType,
-        quantity: 1
+        quantity: 1,
       }));
 
       setSelectedItems(selected);
@@ -190,14 +222,14 @@ const ProductView = () => {
   const toggleItemSelection = useCallback(
     (item: any) => {
       const itemData = {
-        stockId: item._id,
+        stockId: item.id,
         category: product?.itemType,
       };
 
       setSelectedItems((prev) => {
-        const isSelected = prev.some((i) => i.stockId === item._id);
+        const isSelected = prev.some((i) => i.stockId === item.id);
         if (isSelected) {
-          return prev.filter((i) => i.stockId !== item._id);
+          return prev.filter((i) => i.stockId !== item.id);
         } else {
           if (prev.length >= quantity!) {
             setDistributeError(
@@ -232,30 +264,29 @@ const ProductView = () => {
 
     setDistributing(true);
     try {
+      // return;
       const response = await axios.post(
         user.role === 'manager' || user.role === 'superuser'
           ? `${
               import.meta.env.VITE_SERVER_HEAD
             }/api/distribution/bulk-distribution`
-          : `${
-              import.meta.env.VITE_SERVER_HEAD
-            }/api/inventory/accessory/create-transfer`,
+          : `${import.meta.env.VITE_SERVER_HEAD}/api/transfer/bulk-transfer`,
         user.role === 'manager' || user.role === 'superuser'
           ? {
               shopDetails: {
-                mainShop: 'Main Shop',
+                mainShop: 'Kahawa 2323',
                 distributedShop: shopName,
               },
               category: product?.itemType,
               bulkDistribution: selectedItems,
             }
           : {
-              mainShop: currentUser.assignedShop.name,
-              distributedShop: shopName,
-              stockId: product?.Items.find(
-                (item) => item._id === selectedItems[0].stockId,
-              )?._id,
-              quantity: 1,
+              shopDetails: {
+                mainShop: currentUser.assignedShop.shopName,
+                distributedShop: shopName,
+              },
+              category: product?.itemType,
+              bulkDistribution: selectedItems,
             },
         { withCredentials: true },
       );
@@ -301,6 +332,13 @@ const ProductView = () => {
           {user.role === 'manager' ? 'Distribute Product' : 'Transfer Product'}
         </h2>
       </div>
+      {/* {user.role === 'seller' ? (
+        <div className="bg-white dark:bg-boxdark rounded-lg shadow-md p-6">
+          <p className="text-gray-500 dark:text-yellow-400">
+            Feature is under Maintenance
+          </p>
+        </div>
+      ) : ( */}
       <form onSubmit={handleDistribute} className="p-6 space-y-6">
         <div className="grid md:grid-cols-2 gap-6">
           <div>
@@ -313,8 +351,8 @@ const ProductView = () => {
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
             >
               <option value="">Select a shop</option>
-              {outlets.map((shop) => (
-                <option key={shop._id} value={shop.shopName}>
+              {outletListings.map((shop) => (
+                <option key={shop.id} value={shop.shopName}>
                   {shop.shopName} -- {shop.address}
                 </option>
               ))}
@@ -378,16 +416,16 @@ const ProductView = () => {
                   available.stockStatus?.toLowerCase() === 'distributed',
               )
                 .sort((a, b) =>
-                  selectedItems.some((i) => i.stockId === a._id) ? -1 : 1,
+                  selectedItems.some((i) => i.stockId === a.id) ? -1 : 1,
                 )
                 .map((item: any) => (
                   <div
-                    key={item._id}
+                    key={item.id}
                     onClick={() =>
                       selectionMode === 'manual' && toggleItemSelection(item)
                     }
                     className={`p-3 border rounded-lg mb-2 cursor-pointer ${
-                      selectedItems.some((i) => i.stockId === item._id)
+                      selectedItems.some((i) => i.stockId === item.id)
                         ? 'border-primary bg-primary/10'
                         : 'border-gray-200 dark:border-strokedark'
                     }`}
@@ -395,10 +433,10 @@ const ProductView = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{`${
                         item.IMEI || item.serialNumber
-                      } - ${item.batchNumber}`}</span>
+                      } - ${item.batchNumber} / ${item.id}`}</span>
                       <CheckCircle
                         className={`w-5 h-5 ${
-                          selectedItems.some((i) => i.stockId === item._id)
+                          selectedItems.some((i) => i.stockId === item.id)
                             ? 'text-primary'
                             : 'text-gray-300 dark:text-gray-600'
                         }`}
@@ -428,6 +466,7 @@ const ProductView = () => {
           </button>
         </div>
       </form>
+      {/* )} */}
     </div>
   );
 
@@ -453,11 +492,11 @@ const ProductView = () => {
         );
 
       case 'shops_in_stock':
-        return (
-          <span className="text-yellow-500 w-full h-24 flex justify-center items-center gap-2">
-            <Bolt /> Under Maintenance
-          </span>
-        );
+        // return (
+        //   <span className="text-yellow-500 w-full h-24 flex justify-center items-center gap-2">
+        //     <Bolt /> Under Maintenance
+        //   </span>
+        // );
 
         return (
           <div className="bg-white dark:bg-boxdark rounded-lg shadow-md p-6">
@@ -466,49 +505,66 @@ const ProductView = () => {
                 Shops in Stock
               </h2>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left text-gray-600 dark:text-gray-300">
-                      Shop Name
-                    </th>
-                    <th className="text-left text-gray-600 dark:text-gray-300">
-                      Location
-                    </th>
-                    <th className="text-left text-gray-600 dark:text-gray-300">
-                      Contact
-                    </th>
-                    <th className="text-left text-gray-600 dark:text-gray-300">
-                      Address
-                    </th>
-                    <th className="text-left text-gray-600 dark:text-gray-300">
-                      Available Stock
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {outlets.map((shop) => (
-                    <tr key={shop._id}>
-                      <td className="text-gray-800 dark:text-white">
-                        {shop.shopName}
-                      </td>
-                      <td className="text-gray-800 dark:text-white">
-                        {shop.location}
-                      </td>
-                      <td className="text-gray-800 dark:text-white">
-                        {shop.contact}
-                      </td>
-                      <td className="text-gray-800 dark:text-white">
-                        {shop.address}
-                      </td>
-                      <td className="text-gray-800 dark:text-white">
-                        {shop.availableStock}
-                      </td>
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                      <th className="whitespace-nowrap px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                        <div className="flex items-center gap-2">
+                          <Store className="h-4 w-4" />
+                          <span>Shop Name</span>
+                        </div>
+                      </th>
+                      <th className="whitespace-nowrap px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                        <span>Address</span>
+                      </th>
+                      <th className="whitespace-nowrap px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                        <span>Actions</span>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {!outlets || outlets.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-8">
+                          <div className="flex flex-col items-center justify-center gap-3">
+                            <ShoppingBag className="h-8 w-8 text-gray-400" />
+                            <p className="text-base text-gray-500 dark:text-gray-400">
+                              No shops are currently in stock
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      outlets.map((shop) => (
+                        <tr
+                          key={shop.id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+                        >
+                          <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                            {shop.shopName}
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                            {shop.address}
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-2 text-sm">
+                            <button
+                              onClick={() =>
+                                navigate(`/outlets/${shop.shopName}`)
+                              }
+                              className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-colors duration-200"
+                            >
+                              View
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         );

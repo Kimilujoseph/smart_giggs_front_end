@@ -2,7 +2,7 @@ import { Key, ReactNode } from "react";
 
 // export type Product = {
 //   [x: string]: any;
-//   _id: Key | null | undefined;
+//   id: Key | null | undefined;
 //   itemName: ReactNode;
 //   productcost?: ReactNode;
 //   minprice: ReactNode;
@@ -30,7 +30,7 @@ import { Key, ReactNode } from "react";
 // };
 
 export type Product = {
-  _id: string | null | undefined;
+  id: string | null | undefined;
   itemName: string;
   itemModel: string;
   brand: string;

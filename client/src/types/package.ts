@@ -5,7 +5,7 @@ export type Package = {
   role: string;
   email: string;
   id: string;
-  _id: string;
+  id: string;
 
 };
 

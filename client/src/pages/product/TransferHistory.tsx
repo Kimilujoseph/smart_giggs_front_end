@@ -7,13 +7,13 @@ import Loader from '../../common/Loader';
 import Message from '../../components/alerts/Message';
 
 interface Shop {
-  _id: string;
+  id: string;
   name: string;
   id: string;
 }
 
 interface Transfer {
-  _id: string;
+  id: string;
   quantity: number;
   fromShop: Shop | null;
   toShop: Shop | null;
@@ -181,7 +181,7 @@ const ProductTransferHistory = ({
                 <div className="space-y-4">
                   {transferHistory.map((transfer) => (
                     <div
-                      key={transfer._id}
+                      key={transfer.id}
                       className="relative pl-6 border-l-2 border-stroke dark:border-strokedark"
                     >
                       <div className="absolute left-[-5px] top-0 h-2 w-2 rounded-full bg-primary"></div>

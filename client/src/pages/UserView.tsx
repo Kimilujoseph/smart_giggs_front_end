@@ -19,7 +19,7 @@ import jwt_decode from 'jwt-decode';
 
 // Type definitions
 interface Sale {
-  _id: string;
+  id: string;
   category: 'accessory' | 'phone';
   soldprice: number;
   quantity: number;
@@ -41,7 +41,7 @@ interface Assignment {
 }
 
 interface UserProfile {
-  _id: string;
+  id: string;
   profileimage: string;
   name: string;
   email: string;

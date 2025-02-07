@@ -36,7 +36,7 @@ const OutletView2: React.FC = () => {
   const [outletFormData, setOutletFormData] = useState({
     name: '',
     address: '',
-    _id: '',
+    id: '',
   });
   const sections = [
     { name: 'Sales', key: 'Sales' },
@@ -105,7 +105,7 @@ const OutletView2: React.FC = () => {
         setOutletFormData({
           name: outlet.name,
           address: outlet.address,
-          _id: outlet._id,
+          id: outlet.id,
         });
       }
     } catch (error) {
@@ -187,7 +187,7 @@ const OutletView2: React.FC = () => {
     try {
       const response = await axios.put(
         `${import.meta.env.VITE_SERVER_HEAD}/api/shop/update/${
-          outletFormData._id
+          outletFormData.id
         }`,
         outletFormData,
         { withCredentials: true },
@@ -199,7 +199,7 @@ const OutletView2: React.FC = () => {
         setOutletFormData({
           name: outletUpdated.name,
           address: outletUpdated.address,
-          _id: outletUpdated._id,
+          id: outletUpdated.id,
         });
       } else {
         alert(`Error: ${response.data.message}`);
@@ -559,7 +559,7 @@ const OutletView2: React.FC = () => {
                   <tbody>
                     {shop.sellers.map((seller, index) => (
                       <tr
-                        key={seller._id}
+                        key={seller.id}
                         className="border-b border-[#eee] dark:border-strokedark"
                       >
                         <td className="py-1.5 px-4">

@@ -7,7 +7,7 @@ import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
 import { CircularProgress } from '@mui/material';
 
 interface Sale {
-  _id: string;
+  id: string;
   seller: string;
   quantity: number;
   date: string;
@@ -124,7 +124,7 @@ const ProductView: React.FC = () => {
                   {product.history.length > 0 ? (
                     product.history.map((sale) => (
                       <tr
-                        key={sale._id}
+                        key={sale.id}
                         className="border-b border-[#eee] dark:border-strokedark"
                       >
                         <td className="py-1.5 px-4">

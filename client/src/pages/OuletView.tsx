@@ -6,6 +6,7 @@ import jwt_decode from 'jwt-decode';
 import { Shop } from '../types/shop';
 import { DecodedToken } from '../types/decodedToken';
 import {
+  capitalize,
   CircularProgress,
   Dialog,
   DialogContent,
@@ -27,6 +28,12 @@ import {
   UserPlus,
   InfoIcon,
   XIcon,
+  Eye,
+  Share,
+  Share2,
+  Shuffle,
+  RefreshCw,
+  Check,
 } from 'lucide-react';
 import Message from '../components/alerts/Message';
 import ModalAlert from '../components/alerts/Alert';
@@ -40,6 +47,7 @@ const OutletView: React.FC = () => {
   const [newStockTally, setNewStockTally] = useState<number>(0);
   // const [outletData, setOutletData] = useState<any | null>(null);
   const [showActionsMenu, setShowActionsMenu] = useState<string | null>(null);
+  const [removingSeller, setRemovingSeller] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<{ text: string; type: string } | null>(
     null,
@@ -108,13 +116,39 @@ const OutletView: React.FC = () => {
     }
   }, []);
 
+  const handleRemoveSeller = async (id: string) => {
+    try {
+      setRemovingSeller(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/assignment/remove`,
+        { assignmentId: id },
+        { withCredentials: true },
+      );
+
+      if (response.status === 200) {
+        setMessage({ text: 'Seller removed successfully!', type: 'success' });
+        fetchShop();
+      }
+    } catch (error: any) {
+      setMessage({
+        text:
+          error.response.data.message ||
+          error.message ||
+          'Failed to remove seller',
+        type: 'error',
+      });
+    } finally {
+      setRemovingSeller(false);
+    }
+  };
+
   const toggleActionsMenu = (id: string) => {
     setShowActionsMenu((prev) => (prev === id ? null : id));
   };
   const [outletFormData, setOutletFormData] = useState({
     name: '',
     address: '',
-    _id: '',
+    id: '',
   });
 
   const [assignmentData, setAssignmentData] = useState({
@@ -147,9 +181,7 @@ const OutletView: React.FC = () => {
         if (user_res?.data) {
           setUsers(user_res?.data);
         }
-      } catch (error) {
-        
-      }
+      } catch (error) {}
     };
     fetchUsers();
   }, [shop]);
@@ -176,7 +208,6 @@ const OutletView: React.FC = () => {
         fetchShop();
       }
     } catch (error: any) {
-      
       setMessage({
         text:
           error.response.data.message ||
@@ -190,8 +221,6 @@ const OutletView: React.FC = () => {
   const calculateInventoryStats = () => {
     if (!shop) return null;
 
-    
-
     const phoneItems = shop.phoneItems || [];
     const accessories = shop.stockItems || [];
     const totalPhones = phoneItems.reduce(
@@ -204,12 +233,12 @@ const OutletView: React.FC = () => {
     );
 
     // Calculate items with low stock (less than 5 units)
-    const lowStockPhones = phoneItems.filter(
-      (item) => item.quantity < 5,
-    ).length;
-    const lowStockAccessories = accessories.filter(
-      (item) => item.quantity < 5,
-    ).length;
+    // const lowStockPhones = phoneItems.filter(
+    //   (item) => item.quantity < 5,
+    // ).length;
+    // const lowStockAccessories = accessories.filter(
+    //   (item) => item.quantity < 5,
+    // ).length;
 
     // Calculate inventory value
     const phoneValue = phoneItems.reduce(
@@ -220,13 +249,13 @@ const OutletView: React.FC = () => {
     const accessoryValue = accessories.reduce(
       (sum, item) => sum + item.quantity * (Number(item.stock.minprice) || 0),
       0,
-    );
+    );    
 
     return {
       totalPhones,
       totalAccessories,
       totalItems: totalPhones + totalAccessories,
-      lowStockItems: lowStockPhones + lowStockAccessories,
+      lowStockItems: shop.lowStockItems.length,
       phoneModels: phoneItems.length,
       accessoryModels: accessories.length,
       totalValue: phoneValue + accessoryValue,
@@ -257,9 +286,6 @@ const OutletView: React.FC = () => {
           { withCredentials: true },
         );
         const { assignedShop } = response.data.user;
-        
-
-        
 
         if (!assignedShop && userPermissions === 'seller') {
           setModalAlert({
@@ -268,16 +294,16 @@ const OutletView: React.FC = () => {
           });
         }
         setCurrentUser(response.data.user);
+
         setShop(assignedShop);
         setOutletFormData({
           name: assignedShop.shopName,
           address: assignedShop.address,
-          _id: assignedShop._id,
+          id: assignedShop.id,
         });
         setShopName(assignedShop.shopName);
       }
     } catch (error: any) {
-      
       setMessage({
         text:
           error.response.data.message ||
@@ -324,17 +350,15 @@ const OutletView: React.FC = () => {
 
         // Update the state with the total count of pending items
         setNewStockTally(pendingPhoneItemsCount + pendingAccessoryItemsCount);
-        
+        console.log(`Outlet`, outlet);
 
         setOutletFormData({
           name: outlet.name,
           address: outlet.address,
-          _id: outlet._id,
+          id: outlet.id,
         });
       }
-    } catch (error) {
-      
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -356,7 +380,7 @@ const OutletView: React.FC = () => {
     try {
       const response = await axios.put(
         `${import.meta.env.VITE_SERVER_HEAD}/api/shop/update/${
-          outletFormData._id
+          outletFormData.id
         }`,
         outletFormData,
         { withCredentials: true },
@@ -368,13 +392,12 @@ const OutletView: React.FC = () => {
         setOutletFormData({
           name: outletUpdated.name,
           address: outletUpdated.address,
-          _id: outletUpdated._id,
+          id: outletUpdated.id,
         });
       } else {
         alert(`Error: ${response.data.message}`);
       }
     } catch (error) {
-      
       alert('Internal Server Error');
     }
   };
@@ -386,7 +409,7 @@ const OutletView: React.FC = () => {
     if (!items) return [];
 
     const grouped = items.reduce((acc: any, item: any) => {
-      const categoryId = item.categoryId._id;
+      const categoryId = item.categoryId.id;
 
       if (!acc[categoryId]) {
         acc[categoryId] = {
@@ -404,8 +427,6 @@ const OutletView: React.FC = () => {
 
     return Object.values(grouped);
   }, [items]);
-
-  
 
   const renderContent = () => {
     switch (activeSection) {
@@ -588,10 +609,10 @@ const OutletView: React.FC = () => {
           <>
             {/* Request Modal */}
             {showRequestModal && (
-              <div className="fixed inset-0 w-full h-full z-999 bg-transparent flex justify-center items-center">
-                <div className="absolute w-full h-full bg-gray-500 opacity-50 dark:opacity-20" />
-                <div className="bg-bodydark2 dark:bg-boxdark-2 rounded-lg w-1/2 h-1/2 z-9999 text-white">
-                  <div className="p-4">
+              <div className="fixed inset-0 w-full h-full z-999 bg-transparent flex justify-center items-center px-4">
+                <div className="absolute w-full h-full bg-gray-500 opacity-50 dark:opacity-20 " />
+                <div className="bg-bodydark2 w-full md:w-3/4 lg:w-1/3 dark:bg-boxdark-2 rounded-lg w-1/2 h-1/2 z-9999 text-white">
+                  <div className="p-4 w-full">
                     <div className="flex justify-between">
                       <h2 className="text-lg font-semibold text-white mb-4">
                         Request Item
@@ -602,25 +623,29 @@ const OutletView: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-4">
-                      {shop?.sellers?.map((seller) => (
-                        <div
-                          key={seller._id}
-                          className="flex items-center justify-between p-2 bg-gray-800 rounded-lg"
-                        >
-                          <div>
-                            <p className="text-sm font-medium">{seller.name}</p>
-                            <p className="text-xs text-gray-400">
-                              {seller.phone || 'Not Provided'}
-                            </p>
-                          </div>
-                          <a
-                            href={`tel:${seller.phone}`}
-                            className="text-blue-400 hover:text-blue-600"
+                      {shop?.sellers
+                        ?.filter((seller) => seller.status === 'assigned')
+                        .map((seller) => (
+                          <div
+                            key={seller.id}
+                            className="flex items-center justify-between p-2 bg-gray-800 rounded-lg"
                           >
-                            Call
-                          </a>
-                        </div>
-                      ))}
+                            <div>
+                              <p className="text-sm font-medium">
+                                {seller.name}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {seller.phone || 'Not Provided'}
+                              </p>
+                            </div>
+                            <a
+                              href={`tel:${seller.phone}`}
+                              className="text-blue-400 hover:text-blue-600"
+                            >
+                              Call
+                            </a>
+                          </div>
+                        ))}
                     </div>
                   </div>
                 </div>
@@ -667,7 +692,7 @@ const OutletView: React.FC = () => {
                     ) : (
                       groupedItems.map((group: any, index: number) => (
                         <tr
-                          key={group.categoryId._id}
+                          key={group.categoryId.id}
                           className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors
                         ${
                           index % 2 === 1
@@ -695,53 +720,25 @@ const OutletView: React.FC = () => {
                               {group.categoryId.maxPrice}
                             </span>
                           </td>
-                          <td className="p-3">
-                            <div className="relative">
-                              <button
-                                style={{
-                                  transform: 'rotate(90deg)',
-                                }}
-                                className="text-gray-500 dark:text-white hover:text-gray-700"
-                                onClick={() =>
-                                  toggleActionsMenu(group.categoryId._id)
-                                }
-                              >
-                                <span className="dots-icon rotate-180">
-                                  ...
-                                </span>
-                              </button>
-                              {showActionsMenu === group.categoryId._id && (
-                                <ClickOutside
-                                  onClick={() => setShowActionsMenu(null)}
-                                >
-                                  <div className="fixed right-4 mt-4 w-48 flex-col rounded-md border border-stroke bg-white shadow-lg z-50 border-primary/[0.5] dark:bg-boxdark">
-                                    <button
-                                      className="block px-4 py-2 text-left text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-boxdark-2 w-full"
-                                      onClick={() => {
-                                        userPermissions === 'manager' ||
-                                        userPermissions === 'superuser'
-                                          ? navigate(
-                                              `/outlet/inventory/${group.categoryId._id}`,
-                                            )
-                                          : setRequestModalActive(true);
-                                      }}
-                                    >
-                                      {userPermissions === 'manager' ||
-                                      userPermissions === 'superuser'
-                                        ? `View Items (${group.items.length})`
-                                        : 'Request Items'}
-                                    </button>
-
-                                    {/* <button
-                                      className="block px-4 py-2 text-left text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-boxdark-2 w-full"
-                                      onClick={() => alert('Deleting...')}
-                                    >
-                                      Delete All
-                                    </button> */}
-                                  </div>
-                                </ClickOutside>
+                          <td className="p-3 text-center">
+                            <button className="w-full flex justify-center items-center">
+                              {userPermissions === 'manager' ||
+                              userPermissions === 'superuser' ? (
+                                <Eye
+                                  onClick={() =>
+                                    navigate(
+                                      `/outlet/inventory/${group.categoryId.id}`,
+                                    )
+                                  }
+                                  className="h-4 w-4"
+                                />
+                              ) : (
+                                <Shuffle
+                                  onClick={() => setRequestModalActive(true)}
+                                  className="h-4 w-4"
+                                />
                               )}
-                            </div>
+                            </button>
                           </td>
                         </tr>
                       ))
@@ -812,7 +809,7 @@ const OutletView: React.FC = () => {
                       {users.map(
                         (user: any) =>
                           user.role === 'seller' && (
-                            <option key={user._id} value={user.name}>
+                            <option key={user.id} value={user.name}>
                               {user.name}
                             </option>
                           ),
@@ -914,7 +911,7 @@ const OutletView: React.FC = () => {
                     ) : (
                       shop?.sellers.map((seller, index) => (
                         <tr
-                          key={seller._id}
+                          key={seller.id}
                           className="border-b border-gray-200 dark:border-meta-4 hover:bg-gray-50 dark:hover:bg-meta-4"
                         >
                           <td className="p-4 text-sm">{index + 1}</td>
@@ -922,8 +919,8 @@ const OutletView: React.FC = () => {
                             {seller.name}
                           </td>
                           <td className="p-4 text-sm">
-                            {/* {format(new Date(seller.fromDate), 'yyyy-MM-dd')} */}
-                            {seller.assignmentHistory &&
+                            {format(new Date(seller.fromDate), 'dd MMM, yyyy')}
+                            {/* {seller.assignmentHistory &&
                             seller.assignmentHistory.length > 0
                               ? format(
                                   new Date(
@@ -933,11 +930,11 @@ const OutletView: React.FC = () => {
                                   ),
                                   'dd MMM, yyyy',
                                 )
-                              : 'N/A'}
+                              : 'N/A'} */}
                           </td>
                           <td className="p-4 text-sm">
-                            {/* {format(new Date(seller.toDate), 'yyyy-MM-dd')} */}
-                            {seller.assignmentHistory &&
+                            {format(new Date(seller.toDate), 'dd MMM, yyyy')}
+                            {/* {seller.assignmentHistory &&
                             seller.assignmentHistory.length > 0
                               ? format(
                                   new Date(
@@ -947,21 +944,19 @@ const OutletView: React.FC = () => {
                                   ),
                                   'dd MMM, yyyy',
                                 )
-                              : 'N/A'}
+                              : 'N/A'} */}
                           </td>
                           <td className="p-4 text-sm">
-                            {/* <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      new Date(seller.toDate) > new Date()
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
-                                    }`}
-                                  >
-                                    {new Date(seller.toDate) > new Date()
-                                      ? 'Active'
-                                      : 'Expired'}
-                                  </span> */}
                             <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                seller.status.toLowerCase() === 'assigned'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {capitalize(seller.status)}
+                            </span>
+                            {/* <span
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 seller.assignmentHistory[
                                   seller.assignmentHistory.length - 1
@@ -976,16 +971,30 @@ const OutletView: React.FC = () => {
                                     seller.assignmentHistory.length - 1
                                   ].type
                                 : 'N/A'}
-                            </span>
+                            </span> */}
                           </td>
                           <td className="p-4">
                             <button
-                              className="p-1 hover:bg-gray-100 rounded-full text-gray-600 hover:text-red-600 transition-colors"
+                              disabled={removingSeller}
+                              className={`p-1 rounded-full text-gray-600`}
                               onClick={() => {
-                                /* Handle remove seller */
+                                seller.status.toLowerCase() === 'assigned'
+                                  ? handleRemoveSeller(seller.assignmentId)
+                                  : alert('Seller already removed');
                               }}
                             >
-                              <X className="w-4 h-4" />
+                              {seller.status.toLowerCase() === 'assigned' ? (
+                                removingSeller ? (
+                                  <CircularProgress
+                                    size={24}
+                                    className="w-2 h-2 text-red-400"
+                                  />
+                                ) : (
+                                  <X className="w-5 h-5 text-red-400 hover:transform hover:rotate-180 duration-300 transition-all" />
+                                )
+                              ) : (
+                                <Check className="w-4 h-4 text-green-400" />
+                              )}
                             </button>
                           </td>
                         </tr>
@@ -1066,7 +1075,7 @@ const OutletView: React.FC = () => {
 
   // useEffect(() => {
   //   setTimeout(() => {
-  //   
+  //
   //   if (shop) {
   //     setModalAlert(null);
   //   }
@@ -1136,7 +1145,10 @@ const OutletView: React.FC = () => {
           </div>
         )}
       </div>
-      <Breadcrumb pageName="Inventory" header={`${shopname || shop?.shopName}`} />
+      <Breadcrumb
+        pageName="Inventory"
+        header={`${shopname || shop?.shopName}`}
+      />
       {!currentUser && userPermissions === 'seller' && (
         <span className="flex items-center gap-2 text-slate-500 p-2">
           <InfoIcon size={16} />

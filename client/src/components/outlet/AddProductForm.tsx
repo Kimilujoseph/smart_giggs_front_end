@@ -337,7 +337,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       const res = await axios.post(
         `${
           productType === 'phone'
-            ? `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/create-phone-stock`
+            ? `${
+                import.meta.env.VITE_SERVER_HEAD
+              }/api/inventory/create-phone-stock`
             : `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/create-stock`
         }`,
         {
@@ -353,7 +355,6 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
           maxprice: product.maxPrice,
           minprice: product.minPrice,
           quantity: 10,
-          
         },
         { withCredentials: true },
       );

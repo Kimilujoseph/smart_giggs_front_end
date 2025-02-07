@@ -28,7 +28,7 @@ import Message from '../alerts/Message';
 import ModalAlert from '../alerts/Alert';
 
 interface Sale {
-  _id: string;
+  id: string;
   productId: string;
   sellerId: string;
   shopId: string;
@@ -164,7 +164,9 @@ const OutletSales = () => {
           );
         }
         const data = await response.data;
-        setSalesData(data);
+        console.log(data);
+        
+        setSalesData(data.data);
         setMessage({
           text: 'Sales data fetched successfully',
           type: 'success',
@@ -197,7 +199,7 @@ const OutletSales = () => {
         categoryMetrics: [],
       };
 
-    const totalUnits = salesData.sales.reduce(
+    const totalUnits = salesData.sales?.reduce(
       (sum, item) => sum + item.totaltransaction,
       0,
     );
@@ -205,7 +207,7 @@ const OutletSales = () => {
 
     // Calculate product metrics
     const productData = new Map();
-    salesData.sales.forEach((item) => {
+    salesData.sales?.forEach((item) => {
       const productKey = item.productname;
       if (!productData.has(productKey)) {
         productData.set(productKey, {
@@ -226,7 +228,7 @@ const OutletSales = () => {
 
     // Calculate category metrics
     const categoryData = new Map();
-    salesData.sales.forEach((item) => {
+    salesData.sales?.forEach((item) => {
       const categoryKey = item.category;
       if (!categoryData.has(categoryKey)) {
         categoryData.set(categoryKey, {
@@ -313,18 +315,17 @@ const OutletSales = () => {
           icon={TrendingUp}
         />
         <StatCard
-          title="Units Sold"
-          value={metrics.totalUnits.toLocaleString()}
+          title="Products Sold / Total Units"
+          value={`${metrics.productMetrics.length} / ${metrics.totalUnits?.toLocaleString()}`}
           valueType="number"
-          secondaryValue={`Avg. ticket: ${metrics.avgTicketSize.toLocaleString()}`}
+          secondaryValue={`Avg. ticket: ${metrics.avgTicketSize?.toLocaleString()}`}
           icon={Package}
         />
         <StatCard
-          title="Products"
-          value={metrics.productMetrics.length}
-          // secondaryValue={`Total products: ${metrics.productMetrics.length}`}
-          icon={Store}
-          valueType="number"
+          title="Commission Earned"
+          value={metrics.totalCommission?.toLocaleString() || '-'}
+          valueType="currency"
+          icon={TrendingUp}
         />
       </div>
 

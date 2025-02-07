@@ -142,7 +142,7 @@ const UserTable: React.FC<UserTableProps> = () => {
           break;
         case 'view':
           navigate(`/userprofile?email=${encodeURIComponent(email)}`);
-          const selectedUser = packageData.find((user) => user._id === user_id);
+          const selectedUser = packageData.find((user) => user.id === user_id);
           if (selectedUser) {
             localStorage.setItem(
               'selectedUserData',

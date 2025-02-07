@@ -11,9 +11,9 @@ import {
 import { Clock, Store, ArrowRight } from 'lucide-react';
 
 interface Assignment {
-  _id: string;
+  id: string;
   shopId: {
-    _id: string;
+    id: string;
     name: string;
     id: string;
   };

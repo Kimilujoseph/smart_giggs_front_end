@@ -7,12 +7,12 @@ type History = {
   quantity: number;
   seller: string;
   type: string;
-  _id: string;
+  id: string;
   date: string;
 };
 
 type Product = {
-  _id: string;
+  id: string;
   category: string;
   itemName: string;
   brand: string;
@@ -172,7 +172,7 @@ const ProductView: React.FC = () => {
               </div>
               <div className="flex justify-between items-center border-t border-gray/[0.3] py-2">
                 <p className="text-sm font-medium">Product ID</p>
-                <p className="text-sm font-medium">{product._id}</p>
+                <p className="text-sm font-medium">{product.id}</p>
               </div>
               <div className="flex justify-between items-center border-t border-gray/[0.3] py-2">
                 <p className="text-sm font-medium">Category</p>
@@ -238,7 +238,7 @@ const ProductView: React.FC = () => {
                 <tbody>
                   {product && product.history && product.history.map((item) => (
                     <tr
-                      key={item._id}
+                      key={item.id}
                       className="bg-blue-500/[0.2] text-sm font-semibold border-b border-gray/[0.2]"
                     >
                       <td className="py-2 px-4">

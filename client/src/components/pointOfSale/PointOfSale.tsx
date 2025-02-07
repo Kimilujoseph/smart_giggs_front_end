@@ -22,7 +22,7 @@ import { DecodedToken } from '../../types/decodedToken';
 import Breadcrumb from '../Breadcrumbs/Breadcrumb';
 
 type Product = {
-  _id: string;
+  id: string;
   stock: {
     itemName: string;
     maxprice: number;
@@ -69,17 +69,17 @@ const PointOfSales = () => {
   const addToCart = (category: any, item: any) => {
     setCart((prevCart: any) => {
       const existingItem = prevCart.find(
-        (cartItem: any) => cartItem.stock._id === item._id,
+        (cartItem: any) => cartItem.stock.id === item.id,
       );
       if (existingItem) {
         return prevCart.filter(
-          (cartItem: any) => cartItem.stock._id !== item._id,
+          (cartItem: any) => cartItem.stock.id !== item.id,
         );
       }
 
       setSoldPrice({
         ...soldprice,
-        [category._id]: soldprice[category._id] || category.minPrice,
+        [category.id]: soldprice[category.id] || category.minPrice,
       });
 
       return [
@@ -96,7 +96,7 @@ const PointOfSales = () => {
   const removeFromCart = (productId: string) => {
     setCart((prevCart) => {
       return prevCart.filter(
-        (cartItem: any) => cartItem.category._id !== productId,
+        (cartItem: any) => cartItem.category.id !== productId,
       );
     });
     updateTotal();
@@ -106,7 +106,7 @@ const PointOfSales = () => {
     if (newQuantity < 1) return;
     setCart((prevCart: any) =>
       prevCart.map((item: any) =>
-        item.stock._id === itemId ? { ...item, soldunits: newQuantity } : item,
+        item.stock.id === itemId ? { ...item, soldunits: newQuantity } : item,
       ),
     );
     updateTotal();
@@ -128,7 +128,7 @@ const PointOfSales = () => {
     );
 
     const newtotal = groupedCart.reduce((sum: number, product: any) => {
-      const price = soldprice[product.categoryId._id];
+      const price = soldprice[product.categoryId.id];
       return sum + price * product.items.length;
     }, 0);
     setTotal(newtotal);
@@ -141,10 +141,10 @@ const PointOfSales = () => {
   // Check if an item is in cart
   const isInCart = (productId: string, itemId: string) => {
     const product = groupedCart.find((p: any) => {
-      return p.categoryId._id === productId;
+      return p.categoryId.id === productId;
     });
     if (!product) return false;
-    return product.items.some((item: any) => item._id === itemId);
+    return product.items.some((item: any) => item.id === itemId);
   };
 
   useEffect(() => {
@@ -240,12 +240,12 @@ const PointOfSales = () => {
 
       groupedCart.forEach((product: any) => {
         const items = product.items.map((item: any) => ({
-          productId: item._id,
-          soldprice: soldprice[product.categoryId._id],
+          productId: item.id,
+          soldprice: soldprice[product.categoryId.id],
           soldUnits: 1
         }));
         bulkSales.push({
-          CategoryId: product.categoryId._id,
+          CategoryId: product.categoryId.id,
           itemType: product.categoryId.itemType,
           items: [...items],
           paymentmethod: paymentMethod,
@@ -260,7 +260,7 @@ const PointOfSales = () => {
         `${import.meta.env.VITE_SERVER_HEAD}/api/sales/items/sale`,
         {
           customerdetails: formData,
-          shopName: outletData.name,
+          shopName: outletData.shopName,
           bulksales: [...bulkSales],
         },
         {
@@ -294,7 +294,7 @@ const PointOfSales = () => {
     if (!inventory) return [];
 
     const grouped = inventory.reduce((acc: any, item: any) => {
-      const categoryId = item.categoryId._id;
+      const categoryId = item.categoryId.id;
 
       if (!acc[categoryId]) {
         acc[categoryId] = {
@@ -316,7 +316,7 @@ const PointOfSales = () => {
 
   type GroupedCartItem = {
     categoryId: {
-      _id: string;
+      id: string;
       itemName: string;
       brand: string;
       itemModel: string;
@@ -330,7 +330,7 @@ const PointOfSales = () => {
   const groupedCart = useMemo<GroupedCartItem[]>(() => {
     if (!cart) return [];
     const grouped = cart.reduce((acc: any, item: any) => {
-      const categoryId = item.category._id;
+      const categoryId = item.category.id;
 
       if (!acc[categoryId]) {
         acc[categoryId] = {
@@ -359,6 +359,8 @@ const PointOfSales = () => {
 
   // Filtering and search logic
   const filteredProducts = useMemo(() => {
+    console.log(inventory);
+    
     return Object.entries(groupedItems).filter(([_, product]: any) => {
       const matchesSearch =
         product.categoryId.itemName
@@ -517,7 +519,6 @@ const PointOfSales = () => {
                   {filteredProducts.length} products
                 </div>
               </div>
-
               {paginatedProducts.length === 0 ? (
                 <SuchEmpty
                   message="No products found"
@@ -533,6 +534,7 @@ const PointOfSales = () => {
                         key={productId}
                         className="overflow-hidden rounded-md"
                       >
+                        
                         <div
                           className="cursor-pointer bg-bodydark/50 p-3 dark:bg-boxdark text-black transition-all duration-500 rounded-lg shadow-sm"
                           onClick={() => toggleExpand(productId)}
@@ -653,23 +655,23 @@ const PointOfSales = () => {
                                 )
                                 .map((item: any) => (
                                   <div
-                                    key={item._id}
+                                    key={item.id}
                                     onClick={() =>
                                       addToCart(product.categoryId, item)
                                     }
                                     className={`relative cursor-pointer bg-bodydark/50 dark:bg-boxdark p-4 rounded-lg shadow-sm flex justify-between items-center border hover:scale-110 transition-transform duration-300
                                       ${
                                         isInCart(
-                                          product.categoryId._id,
-                                          item._id,
+                                          product.categoryId.id,
+                                          item.id,
                                         )
                                           ? 'border-primary/70'
                                           : 'dark:border-slate-700'
                                       }`}
                                   >
                                     {isInCart(
-                                      product.categoryId._id,
-                                      item._id,
+                                      product.categoryId.id,
+                                      item.id,
                                     ) && (
                                       <CheckCircle className="text-primary absolute top-2 right-2 h-4 w-4" />
                                     )}
@@ -678,10 +680,6 @@ const PointOfSales = () => {
                                         IMEI: {item.IMEI}
                                       </p>
                                       <div className="text-sm dark:text-slate-400 mt-1">
-                                        <p>
-                                          Commission:{' '}
-                                          {formatPrice(item.commission)}
-                                        </p>
                                         {item.discount > 0 && (
                                           <p className="text-green-600">
                                             Discount:{' '}
@@ -751,7 +749,7 @@ const PointOfSales = () => {
                     {groupedCart.map((product: any) => (
                       <>
                         <div
-                          key={product.categoryId._id}
+                          key={product.categoryId.id}
                           className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between"
                         >
                           <div className="flex-grow">
@@ -766,7 +764,7 @@ const PointOfSales = () => {
                               {/* <button
                               onClick={() =>
                                 updateQuantity(
-                                  product.categoryId._id,
+                                  product.categoryId.id,
                                   product.quantity - 1,
                                 )
                               }
@@ -780,7 +778,7 @@ const PointOfSales = () => {
                               {/* <button
                               onClick={() =>
                                 updateQuantity(
-                                  product.categoryId._id,
+                                  product.categoryId.id,
                                   product.quantity + 1,
                                 )
                               }
@@ -793,7 +791,7 @@ const PointOfSales = () => {
                           <div className="flex flex-col justify-between h-full items-end gap-2">
                             <button
                               onClick={() =>
-                                removeFromCart(product.categoryId._id)
+                                removeFromCart(product.categoryId.id)
                               }
                               className="text-red-500 hover:text-red-600"
                             >
@@ -804,11 +802,11 @@ const PointOfSales = () => {
                               min={product.categoryId.minPrice}
                               max={product.categoryId.maxPrice}
                               defaultValue={product.categoryId.minPrice}
-                              value={soldprice[product.categoryId._id]}
+                              value={soldprice[product.categoryId.id]}
                               onChange={(e) => {
                                 setSoldPrice({
                                   ...soldprice,
-                                  [product.categoryId._id]: e.target.value,
+                                  [product.categoryId.id]: e.target.value,
                                 });
 
                                 updateTotal(Number(e.target.value));
@@ -821,7 +819,7 @@ const PointOfSales = () => {
                           </p> */}
                           </div>
                         </div>
-                        {soldprice[product.categoryId._id] >
+                        {soldprice[product.categoryId.id] >
                           product.categoryId.maxPrice && (
                           <>
                             <span className="text-xs text-red-400 font-bold animate-pulse">{`Max Price should be ${formatPrice(
@@ -829,7 +827,7 @@ const PointOfSales = () => {
                             )}`}</span>
                           </>
                         )}
-                        {soldprice[product.categoryId._id] <
+                        {soldprice[product.categoryId.id] <
                           product.categoryId.minPrice && (
                           <>
                             <span className="text-xs text-red-400 font-bold animate-pulse">{`Min Price should be ${formatPrice(
@@ -841,7 +839,7 @@ const PointOfSales = () => {
                     ))}
                     {/* {groupedCart.map((item) => (
                       <div
-                        key={item.stock._id}
+                        key={item.stock.id}
                         className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between"
                       >
                         <div className="flex-grow">
@@ -855,7 +853,7 @@ const PointOfSales = () => {
                             <button
                               onClick={() =>
                                 updateQuantity(
-                                  item.stock._id,
+                                  item.stock.id,
                                   item.soldunits - 1,
                                 )
                               }
@@ -869,7 +867,7 @@ const PointOfSales = () => {
                             <button
                               onClick={() =>
                                 updateQuantity(
-                                  item.stock._id,
+                                  item.stock.id,
                                   item.soldunits + 1,
                                 )
                               }
@@ -884,7 +882,7 @@ const PointOfSales = () => {
                             {formatPrice(item.stock.maxprice * item.soldunits)}
                           </p>
                           <button
-                            onClick={() => removeFromCart(item.stock._id)}
+                            onClick={() => removeFromCart(item.stock.id)}
                             className="text-red-500 hover:text-red-600"
                           >
                             <X className="h-5 w-5" />

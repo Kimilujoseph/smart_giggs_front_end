@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   X,
   UserPlus,
+  Eye,
 } from 'lucide-react';
 import Message from '../alerts/Message';
 // import { getUsers } from '../../api/user_manager';
@@ -79,7 +80,7 @@ const OutletInventoryView: React.FC = () => {
   const [outletFormData, setOutletFormData] = useState({
     name: '',
     address: '',
-    _id: '',
+    id: '',
   });
 
   const sections = [
@@ -215,12 +216,12 @@ const OutletInventoryView: React.FC = () => {
     ).length;
 
     // Calculate items with low stock (less than 5 units)
-    const lowStockPhones = phoneItems.filter(
-      (item) => item.quantity < 5,
-    ).length;
-    const lowStockAccessories = accessories.filter(
-      (item) => item.quantity < 5,
-    ).length;
+    // const lowStockPhones = phoneItems.filter(
+    //   (item) => item.quantity < 5,
+    // ).length;
+    // const lowStockAccessories = accessories.filter(
+    //   (item) => item.quantity < 5,
+    // ).length;
 
     // Calculate inventory value
     const phoneValue = phoneItems.reduce(
@@ -229,22 +230,20 @@ const OutletInventoryView: React.FC = () => {
       0,
     );
     console.log(phoneValue);
-    
+
     const accessoryValue = accessories.reduce(
-      (sum, item) => sum + item.quantity * (Number(item.stock.productcost) || 0),
+      (sum, item) =>
+        sum + item.quantity * (Number(item.stock.productcost) || 0),
       0,
     );
-    console.log(accessoryValue);
-    console.log(accessories);
-    
-
+  
     return {
       totalPhones,
       totalAccessories,
       totalItems: totalPhones + totalAccessories,
       totalSoldItems: soldPhones + soldAccessories,
       totalItemsInStock: phonesInStock + accessoriesInStock,
-      lowStockItems: lowStockPhones + lowStockAccessories,
+      lowStockItems: shop.lowStockItems.length,
       phoneModels: phoneItems.length,
       accessoryModels: accessories.length,
       totalValue: phoneValue + accessoryValue,
@@ -286,13 +285,13 @@ const OutletInventoryView: React.FC = () => {
           });
         }
         setCurrentUser(response.data.user);
-        setShop(assignedShop);
+        // setShop(assignedShop);
         setOutletFormData({
           name: assignedShop.shopName,
           address: assignedShop.address,
-          _id: assignedShop._id,
+          id: assignedShop.id,
         });
-        setShopName(assignedShop.name);
+        setShopName(assignedShop.shopName);
       }
     } catch (error: any) {
       console.error('Error fetching user data', error);
@@ -345,9 +344,9 @@ const OutletInventoryView: React.FC = () => {
         setNewStockTally(pendingPhoneItemsCount + pendingAccessoryItemsCount);
 
         setOutletFormData({
-          name: outlet.shopName,
+          name: outlet.name,
           address: outlet.address,
-          _id: outlet._id,
+          id: outlet.id,
         });
       }
     } catch (error) {
@@ -356,7 +355,12 @@ const OutletInventoryView: React.FC = () => {
   };
 
   useEffect(() => {
-    console.log('Fetching user data', urlShopname, userPermissions, (userPermissions !== 'seller' && !urlShopname));
+    console.log(
+      'Fetching user data',
+      urlShopname,
+      userPermissions,
+      userPermissions !== 'seller' && !urlShopname,
+    );
     if (userPermissions === 'seller' && !urlShopname) {
       console.log('Fetching....');
       fetchUserData();
@@ -380,7 +384,7 @@ const OutletInventoryView: React.FC = () => {
     try {
       const response = await axios.put(
         `${import.meta.env.VITE_SERVER_HEAD}/api/shop/update/${
-          outletFormData._id
+          outletFormData.id
         }`,
         outletFormData,
         { withCredentials: true },
@@ -392,7 +396,7 @@ const OutletInventoryView: React.FC = () => {
         setOutletFormData({
           name: outletUpdated.shopName,
           address: outletUpdated.address,
-          _id: outletUpdated._id,
+          id: outletUpdated.id,
         });
       } else {
         alert(`Error: ${response.data.message}`);
@@ -407,10 +411,12 @@ const OutletInventoryView: React.FC = () => {
     activeSection === 'Phones' ? shop?.phoneItems : shop?.stockItems;
 
   const groupedItems = useMemo(() => {
+    console.log("Items from memo", items);
+    
     if (!items) return [];
 
     const grouped = items.reduce((acc: any, item: any) => {
-      const categoryId = item.categoryId._id;
+      const categoryId = item.categoryId.id;
 
       if (!acc[categoryId]) {
         acc[categoryId] = {
@@ -668,7 +674,7 @@ const OutletInventoryView: React.FC = () => {
                   ) : (
                     groupedItems.map((group: any, index: number) => (
                       <tr
-                        key={group.categoryId._id}
+                        key={group.categoryId.id}
                         className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors
                         ${
                           index % 2 === 1
@@ -697,46 +703,19 @@ const OutletInventoryView: React.FC = () => {
                           </span>
                         </td>
                         <td className="p-3">
-                          <div className="relative">
-                            <button
-                              style={{
-                                transform: 'rotate(90deg)',
-                              }}
-                              className="text-gray-500 dark:text-white hover:text-gray-700"
-                              onClick={() =>
-                                toggleActionsMenu(group.categoryId._id)
-                              }
-                            >
-                              <span className="dots-icon rotate-180">...</span>
-                            </button>
-                            {showActionsMenu === group.categoryId._id && (
-                              <ClickOutside
-                                onClick={() => setShowActionsMenu(null)}
-                              >
-                                <div className="fixed right-4 mt-4 w-48 flex-col rounded-md border border-stroke bg-white shadow-lg z-50 border-primary/[0.5] dark:bg-boxdark">
-                                  <button
-                                    className="block px-4 py-2 text-left text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-boxdark-2 w-full"
-                                    onClick={() =>
-                                      navigate(
-                                        `/outlet/inventory/${group.categoryId._id}`,
-                                        {
-                                          state: group,
-                                        },
-                                      )
-                                    }
-                                  >
-                                    View Items ({group?.items?.length || 0})
-                                  </button>
-                                  <button
-                                    className="block px-4 py-2 text-left text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-boxdark-2 w-full"
-                                    onClick={() => alert('Deleting...')}
-                                  >
-                                    Delete All
-                                  </button>
-                                </div>
-                              </ClickOutside>
-                            )}
-                          </div>
+                          <button
+                            className="block px-4 py-2 flex justify-center text-gray-800 dark:text-white w-full"
+                            onClick={() =>
+                              navigate(
+                                `/outlet/inventory/${group.categoryId.id}`,
+                                {
+                                  state: group,
+                                },
+                              )
+                            }
+                          >
+                            <Eye className='h-4 w-4' />
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -806,7 +785,7 @@ const OutletInventoryView: React.FC = () => {
                       {users.map(
                         (user: any) =>
                           user.role === 'seller' && (
-                            <option key={user._id} value={user.name}>
+                            <option key={user.id} value={user.name}>
                               {user.name}
                             </option>
                           ),
@@ -908,7 +887,7 @@ const OutletInventoryView: React.FC = () => {
                     ) : (
                       shop?.sellers.map((seller, index) => (
                         <tr
-                          key={seller._id}
+                          key={seller.id}
                           className="border-b border-gray-200 dark:border-meta-4 hover:bg-gray-50 dark:hover:bg-meta-4"
                         >
                           <td className="p-4 text-sm">{index + 1}</td>
@@ -1054,7 +1033,7 @@ const OutletInventoryView: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto text-sm md:text-base">
+    <div className="container w-full mx-auto text-sm md:text-base">
       {modalAlert && (
         <ModalAlert
           message={modalAlert.text}
@@ -1069,7 +1048,7 @@ const OutletInventoryView: React.FC = () => {
         />
       )}
       {/* Top Bar */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 w-full">
         {/* New Stock Button */}
         {userPermissions === 'seller' && currentUser && (
           <div className="flex justify-end w-full mt-4">
@@ -1101,7 +1080,10 @@ const OutletInventoryView: React.FC = () => {
           </div>
         )}
       </div>
-      <Breadcrumb pageName="Inventory" header={`${shopname || shop?.shopName || ''}`} />
+      <Breadcrumb
+        pageName="Inventory"
+        header={`${shopname || shop?.shopName || ''}`}
+      />
       {/* Horizontal Navigation */}
       <div className="mb-6">
         {/* Navigation Menu */}

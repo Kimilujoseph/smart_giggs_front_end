@@ -271,7 +271,7 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
                 </tr>
               ) : (
                 currentItems.map((product: any) => (
-                  <tr key={product._id} className="border-b border-[#eee] dark:border-strokedark hover:bg-gray-1 dark:hover:bg-meta-4">
+                  <tr key={product.id} className="border-b border-[#eee] dark:border-strokedark hover:bg-gray-1 dark:hover:bg-meta-4">
                     <td className="py-3 px-4">
                       <h5 className="font-medium text-black dark:text-white">{product.itemName}</h5>
                     </td>
@@ -298,7 +298,7 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
                     </td>
                     <td className="py-3 px-4">
                       <button
-                        onClick={() => navigate(`/inventory/${product._id}/${product.isMobile}`)}
+                        onClick={() => navigate(`/inventory/${product.id}/${product.isMobile}`)}
                         className="p-2 rounded-lg hover:bg-gray-2 dark:hover:bg-meta-4"
                         title="View Details"
                       >
