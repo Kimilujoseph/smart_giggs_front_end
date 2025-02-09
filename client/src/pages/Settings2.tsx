@@ -1,21 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Camera,
-  Pencil,
-  User,
-  Phone,
-  Mail,
-  Users,
-  Upload,
-  Edit,
-  Info,
-} from 'lucide-react';
+import { Users, Upload } from 'lucide-react';
 import axios, { AxiosResponse } from 'axios';
 import jwt_decode from 'jwt-decode';
 import { DecodedToken } from '../types/decodedToken';
-import ClickOutside from '../components/ClickOutside';
 import { useNavigate } from 'react-router-dom';
 import PersonalInformation from '../components/settings/PersonalInformation';
+import AccountSettings from '@/components/settings/AccountSettongs';
+
+export interface UserProfileProps {
+  name: string;
+  phone: string;
+  email: string;
+  nextofkinname: string;
+  nextofkinphonenumber: string;
+  profileimage: string | File | null;
+  password: string;
+  backId: string;
+  frontId: string;
+  nextOfKinFrontId: string;
+  nextOfKinBackId: string;
+}
 
 const Settings2 = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -267,7 +271,7 @@ const Settings2 = () => {
       {/* Tabs */}
       <div className="mb-6 w-full">
         <div className="flex space-x-1 rounded-xl bg-white dark:bg-boxdark h-12 px-1 w-full">
-          {['profile', 'security', 'next-of-kin'].map((tab) => (
+          {['profile', 'additional-Settings'].map((tab) => (
             <button
               key={tab}
               className={`w-full py-2.5 text-sm font-medium leading-5
@@ -286,332 +290,15 @@ const Settings2 = () => {
 
       {/* Profile Tab Content */}
       {activeTab === 'profile' && (
-        // <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-whiten dark:bg-boxdark-2 rounded-lg">
-        //   {/* Profile Photo Section */}
-        //   <div className="bg-white dark:bg-boxdark rounded-lg shadow p-6">
-        //     <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        //       <Camera className="w-5 h-5" />
-        //       Profile Photo
-        //     </h2>
-        //     <div className="flex md:flex-col gap-4 justify-center items-center space-y-4">
-        //       <div className="relative">
-        //         <img
-        //           src={
-        //             typeof userProfile.profileimage === 'string'
-        //               ? userProfile.profileimage
-        //               : 'https://www.strasys.uk/wp-content/uploads/2022/02/Depositphotos_484354208_S.jpg'
-        //           }
-        //           alt="Profile"
-        //           className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-white shadow-lg"
-        //         />
-        //         <button
-        //           onClick={() => fileInputRef.current?.click()}
-        //           className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full shadow-lg hover:bg-primary/90"
-        //         >
-        //           <Pencil className="w-2 h-2 md:w-4 md:h-4" />
-        //         </button>
-        //         <input
-        //           ref={fileInputRef}
-        //           type="file"
-        //           accept="image/*"
-        //           name="profileimage"
-        //           className="hidden"
-        //           onChange={handleFileUpload}
-        //         />
-        //       </div>
-        //       <p className="text-sm text-gray-500">
-        //         Click the edit button to update your photo
-        //       </p>
-        //     </div>
-        //   </div>
-
-        //   {/* Personal Information Section */}
-        //   <div className="bg-white dark:bg-boxdark rounded-lg shadow p-6 md:col-span-2">
-        //     <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        //       <User className="w-5 h-5" />
-        //       Personal Information
-        //     </h2>
-        //     <form onSubmit={updateUserProfile} className="space-y-4">
-        //       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        //         {/* Name */}
-        //         <div className="space-y-2">
-        //           <div className="flex items-center gap-4">
-        //             <label className="text-sm font-medium">Full Name</label>
-        //             <Edit
-        //               onClick={() => handleEdit('name')}
-        //               className="h-5 w-5 text-primary"
-        //             />
-        //           </div>
-        //           <div className="relative">
-        //             <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-        //             <ClickOutside
-        //               onClick={() =>
-        //                 setDisabledFields((prev) => ({ ...prev, name: true }))
-        //               }
-        //             >
-        //               <input
-        //                 type="text"
-        //                 name="name"
-        //                 value={userProfile.name}
-        //                 onChange={handleInputChange}
-        //                 className={`pl-10 bg-white dark:bg-boxdark w-full rounded-md focus:border-primary px-3 py-2 outline-none
-        //                 ${disabledFields.name ? '' : 'border border-gray-300'}`}
-        //                 disabled={disabledFields.name}
-        //                 placeholder="John Doe"
-        //               />
-        //             </ClickOutside>
-        //           </div>
-        //         </div>
-
-        //         {/* Phone Number */}
-        //         <div className="space-y-2">
-        //           <div className="flex items-center gap-4">
-        //             <label className="text-sm font-medium">Phone Number</label>
-        //             <Edit
-        //               onClick={() => handleEdit('phone')}
-        //               className="h-5 w-5 text-primary"
-        //             />
-        //           </div>
-        //           <div className="relative">
-        //             <Phone className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-        //             <ClickOutside
-        //               onClick={() =>
-        //                 setDisabledFields((prev) => ({ ...prev, phone: true }))
-        //               }
-        //             >
-        //               <input
-        //                 type="tel"
-        //                 name="phone"
-        //                 value={userProfile.phone}
-        //                 onChange={handleInputChange}
-        //                 className={`pl-10 bg-white dark:bg-boxdark w-full rounded-md focus:border-primary px-3 py-2 outline-none
-        //                 ${
-        //                   disabledFields.phone ? '' : 'border border-gray-300'
-        //                 }`}
-        //                 disabled={disabledFields.phone}
-        //                 placeholder="+254712345678"
-        //               />
-        //             </ClickOutside>
-        //           </div>
-        //         </div>
-
-        //         {/* Email Address */}
-        //         <div className="space-y-2">
-        //           <div className="flex items-center gap-4">
-        //             <label className="text-sm font-medium">Email Address</label>
-        //             {/* <Edit
-        //               onClick={() => handleEdit('email')}
-        //               className="h-5 w-5 text-primary"
-        //             /> */}
-        //             <div className='text-xs text-yellow-500 flex gap-1 items-center'>
-        //               <Info className='h-3 w-3 text-yellow-500' />
-        //               Email editing is disabled</div>
-        //           </div>
-        //           <div className="relative">
-        //             <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-        //             <ClickOutside
-        //               onClick={() =>
-        //                 setDisabledFields((prev) => ({ ...prev, email: true }))
-        //               }
-        //             >
-        //               <input
-        //                 type="email"
-        //                 name="email"
-        //                 value={userProfile.email}
-        //                 onChange={() => void 0}
-        //                 className={`pl-10 bg-white dark:bg-boxdark w-auto rounded-md focus:border-primary px-3 py-2 outline-none`}
-        //                 disabled
-        //                 placeholder="johndoe@example.com"
-        //               />
-        //             </ClickOutside>
-        //           </div>
-        //         </div>
-        //       </div>
-
-        //       <div className="flex justify-end gap-4 pt-4">
-        //         {/* <button
-        //           type="button"
-        //           className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-        //         >
-        //           Cancel
-        //         </button> */}
-        //         <button
-        //           type="submit"
-        //           className={`px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80
-        //             ${submitting ? 'cursor-not-allowed opacity-40' : ''}`}
-        //         >
-        //           {submitting ? 'Updating...' : 'Save Changes'}
-        //         </button>
-        //       </div>
-        //     </form>
-        //   </div>
-        // </div>
-        <PersonalInformation userProfile={userProfile} refreshUserData={() => fetchUserData()} />
+        <PersonalInformation
+          userProfile={userProfile}
+          refreshUserData={() => fetchUserData()}
+        />
       )}
 
       {/* Security Tab Content */}
-      {activeTab === 'security' && (
-        <div className="bg-white dark:bg-boxdark rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Password Settings</h2>
-          <form className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Current Password</label>
-                <input
-                  type="password"
-                  name="currentPassword"
-                  className="bg-white dark:bg-boxdark w-full rounded-md border border-gray-300 focus:border-primary px-3 py-2 outline-none"
-                  placeholder="Enter current password"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">New Password</label>
-                <input
-                  type="password"
-                  name="newPassword"
-                  className="bg-white dark:bg-boxdark w-full rounded-md border border-gray-300 focus:border-primary px-3 py-2 outline-none"
-                  placeholder="Enter new password"
-                />
-              </div>
-            </div>
-
-            <div className="bg-bodydark1 dark:bg-graydark border-l-4 border-blue-400 text-accent1 dark:border-primary/60 p-4 text-sm dark:text-primary/60">
-              Password must be at least 8 characters long and contain at least
-              one uppercase letter, one lowercase letter, and one number.
-            </div>
-
-            <div className="flex justify-end gap-4">
-              <button
-                type="button"
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80"
-              >
-                Update Password
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Next of Kin Tab Content */}
-      {activeTab === 'next-of-kin' && (
-        <div className="bg-white dark:bg-boxdark rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Next of Kin Information
-          </h2>
-          <form className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Full Name</label>
-                <input
-                  type="text"
-                  name="nextofkinname"
-                  value={userProfile.nextofkinname}
-                  onChange={handleInputChange}
-                  className="bg-white dark:bg-boxdark w-full rounded-md border border-gray-300 focus:border-primary px-3 py-2 outline-none"
-                  placeholder="Next of kin's full name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Phone Number</label>
-                <input
-                  type="tel"
-                  name="nextofkinphonenumber"
-                  value={userProfile.nextofkinphonenumber}
-                  onChange={handleInputChange}
-                  className="bg-white dark:bg-boxdark w-full rounded-md border border-gray-300 focus:border-primary px-3 py-2 outline-none"
-                  placeholder="Next of kin's phone number"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Front ID Section */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Front ID</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary transition-colors">
-                  <input
-                    type="file"
-                    name="nextOfKinFrontId"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    accept="image/*"
-                    id="frontId"
-                  />
-                  <label htmlFor="frontId" className="cursor-pointer">
-                    {frontIdPreview ? (
-                      <img
-                        src={frontIdPreview}
-                        alt="Front ID Preview"
-                        className="mx-auto rounded-lg max-h-40"
-                      />
-                    ) : (
-                      <>
-                        <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                        <p className="mt-2 text-sm text-gray-500">
-                          Click to upload front ID
-                        </p>
-                      </>
-                    )}
-                  </label>
-                </div>
-              </div>
-
-              {/* Back ID Section */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Back ID</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary transition-colors">
-                  <input
-                    type="file"
-                    name="nextOfKinBackId"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    accept="image/*"
-                    id="backId"
-                  />
-                  <label htmlFor="backId" className="cursor-pointer">
-                    {backIdPreview ? (
-                      <img
-                        src={backIdPreview}
-                        alt="Back ID Preview"
-                        className="mx-auto rounded-lg max-h-40"
-                      />
-                    ) : (
-                      <>
-                        <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                        <p className="mt-2 text-sm text-gray-500">
-                          Click to upload back ID
-                        </p>
-                      </>
-                    )}
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-4">
-              <button
-                type="button"
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80"
-              >
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>
+      {activeTab === 'additional-Settings' && (
+        <AccountSettings refreshUserData={fetchUserData} />
       )}
     </div>
   );

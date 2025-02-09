@@ -69,7 +69,9 @@ const Dashboard: React.FC = () => {
 
   // Calculate sales meter percentage (example)
   const salesTarget = 1000000;
-  const meterPercentage = (analyticsData.totalSales / salesTarget) * 100 || 0;
+  const calcMeterPercentage =
+    (analyticsData.totalSales / salesTarget) * 100 || 0;
+  const meterPercentage = calcMeterPercentage > 100 ? 100 : calcMeterPercentage;
 
   const fetchAnalyticsData = async () => {
     try {
@@ -79,6 +81,7 @@ const Dashboard: React.FC = () => {
         { withCredentials: true },
       );
       const analyticsReport = salesDataResponse.data.data;
+      console.log(analyticsReport);
       
 
       setAnalyticsData(analyticsReport);
@@ -87,9 +90,7 @@ const Dashboard: React.FC = () => {
       setTopProducts(
         [...analyticsReport.analytics.analytics.productAnalytics].slice(0, 3),
       );
-    } catch (error) {
-      
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -104,22 +105,46 @@ const Dashboard: React.FC = () => {
   return (
     <div className="p-6 w-full">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-white dark:bg-boxdark rounded-xl p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-slate-400">
-                Total Sales
-              </p>
-              <h3 className="text-2xl font-bold mt-1">
-                {analyticsData.totalSales
-                  ? `Ksh ${analyticsData.totalSales.toLocaleString()}`
-                  : '-'}
-              </h3>
-              <span className="text-green-500 text-sm">+14.5%</span>
-            </div>
-            <div className="bg-blue-100 p-3 rounded-lg">
+        <div className="bg-blue-100 p-3 rounded-lg float-right flex">
               <DollarSign className="w-6 h-6 text-blue-600" />
+            </div>
+          <div className="flex items-center justify-between">
+          
+            <div className='w-full flex flex-col gap-4'>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-slate-400">
+                  Total Sales
+                </p>
+                <h3 className="text-2xl font-bold mt-1">
+                  {analyticsData.totalSales
+                    ? `Ksh ${analyticsData.totalSales.toLocaleString()}`
+                    : '-'}
+                </h3>
+              </div>
+              <div className='flex justify-between w-full'>
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Direct Sales
+                  </p>
+                  <h3 className="text-sm font-bold mt-1">
+                    {analyticsData.totalSales
+                      ? `Ksh ${analyticsData.totalSales.toLocaleString()}`
+                      : '-'}
+                  </h3>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Financed Sales
+                  </p>
+                  <h3 className="text-sm font-bold mt-1">
+                    {analyticsData.totalSales
+                      ? `Ksh ${analyticsData.totalfinanceSalesPending.toLocaleString()}`
+                      : '-'}
+                  </h3>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -372,7 +397,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
     </div>
-  )
+  );
 };
 
 export default Dashboard;

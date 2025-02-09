@@ -46,7 +46,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone: string;
-  assignmentHistory: Assignment[];
+  assignment: Assignment[];
   AccessorySalesHistory: Sale[];
   MobilePhoneSalesHistory: Sale[];
 }
@@ -103,8 +103,8 @@ const UserView: React.FC = () => {
           throw new Error('Failed to fetch user data');
         }
 
-        const data = await response.json();
-        const user = data.user;
+        const responseData = await response.json();
+        const data = responseData.data;
         
 
         // Calculate sales data

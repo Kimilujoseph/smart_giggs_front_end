@@ -9,15 +9,24 @@ import {
   UserIcon,
   Pencil,
   Info,
+  Users,
+  PhoneForwarded,
+  UserCheck,
+  UserCircle,
+  UserCircle2,
+  UserCog,
+  Home,
+  House,
+  HousePlug,
 } from 'lucide-react';
 
 import ClickOutside from '../ClickOutside';
-import { User } from '../../types/user';
 import { Avatar } from '@mui/material';
 import Message from '../alerts/Message';
+import { UserProfileProps } from '@/pages/Settings2';
 
 interface PersonalInformationProps {
-  userProfile: User;
+  userProfile: UserProfileProps;
   refreshUserData: () => void;
 }
 
@@ -35,19 +44,25 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
     profileimage: userProfile.profileimage,
   };
   const [newUserProfile, setNewUserProfile] = useState({
-      name: userProfile.name,
-      email: userProfile.email,
-      phone: userProfile.phone,
-      profileimage: userProfile.profileimage,
-    });
+    name: userProfile.name,
+    email: userProfile.email,
+    phone: userProfile.phone,
+    nextofkinname: userProfile.nextofkinname,
+    nextofkinphonenumber: userProfile.nextofkinphonenumber,
+    profileimage: userProfile.profileimage,
+  });
   const [disabledFields, setDisabledFields] = React.useState<{
     name: boolean;
     email: boolean;
     phone: boolean;
+    nextofkinname: boolean;
+    nextofkinphonenumber: boolean;
   }>({
     name: true,
     email: true,
     phone: true,
+    nextofkinname: true,
+    nextofkinphonenumber: true,
   });
   const [message, setMessage] = React.useState<{
     text: string;
@@ -70,7 +85,7 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('Handling input change', e.target.name, e.target.value);
-    
+
     const { name, value } = e.target;
     setNewUserProfile((prev) => ({ ...prev, [name]: value }));
   };
@@ -109,45 +124,27 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
       ] = [null, null];
 
       if (
-        newUserProfile &&
-        (newUserProfile.email !== userProfile.email ||
-        newUserProfile.phone !== userProfile.phone ||
-        newUserProfile.name !== userProfile.name)
+        (newUserProfile &&
+          (newUserProfile.email !== userProfile.email ||
+            newUserProfile.phone !== userProfile.phone ||
+            newUserProfile.name !== userProfile.name)) ||
+        newUserProfile.nextofkinname !== userProfile.nextofkinname ||
+        newUserProfile.nextofkinphonenumber !== userProfile.nextofkinphonenumber
       ) {
         const formData = new FormData();
         formData.append('name', newUserProfile.name || userProfile.name);
         formData.append('phone', newUserProfile.phone || userProfile.phone);
-        formData.append('email', newUserProfile.email || userProfile.email);
-
-        console.log(newUserProfile.email !== userProfile.email, newUserProfile.phone !== userProfile.phone, newUserProfile.name !== userProfile.name);
-        
-
-        // console.log(
-        //   `Profile: ${JSON.stringify({
-        //     // name: formData.get('name'),
-        //     // phone: formData.get('phone'),
-        //     // email: formData.get('email'),
-        //     name: newUserProfile.name,
-        //     phone: newUserProfile.phone,
-        //     email: newUserProfile.email
-        //   })}`,
-        // );
-        console.log(newUserProfile);
-        
-
-        console.log(
-          `Initial Profile Details: ${JSON.stringify({
-            name: userProfile.name,
-            phone: userProfile.phone,
-            email: userProfile.email
-          })}`,
-        );
+        // formData.append('email', newUserProfile.email || userProfile.email);
+        formData.append('nextofkinname', newUserProfile.nextofkinname || userProfile.nextofkinname);
+        formData.append('nextofkinphonenumber', newUserProfile.nextofkinphonenumber || userProfile.nextofkinphonenumber);
       }
 
       if (newUserProfile !== userProfile) {
         const formData = new FormData();
         formData.append('name', newUserProfile.name || userProfile.name);
         formData.append('phone', newUserProfile.phone || userProfile.phone);
+        formData.append('nextofkinname', newUserProfile.nextofkinname || userProfile.nextofkinname);
+        formData.append('nextofkinphonenumber', newUserProfile.nextofkinphonenumber || userProfile.nextofkinphonenumber);
         // formData.append('email', newUserProfile.email);
 
         profileResponse = await axios.put(
@@ -155,6 +152,8 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
           {
             name: formData.get('name'),
             phone: formData.get('phone'),
+            nextofkinname: formData.get('nextofkinname'),
+            nextofkinphonenumber: formData.get('nextofkinphonenumber'),
             // email: formData.get('email'),
           },
           {
@@ -169,12 +168,6 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
       if (newUserProfile.profileimage instanceof File) {
         const imageFormData = new FormData();
         imageFormData.append('images', newUserProfile.profileimage);
-
-        console.log(
-          `Image: ${JSON.stringify(
-            imageFormData.get('profileimage') as object,
-          )}`,
-        );
 
         profileImageResponse = await axios.put(
           `${import.meta.env.VITE_SERVER_HEAD}/api/user/update/profilepicture`,
@@ -218,7 +211,13 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-whiten dark:bg-boxdark-2 rounded-lg">
       {/* Profile Photo Section */}
-      {message && <Message message={message.text} type={message.type} onClose={() => setMessage(null)} />}
+      {message && (
+        <Message
+          message={message.text}
+          type={message.type}
+          onClose={() => setMessage(null)}
+        />
+      )}
       <div className="bg-white dark:bg-boxdark rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Camera className="w-5 h-5" />
@@ -229,12 +228,12 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
             <Avatar
               src={profilePreview || `${userProfile.profileimage as string}`}
               alt={userProfile.name}
-              className='bg-red-400'
+              className="bg-red-400"
               sx={{
                 width: '100%',
                 height: '100%',
-                backgroundColor: "transparent",
-                fontSize: '2rem'
+                backgroundColor: 'transparent',
+                fontSize: '2rem',
               }}
               // className="w-24 h-24 md:w-100 md:h-100 rounded-full object-cover border-4 border-white shadow-lg"
             />
@@ -259,126 +258,222 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
         </div>
       </div>
 
-      {/* Personal Information Section */}
       <div className="bg-white dark:bg-boxdark rounded-lg shadow p-6 md:col-span-2">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <UserIcon className="w-5 h-5" />
-          Personal Information
-        </h2>
-        <form onSubmit={handleProfileUpdate} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Name */}
-            <div className="space-y-2 col-span-2 md:col-span-1">
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium">Full Name</label>
-                <Edit
-                  onClick={() => handleEdit('name')}
-                  className="h-5 w-5 text-primary"
-                />
-              </div>
-              <div className="relative">
-                <UserIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                <ClickOutside
-                  onClick={() =>
-                    setDisabledFields((prev) => ({ ...prev, name: true }))
-                  }
-                >
-                  <input
-                    type="text"
-                    name="name"
-                    value={newUserProfile.name || userProfile.name || ''}
-                    onChange={handleInputChange}
-                    className={`w-full pl-10 bg-white dark:bg-boxdark w-full rounded-md focus:border-primary px-3 py-2 outline-none
+        <section>
+          <form onSubmit={handleProfileUpdate} className="space-y-4">
+            {/* Personal Information */}
+            <div
+              id="personal-information"
+              className="border border-slate-500 rounded-lg p-4"
+            >
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <UserIcon className="w-5 h-5" />
+                Personal Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Name */}
+                <div className="space-y-2 col-span-2 md:col-span-1">
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium">Full Name</label>
+                    <Edit
+                      onClick={() => handleEdit('name')}
+                      className="h-5 w-5 text-primary"
+                    />
+                  </div>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    <ClickOutside
+                      onClick={() =>
+                        setDisabledFields((prev) => ({ ...prev, name: true }))
+                      }
+                    >
+                      <input
+                        type="text"
+                        name="name"
+                        value={newUserProfile.name || userProfile.name || ''}
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 bg-white dark:bg-boxdark w-full rounded-md focus:border-primary px-3 py-2 outline-none
                         ${disabledFields.name ? '' : 'border border-gray-300'}`}
-                    disabled={disabledFields.name}
-                    placeholder="John Doe"
-                  />
-                </ClickOutside>
-              </div>
-            </div>
+                        disabled={disabledFields.name}
+                        placeholder="John Doe"
+                      />
+                    </ClickOutside>
+                  </div>
+                </div>
 
-            {/* Phone Number */}
-            <div className="space-y-2 col col-span-2 md:col-span-1">
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium">Phone Number</label>
-                <Edit
-                  onClick={() => handleEdit('phone')}
-                  className="h-5 w-5 text-primary"
-                />
-              </div>
-              <div className="relative">
-                <Phone className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                <ClickOutside
-                  onClick={() =>
-                    setDisabledFields((prev) => ({ ...prev, phone: true }))
-                  }
-                >
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={newUserProfile.phone || userProfile.phone || ''}
-                    onChange={handleInputChange}
-                    className={`w-full pl-10 bg-white dark:bg-boxdark w-full rounded-md focus:border-primary px-3 py-2 outline-none
+                {/* Phone Number */}
+                <div className="space-y-2 col col-span-2 md:col-span-1">
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium">Phone Number</label>
+                    <Edit
+                      onClick={() => handleEdit('phone')}
+                      className="h-5 w-5 text-primary"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    <ClickOutside
+                      onClick={() =>
+                        setDisabledFields((prev) => ({ ...prev, phone: true }))
+                      }
+                    >
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={newUserProfile.phone || userProfile.phone || ''}
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 bg-white dark:bg-boxdark w-full rounded-md focus:border-primary px-3 py-2 outline-none
                         ${
                           disabledFields.phone ? '' : 'border border-gray-300'
                         }`}
-                    disabled={disabledFields.phone}
-                    placeholder="+254712345678"
-                  />
-                </ClickOutside>
-              </div>
-            </div>
+                        disabled={disabledFields.phone}
+                        placeholder="+254712345678"
+                      />
+                    </ClickOutside>
+                  </div>
+                </div>
 
-            {/* Email Address */}
-            <div className="space-y-2 col-span-2">
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium">Email Address</label>
-                {/* <Edit
+                {/* Email Address */}
+                <div className="space-y-2 col-span-2">
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium">Email Address</label>
+                    {/* <Edit
                       onClick={() => handleEdit('email')}
                       className="h-5 w-5 text-primary"
                     /> */}
-                <div className="text-xs text-yellow-500 flex gap-1 items-center">
-                  <Info className="h-3 w-3 text-yellow-500" />
-                  Email editing is disabled
+                    <div className="text-xs text-yellow-500 flex gap-1 items-center">
+                      <Info className="h-3 w-3 text-yellow-500" />
+                      Email editing is disabled
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    <ClickOutside
+                      onClick={() =>
+                        setDisabledFields((prev) => ({ ...prev, email: true }))
+                      }
+                    >
+                      <input
+                        type="email"
+                        name="email"
+                        value={userProfile.email}
+                        onChange={() => void 0}
+                        className={`w-full pl-10 bg-white dark:bg-boxdark w-auto rounded-md focus:border-primary px-3 py-2 outline-none`}
+                        disabled
+                        placeholder="johndoe@example.com"
+                      />
+                    </ClickOutside>
+                  </div>
                 </div>
               </div>
-              <div className="relative">
-                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                <ClickOutside
-                  onClick={() =>
-                    setDisabledFields((prev) => ({ ...prev, email: true }))
-                  }
-                >
-                  <input
-                    type="email"
-                    name="email"
-                    value={userProfile.email}
-                    onChange={() => void 0}
-                    className={`w-full pl-10 bg-white dark:bg-boxdark w-auto rounded-md focus:border-primary px-3 py-2 outline-none`}
-                    disabled
-                    placeholder="johndoe@example.com"
-                  />
-                </ClickOutside>
+            </div>
+
+            {/* Next of Kin Information */}
+            <div
+              id="next-of-kin-info"
+              className="border border-slate-500 rounded-lg p-4"
+            >
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Home className="w-5 h-5" />
+                Next of Kin Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Next of Kin Name */}
+                <div className="space-y-2 col-span-2 md:col-span-1">
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium">Full Name</label>
+                    <Edit
+                      onClick={() => handleEdit('nextofkinname')}
+                      className="h-5 w-5 text-primary"
+                    />
+                  </div>
+                  <div className="relative">
+                    <UserCog className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    <ClickOutside
+                      onClick={() =>
+                        setDisabledFields((prev) => ({
+                          ...prev,
+                          nextofkinname: true,
+                        }))
+                      }
+                    >
+                      <input
+                        type="text"
+                        name="nextofkinname"
+                        value={
+                          newUserProfile.nextofkinname ||
+                          userProfile.nextofkinname ||
+                          ''
+                        }
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 bg-white dark:bg-boxdark w-full rounded-md focus:border-primary px-3 py-2 outline-none
+                        ${
+                          disabledFields.nextofkinname
+                            ? ''
+                            : 'border border-gray-300'
+                        }`}
+                        disabled={disabledFields.nextofkinname}
+                        placeholder="Jane Doe"
+                      />
+                    </ClickOutside>
+                  </div>
+                </div>
+
+                {/* Next of Kin Phone */}
+                <div className="space-y-2 col-span-2 md:col-span-1">
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium">Phone Number</label>
+                    <Edit
+                      onClick={() => handleEdit('nextofkinphonenumber')}
+                      className="h-5 w-5 text-primary"
+                    />
+                  </div>
+                  <div className="relative">
+                    <PhoneForwarded className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    <ClickOutside
+                      onClick={() =>
+                        setDisabledFields((prev) => ({
+                          ...prev,
+                          nextofkinphonenumber: true,
+                        }))
+                      }
+                    >
+                      <input
+                        type="tel"
+                        name="nextofkinphonenumber"
+                        value={
+                          newUserProfile.nextofkinphonenumber ||
+                          userProfile.nextofkinphonenumber ||
+                          ''
+                        }
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 bg-white dark:bg-boxdark w-full rounded-md focus:border-primary px-3 py-2 outline-none
+                        ${
+                          disabledFields.nextofkinphonenumber
+                            ? ''
+                            : 'border border-gray-300'
+                        }`}
+                        disabled={disabledFields.nextofkinphonenumber}
+                        placeholder="Jane Doe"
+                      />
+                    </ClickOutside>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-end gap-4 pt-4">
-            {/* <button
-                  type="button"
-                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Cancel
-                </button> */}
-            <button
-              type="submit"
-              className={`px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80
+            {/* Submit Button */}
+            <div className="flex justify-end gap-4 pt-4">
+              <button
+                type="submit"
+                className={`px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80
                     ${submitting ? 'cursor-not-allowed opacity-40' : ''}`}
-            >
-              {submitting ? 'Updating...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
+              >
+                {submitting ? 'Updating...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </section>
       </div>
     </div>
   );
