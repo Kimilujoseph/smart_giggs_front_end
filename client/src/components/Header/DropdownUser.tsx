@@ -32,8 +32,6 @@ const DropdownUser = () => {
           }/api/user/profile/${decoded?.email}`,
           { withCredentials: true },
         );
-        console.log(200);
-
         if (response.status !== 200) {
           throw new Error(
             response.data.message ||

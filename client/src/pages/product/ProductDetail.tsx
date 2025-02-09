@@ -71,7 +71,7 @@ const ProductDetail = ({
   const [discount, setDiscount] = useState('');
   const [supplierName, setSupplierName] = useState('');
   const [newserialNumber, setNewSerialNumber] = useState('');
-  const [financer, setFinancer] = useState('');
+  const [financer, setFinancer] = useState('captech');
   const [addingUnit, setAddingUnit] = useState<boolean>(false);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -677,7 +677,6 @@ const ProductDetail = ({
                   </table>
                 </div>
               </div>
-              
             </div>
           )}
 

@@ -251,8 +251,7 @@ const PointOfSales = () => {
           paymentmethod: paymentMethod,
         });
       });
-
-      // return;
+      
       const token = localStorage.getItem('tk');
       if (!token) throw new Error('Token not found. User not authenticated.');
 
@@ -925,7 +924,7 @@ const PointOfSales = () => {
                           className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
                         />
                         <input
-                          type="text"
+                          type="phone"
                           placeholder="Phone Number"
                           value={formData.phonenumber}
                           onChange={(e) =>
@@ -966,9 +965,8 @@ const PointOfSales = () => {
                         className={`w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg`}
                       >
                         <option value="cash">Cash</option>
-                        <option value="online_payment">M-pesa</option>
-                        <option value="credit_card">Credit Card</option>
-                        <option value="debit_card">Debit Card</option>
+                        <option value="mpesa">M-pesa</option>
+                        <option value="creditcard">Credit Card</option>
                       </select>
                     </div>
                     {/* ) : (

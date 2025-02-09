@@ -83,9 +83,9 @@ const Dashboard: React.FC = () => {
 
       setAnalyticsData(analyticsReport);
       setSalesData([...analyticsReport.salesPerMonth]);
-      setTopSellers([...analyticsReport.analytics.sellerAnalytics]);
+      setTopSellers([...analyticsReport.analytics.analytics.sellerAnalytics]);
       setTopProducts(
-        [...analyticsReport.analytics.productAnalytics].slice(0, 3),
+        [...analyticsReport.analytics.analytics.productAnalytics].slice(0, 3),
       );
     } catch (error) {
       
@@ -93,8 +93,6 @@ const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    
-
     fetchAnalyticsData();
   }, []);
 
@@ -137,8 +135,8 @@ const Dashboard: React.FC = () => {
                   <h3 className="text-2xl font-bold mt-1">
                     <div>
                       <span>
-                        {analyticsData?.analytics?.totalSellers
-                          ? analyticsData.analytics.totalSellers.toLocaleString()
+                        {analyticsData?.analytics?.analytics.totalSellers
+                          ? analyticsData.analytics.analytics.totalSellers.toLocaleString()
                           : 0}
                       </span>
                       {/* <span className="text-sm"> / 25</span> */}
@@ -160,8 +158,8 @@ const Dashboard: React.FC = () => {
                 Sold Products
               </p>
               <h3 className="text-2xl font-bold mt-1">
-                {analyticsData?.analytics?.totalProducts
-                  ? analyticsData.analytics.totalProducts.toLocaleString()
+                {analyticsData?.analytics?.analytics.totalProducts
+                  ? analyticsData.analytics.analytics.totalProducts.toLocaleString()
                   : '-'}
               </h3>
               <span className="text-red-500 text-sm">-2.3%</span>
