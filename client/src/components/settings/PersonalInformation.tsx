@@ -84,7 +84,7 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('Handling input change', e.target.name, e.target.value);
+    
 
     const { name, value } = e.target;
     setNewUserProfile((prev) => ({ ...prev, [name]: value }));
@@ -105,7 +105,7 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
 
       reader.readAsDataURL(files[0]);
 
-      console.log('Handling image upload', files[0]);
+      
     }
   };
 
@@ -196,7 +196,7 @@ const PersonalInformation: React.FC<PersonalInformationProps> = ({
         type: 'success',
       });
     } catch (error: any) {
-      console.error('Error updating user profile', error);
+      alert("An error occurred");
       setMessage({
         text: error.response?.data.message || 'Failed to update profile',
         type: `${error.response?.status === 404 ? 'warning' : 'error'}`,

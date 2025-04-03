@@ -62,12 +62,12 @@ const OutletView2: React.FC = () => {
         setUsers(user_res?.data);
       }
     } catch (error) {
-      console.error(error);
+      alert("An error occurred");
     }
   };
 
   useEffect(() => {
-    console.log(shop);
+    
   }, [shop]);
   const fetchShop = async () => {
     try {
@@ -109,7 +109,7 @@ const OutletView2: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching shop data:', error);
+      alert("An error occurred");
     }
   };
 
@@ -126,7 +126,7 @@ const OutletView2: React.FC = () => {
   }, [name]);
 
   const handleSubmit2 = async ({ shop }) => {
-    console.log('Assigning:', sellerName, dates);
+    
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_SERVER_HEAD}/api/shop/assignment/add`,
@@ -145,7 +145,7 @@ const OutletView2: React.FC = () => {
       }
       fetchUsers();
     } catch (error) {
-      console.error(error);
+      alert("An error occurred");
     }
   };
 
@@ -170,7 +170,7 @@ const OutletView2: React.FC = () => {
       }
       fetchUsers();
     } catch (error) {
-      console.error(error);
+      alert("An error occurred");
     }
   };
   const handleInputChange2 = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -205,7 +205,7 @@ const OutletView2: React.FC = () => {
         alert(`Error: ${response.data.message}`);
       }
     } catch (error) {
-      console.error('Error creating shop:', error);
+      alert("An error occurred");
       alert('Internal Server Error');
     }
   };

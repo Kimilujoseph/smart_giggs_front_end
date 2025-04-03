@@ -15,7 +15,7 @@ import InventoryManager from './components/inventory/InventoryManage';
 import ProductView from './pages/ProductView';
 import OutletManager from './components/outlets/Outlets';
 import OutletView from './pages/OuletView';
-import PointOfSales from './components/pointOfSale/PointOfSale';
+import PointOfSale from './components/pointOfSale/PointOfSale';
 import POSLayout from './layout/POSLayout';
 import AssignmentHistory from './pages/AssignmentHistory';
 import OutletInventoryView from './components/outlet/OutletInventory';
@@ -24,12 +24,12 @@ import OutletSales from './components/outlet/OutletSales';
 import { CircularProgress } from '@mui/material';
 import ErrorPage from './pages/ErrorPage';
 import axios from 'axios';
-import { set } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { DecodedToken } from './types/decodedToken';
 import jwt_decode from 'jwt-decode';
 import Message from './components/alerts/Message';
 import SalesBackup from './pages/SalesBackup';
+import PointOfSales from './components/pointOfSale/PointOfSales';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -62,7 +62,7 @@ function App() {
       }
       setCurrentUser(response.data.user);
     } catch (error: any) {
-      console.error(error);
+      alert("An error occurred");
       if (error.response?.status === 401) {
         localStorage.clear();
         navigate('/auth/signin');
@@ -84,13 +84,6 @@ function App() {
           );
         }
       } catch (error: any) {
-        console.log(error);
-
-        console.log(
-          error.response?.data?.message ||
-            error.message ||
-            'Our servers are unreachable at the moment',
-        );
         setServerStatus(false);
         setMessage({
           code: error.response?.status || error.code || 500,
@@ -99,15 +92,10 @@ function App() {
             error.message ||
             'Our servers are unreachable at the moment',
         });
-        console.log(serverReachable);
       }
     };
     serverStatus();
     validateToken();
-    // if (user?.role !== currentUser?.role) {
-    //   localStorage.clear();
-    //   navigate('/auth/signin');
-    // } else {
     if (token && currentUser?.workingstatus.toLowerCase() === 'inactive') {
       setMessage({
         code: 403,
@@ -124,7 +112,6 @@ function App() {
           'Your account has been suspended. Contact the manager for more information',
       });
     }
-    // }
     setLoading(false);
   }, [token, currentUser?.role, currentUser?.workingstatus, navigate]);
 

@@ -6,8 +6,6 @@ import {
   Bar,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -23,6 +21,8 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { CircularProgress } from '@mui/material';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface Report {
   id: {
@@ -131,29 +131,6 @@ const Sales = () => {
   const [loading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
 
-  // const fetchSalesData = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const tokenObj = localStorage.getItem('tk');
-  //     if (tokenObj) {
-  //       const response = await axios.get(
-  //         `${import.meta.env.VITE_SERVER_HEAD}/api/sales/all?period=${timeFrame}&page=1`,
-  //         { withCredentials: true }
-  //       );
-  //       const data = await response.data
-  //       setSalesData(data.data);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching sales data', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchSalesData();
-  // }, [timeFrame]);
-
   // Fetch
   const fetchSalesData = async () => {
     try {
@@ -182,14 +159,14 @@ const Sales = () => {
         ];
 
         const responses = await Promise.all(requests);
-        console.log(responses);
+        
 
         // Flatten sales data from all responses
         const allSales = responses
           .map((res) => res.data.data.sales) // Extract `data` from each response
           .flat(); // Combine all pages into one array
 
-        console.log('All sales:', allSales);
+        
 
         // Calculate total sales and profit
         const totalSales = allSales.reduce(
@@ -213,9 +190,9 @@ const Sales = () => {
           totalCommission,
         });
       }
-      console.log(salesData);
+      
     } catch (error) {
-      console.error('Error fetching sales data:', error);
+      alert("An error occurred");
     } finally {
       setFetchingSales(false);
     }
@@ -223,7 +200,7 @@ const Sales = () => {
 
   useEffect(() => {
     fetchSalesData();
-    console.log('Sales data:', salesData);
+    
   }, [timeFrame]);
 
   const calculateMetrics = () => {
@@ -357,6 +334,13 @@ const Sales = () => {
           <p className="text-bodydark">
             Comprehensive sales performance insights
           </p>
+
+          <DatePicker
+          selected={selectedDate}
+          onChange={(date) => setSelectedDate(date)}
+          dateFormat="yyyy-MM-dd"
+          className="border border-gray-300 p-2 rounded"
+        />
           <select
             value={timeFrame}
             onChange={(e) => {
@@ -365,7 +349,7 @@ const Sales = () => {
             }}
             className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
           >
-            <option value="day">Today</option>
+            <option value="day">Today....</option>
             <option value="week">Past Week</option>
             <option value="month">Past Month</option>
             <option value="year">Past Year</option>

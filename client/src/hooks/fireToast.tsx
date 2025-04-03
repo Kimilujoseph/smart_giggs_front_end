@@ -61,14 +61,14 @@ const createToast=(title: string, msg: string, type: number)=>{toast.custom((t) 
 //     return response
 //   })
 //   .then(data => {
-//     console.log(data);
+//     
 //     dataJSON=data;
 //   })
 const fireToast = () => {
 const alertSettings=localStorage.getItem("alertSettings");
 if (alertSettings){
   for (const alertSetting of JSON.parse(alertSettings)) {
-    console.log(alertSetting);
+    
 
     const value=isNaN(parseFloat(alertSetting.value))?alertSetting.value:parseFloat(alertSetting.value);
     const para=alertSetting.criterion<2?"delta_"+alertSetting.para:alertSetting.para;

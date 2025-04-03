@@ -40,7 +40,7 @@ const AssignmentHistory: React.FC<{
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        console.log('Fetching user data');
+        
         setIsLoading(true);
         const tokenObj = localStorage.getItem('tk');
         if (tokenObj) {
@@ -60,7 +60,7 @@ const AssignmentHistory: React.FC<{
           setSellerAssignment(sortedAssignments);
         }
       } catch (error: any) {
-        console.error('Error fetching user data', error);
+        alert("An error occurred");
         setError(
           error.response?.data.message ||
             error.message ||

@@ -25,3 +25,5 @@ dist-ssr
 
 scripts
 TODO.md
+dummy
+*.tsbuildinfo

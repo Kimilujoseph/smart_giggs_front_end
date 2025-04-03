@@ -38,15 +38,7 @@ const ProductDetail = ({
   const token = localStorage.getItem('tk');
   const user: DecodedToken = jwt_decode(token!);
   if (!token || !user) {
-    return (
-      <div>
-        You seem to be logged out. Click{' '}
-        <a onClick={() => localStorage.clear()} href="/auth/signin">
-          here
-        </a>{' '}
-        to login again
-      </div>
-    );
+    return null;
   }
   if (!product) return null;
   const [isOpen, setIsOpen] = useState(false);
@@ -58,7 +50,7 @@ const ProductDetail = ({
   const [activeTab, setActiveTab] = useState(query.get('subtab') || 'details');
   const [selectedUnit, setSelectedUnit] = useState('');
   const [newBatchNumber, setNewBatchNumber] = useState('');
-  const [quantity, setQuantity] = useState('');
+  const [quantity, setQuantity] = useState<number>(1);
   const [unitPrice, setUnitPrice] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [selectedBatch, setSelectedBatch] = useState(null);
@@ -124,20 +116,19 @@ const ProductDetail = ({
     event.preventDefault();
     try {
       setAddingUnit(true);
-      console.log(productId);
       // return;
       const data = {
         CategoryId: productId,
         IMEI,
         serialNumber: newserialNumber,
         batchNumber: newBatchNumber,
-        availableStock: 1,
+        availableStock: Number(quantity),
         supplierName,
-        productcost,
+        productcost: Number(productcost),
         color,
         stockStatus: 'Available',
-        commission,
-        discount,
+        commission: Number(commission),
+        discount: Number(discount),
       };
       const response = await axios.post(
         product?.itemType === 'mobiles'
@@ -190,13 +181,6 @@ const ProductDetail = ({
 
   const handleAddBatch = () => {
     // Implement batch addition logic
-    console.log('Adding new batch:', {
-      newBatchNumber,
-      quantity,
-      unitPrice,
-      selectedUnit,
-      expiryDate,
-    });
   };
 
   const handleToggleBatchStatus = (batchId: string) => {
@@ -223,10 +207,12 @@ const ProductDetail = ({
 
   const filteredUnits = product?.Items.filter((item) => {
     if (!product?.Items) return [];
+    
+
     const matchesSearch =
       searchQuery.toLowerCase() === '' ||
       item.serialNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.id?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.IMEI?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       selectedStatus === 'all' ||
@@ -463,6 +449,26 @@ const ProductDetail = ({
                             className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
                           />
                         </div>
+
+                        {/* Quantity */}
+                        <div className="col-span-2 lg:col-span-1">
+                          <label
+                            htmlFor="quantity"
+                            className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                          >
+                            Quantity
+                          </label>
+                          <input
+                            id="quantity"
+                            min={1}
+                            defaultValue={1}
+                            type="number"
+                            value={quantity}
+                            onChange={(e) => setQuantity(e.target.value)}
+                            placeholder="Batch Quantity"
+                            className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
+                          />
+                        </div>
                         {/* Supplier */}
                         <div className="col-span-1">
                           <label
@@ -562,7 +568,7 @@ const ProductDetail = ({
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder="Search by Serial or IMEI..."
+                    placeholder={`Search by Serial or ${product.itemType === 'mobiles' ? "IMEI" : "Batch Number"}...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
@@ -597,17 +603,18 @@ const ProductDetail = ({
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-strokedark">
                     <thead className="bg-bodydark1 dark:bg-meta-4 sticky top-0 z-10">
                       <tr>
-                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
-                          IMEI
-                        </th>
+                        {product.itemType === 'mobiles' && (
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                            IMEI
+                          </th>
+                        )}
                         <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
                           Batch Number
                         </th>
-                        {product.itemType === 'mobiles' ? (
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
-                            Color
-                          </th>
-                        ) : (
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                          Color
+                        </th>
+                        {product.itemType === 'accessories' && (
                           <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
                             Units
                           </th>
@@ -636,17 +643,18 @@ const ProductDetail = ({
                             key={item.id}
                             className="hover:bg-bodydark1 dark:hover:bg-meta-4"
                           >
-                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                              {item.IMEI}
-                            </td>
+                            {product.itemType === 'mobiles' && (
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                {item.IMEI}
+                              </td>
+                            )}
                             <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
                               {item.batchNumber || '-'}
                             </td>
-                            {product.itemType === 'mobiles' ? (
-                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                                {item.color}
-                              </td>
-                            ) : (
+                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                              {item.color}
+                            </td>
+                            {product.itemType === 'accessories' && (
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
                                 {item.availableStock}
                               </td>
@@ -663,9 +671,10 @@ const ProductDetail = ({
                               </span>
                             </td>
                             <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                              {item.updatedAt
+                              {/* {JSON.stringify(item)} */}
+                              {item.updatedAt || item.createdAt
                                 ? format(
-                                    new Date(item.updatedAt),
+                                    new Date(item.updatedAt || item.createdAt),
                                     'MMM dd, HH:mm',
                                   )
                                 : 'N/A'}
@@ -680,7 +689,7 @@ const ProductDetail = ({
             </div>
           )}
 
-          {activeTab === 'batches' && (
+          {/* {activeTab === 'batches' && (
             <>
               {setActiveTab('details')}
               <div className="space-y-6">
@@ -692,7 +701,7 @@ const ProductDetail = ({
                   </Typography>
                 </div>
 
-                {/* Add New Batch Form */}
+                // Add New Batch Form 
                 <div className="p-4 border dark:border-strokedark rounded-lg">
                   <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
                     Add New Batch
@@ -742,7 +751,7 @@ const ProductDetail = ({
                   </div>
                 </div>
 
-                {/* Batch List */}
+                // Batch List
                 <div className="space-y-4">
                   {batches.map((batch) => (
                     <div
@@ -783,7 +792,7 @@ const ProductDetail = ({
                 </div>
               </div>
             </>
-          )}
+          )} */}
         </div>
       </div>
     </div>

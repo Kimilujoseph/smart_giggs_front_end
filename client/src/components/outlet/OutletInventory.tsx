@@ -143,8 +143,8 @@ const OutletInventoryView: React.FC = () => {
         if (user_res?.data) {
           setUsers(user_res?.data);
         }
-      } catch (error) {
-        console.error(error);
+      } catch (error: any) {
+        alert("An error occurred while fetching users");
       }
     };
     fetchUsers();
@@ -172,7 +172,6 @@ const OutletInventoryView: React.FC = () => {
         // fetchShop();
       }
     } catch (error: any) {
-      console.error(error);
       setMessage({
         text:
           error.response.data.message ||
@@ -186,7 +185,7 @@ const OutletInventoryView: React.FC = () => {
   const calculateInventoryStats = () => {
     if (!shop) return null;
 
-    console.log(shop.phoneItems);
+    
 
     const phoneItems = shop.phoneItems || [];
     const accessories = shop.stockItems || [];
@@ -198,7 +197,7 @@ const OutletInventoryView: React.FC = () => {
       (sum, item) => sum + item.quantity,
       0,
     );
-    console.log(phoneItems);
+    
 
     const soldPhones = phoneItems.filter(
       (item: any) => item.stock.stockStatus.toLowerCase() === 'sold',
@@ -229,7 +228,7 @@ const OutletInventoryView: React.FC = () => {
         sum + item.quantity * (Number(item.stock.productcost) || 0),
       0,
     );
-    console.log(phoneValue);
+    
 
     const accessoryValue = accessories.reduce(
       (sum, item) =>
@@ -274,9 +273,9 @@ const OutletInventoryView: React.FC = () => {
           { withCredentials: true },
         );
         const { assignedShop } = response.data.user;
-        console.log(response.data.user);
+        
 
-        console.log(assignedShop);
+        
 
         if (!assignedShop && userPermissions === 'seller') {
           setModalAlert({
@@ -294,7 +293,6 @@ const OutletInventoryView: React.FC = () => {
         setShopName(assignedShop.shopName);
       }
     } catch (error: any) {
-      console.error('Error fetching user data', error);
       setMessage({
         text:
           error.response.data.message ||
@@ -323,7 +321,7 @@ const OutletInventoryView: React.FC = () => {
 
       if (response.data) {
         let outlet = { ...response.data.shop.filteredShop };
-        console.log(response.data);
+        
 
         setShop(response.data.shop.filteredShop);
 
@@ -349,28 +347,26 @@ const OutletInventoryView: React.FC = () => {
           id: outlet.id,
         });
       }
-    } catch (error) {
-      console.error('Error fetching shop data:', error);
+    } catch (error: any) {
+      setMessage({
+        text:
+          error.response.data.message ||
+          error.message ||
+          'Internal Server Error',
+        type: 'error',
+      });
     }
   };
 
   useEffect(() => {
-    console.log(
-      'Fetching user data',
-      urlShopname,
-      userPermissions,
-      userPermissions !== 'seller' && !urlShopname,
-    );
     if (userPermissions === 'seller' && !urlShopname) {
-      console.log('Fetching....');
+      
       fetchUserData();
     }
   }, [userPermissions]);
 
   useEffect(() => {
-    console.log('Fetching shop data', shopname);
     if (shopname) {
-      console.log('Fetching....shop');
       fetchShop();
     }
   }, [shopname]);
@@ -402,7 +398,6 @@ const OutletInventoryView: React.FC = () => {
         alert(`Error: ${response.data.message}`);
       }
     } catch (error) {
-      console.error('Error creating shop:', error);
       alert('Internal Server Error');
     }
   };
@@ -411,7 +406,7 @@ const OutletInventoryView: React.FC = () => {
     activeSection === 'Phones' ? shop?.phoneItems : shop?.stockItems;
 
   const groupedItems = useMemo(() => {
-    console.log("Items from memo", items);
+    
     
     if (!items) return [];
 
@@ -435,7 +430,7 @@ const OutletInventoryView: React.FC = () => {
     return Object.values(grouped);
   }, [items]);
 
-  console.log(shop?.sellers);
+  
 
   const renderContent = () => {
     switch (activeSection) {
@@ -446,7 +441,7 @@ const OutletInventoryView: React.FC = () => {
 
         const phonesProgress =
           (stats.totalPhones / stats.phoneModels) * 100 || 0;
-        // console.log(phonesProgress);
+        
 
         const accessoriesProgress =
           (stats.totalAccessories /

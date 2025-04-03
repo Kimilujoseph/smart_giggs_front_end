@@ -94,7 +94,7 @@ const Settings2 = () => {
       const tokenObj = localStorage.getItem('tk');
       if (tokenObj) {
         const decoded = jwt_decode<DecodedToken>(tokenObj);
-        // console.log(decoded.email);
+        
         const response = await axios.get(
           `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${
             decoded.email
@@ -110,7 +110,7 @@ const Settings2 = () => {
           email,
           profileimage,
         } = response.data.user;
-        console.log(response.data.user);
+        
 
         const userObj: any = {
           name,
@@ -130,7 +130,7 @@ const Settings2 = () => {
         setBackIdPreview(userObj.nextOfKinBackId);
       }
     } catch (error) {
-      console.error('Error fetching user data', error);
+      alert("An error occurred");
     }
   };
 
@@ -175,17 +175,11 @@ const Settings2 = () => {
           },
         );
       }
-      console.log(typeof userProfile.profileimage);
+      
 
       if (userProfile.profileimage instanceof File) {
         const imageFormData = new FormData();
         imageFormData.append('images', userProfile.profileimage);
-
-        console.log(
-          `Image: ${JSON.stringify(
-            imageFormData.get('profileimage') as object,
-          )}`,
-        );
 
         profileImageResponse = await axios.put(
           `${import.meta.env.VITE_SERVER_HEAD}/api/user/update/profilepicture`,
@@ -214,7 +208,7 @@ const Settings2 = () => {
         type: 'success',
       });
     } catch (error: any) {
-      console.error('Error updating user profile', error);
+      alert("An error occurred");
       setMessage({
         text: error.response?.data.message || 'Failed to update profile',
         type: `${error.response?.status === 404 ? 'warning' : 'error'}`,
@@ -225,9 +219,9 @@ const Settings2 = () => {
   };
 
   useEffect(() => {
-    console.log('Fetching user data');
+    
     fetchUserData();
-    console.log('User data fetched');
+    
   }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -254,14 +248,14 @@ const Settings2 = () => {
       } else if (name === 'nextOfKinBackId') {
         setBackIdPreview(fileUrl);
       } else if (name === 'profileimage') {
-        console.log('Hanling image upload', file);
+        
         setUserProfile((prev) => ({ ...prev, profileimage: file }));
       }
     }
   };
 
   useEffect(() => {
-    console.log('profileimage', userProfile.profileimage);
+    
   }, [userProfile.profileimage]);
 
   return (

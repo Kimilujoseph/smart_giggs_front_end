@@ -41,7 +41,6 @@ const DropdownUser = () => {
         setUser(response.data.user);
         setLoggedIn(true);
       } catch (error: any) {
-        console.error('Error fetching user data', error);
         if (error.response.status === 404) {
           localStorage.clear();
           return navigate('/auth/signin');

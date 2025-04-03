@@ -46,7 +46,7 @@ const ProductView: React.FC = () => {
           setProduct(response.data.product);
         }
       } catch (error) {
-        console.error('Error fetching product data:', error);
+        alert("An error occurred");
       }
     };
 

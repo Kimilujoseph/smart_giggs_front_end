@@ -231,20 +231,22 @@ const AccessoriesForm: React.FC<FormProps> = ({ product, handleChange }) => (
         required
       />
     </div>
-    {/* <div>
+    <div>
       <label className="mb-2.5 block text-black dark:text-white text-sm">
-        Cost
+        Quantity
       </label>
       <input
         type="number"
-        name="cost"
-        value={product.cost}
+        defaultValue={1}
+        min={1}
+        name="quantity"
+        value={product.quantity}
         onChange={handleChange}
-        placeholder="Enter cost"
+        placeholder="Product Quantity"
         className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black text-sm outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
         required
       />
-    </div> */}
+    </div>
     <div>
       <label className="mb-2.5 block text-black dark:text-white text-sm">
         Category
@@ -328,6 +330,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     itemModel: '',
     itemType: productType,
     brand: '',
+    quantity: 1,
     minPrice: 0,
     maxPrice: 0,
     category: '',
@@ -364,6 +367,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
           itemModel: product.itemModel,
           itemType: product.itemType.toLowerCase(),
           brand: product.brand,
+          quantity: product.quantity,
+          availableStock: product.quantity,
           minPrice: Number(product.minPrice),
           maxPrice: Number(product.maxPrice),
           category: product.category.toLowerCase(),

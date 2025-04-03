@@ -49,7 +49,7 @@ const UserTable: React.FC<UserTableProps> = () => {
           setPackageData(user_res?.data);
         }
       } catch (error) {
-        console.error(error);
+        alert("An error occurred");
       } finally {
         setLoading(false);
       }
@@ -90,7 +90,7 @@ const UserTable: React.FC<UserTableProps> = () => {
         setPackageData(res2?.data);
       }
     } catch (error) {
-      console.error(error);
+      alert("An error occurred");
     }
   };
 
@@ -114,7 +114,7 @@ const UserTable: React.FC<UserTableProps> = () => {
         setPackageData(res2?.data);
       }
     } catch (error) {
-      console.error(error);
+      alert("An error occurred");
     }
   };
 
@@ -154,7 +154,7 @@ const UserTable: React.FC<UserTableProps> = () => {
           setIsVisible(true);
       }
     } catch (error) {
-      console.error(error);
+      alert("An error occurred");
     }
   };
 

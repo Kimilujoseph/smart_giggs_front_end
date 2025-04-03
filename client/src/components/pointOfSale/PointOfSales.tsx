@@ -18,29 +18,15 @@ import Message from '../alerts/Message';
 import Breadcrumb from '../Breadcrumbs/Breadcrumb';
 import { CartItem } from './types/Cart';
 import jwt_decode from 'jwt-decode';
-import { Product } from './types/inventory';
 import axios from 'axios';
 import { DecodedToken } from '@/types/decodedToken';
+import { ITEMS_PER_PAGE, PRODUCTS_PER_PAGE } from './constants';
+import { ConsolidatedData } from './types/ConsolidatedData';
+import { GroupedCartItem } from './types/GroupedCartItem';
+import { Product } from './types/Product';
+import { transformDataForPOS } from './helpers/consolidateData';
 
-// dummy
-const PRODUCTS_PER_PAGE = 10;
-const ITEMS_PER_PAGE = 10;
-
-type GroupedCartItem = {
-  categoryId: {
-    id: string;
-    itemName: string;
-    itemType: string;
-    brand: string;
-    itemModel: string;
-    minPrice: number;
-    maxPrice: number;
-  };
-  items: CartItem[];
-  quantity: number;
-};
-
-const PointOfSale: React.FC = () => {
+const PointOfSales: React.FC = () => {
   const [message, setMessage] = React.useState<{
     text: string;
     type: string;
@@ -48,22 +34,21 @@ const PointOfSale: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<'products' | 'cart'>(
     'products',
   );
-
-  const [outletData, setOutletData] = React.useState<any | null>(null);
+  const [consolidatedData, setConsolidatedData] =
+    React.useState<ConsolidatedData | null>(null);
   const [submitting, setSubmitting] = React.useState<boolean>(false);
-
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [checkoutDisabled, setCheckoutDisabled] =
     React.useState<boolean>(false);
   const [searchTerm, setSearchTerm] = React.useState<string>('');
-  const [inventory, setInventory] = React.useState<Product[]>([]);
   const [selectedBrand, setSelectedBrand] = React.useState<string>('');
   const [currentPage, setCurrentPage] = React.useState<number>(1);
-  const [expandedProducts, setExpandedProducts] = React.useState<Product[]>([]);
-  const [itemPages, setItemPages] = React.useState<{
-    [key: string]: number;
+  const [expandedProducts, setExpandedProducts] = React.useState<{
+    [key: string]: boolean;
   }>({});
-
+  const [itemPages, setItemPages] = React.useState<{ [key: string]: number }>(
+    {},
+  );
   const [total, setTotal] = React.useState<number>(0);
   const [soldprice, setSoldPrice] = React.useState<{ [key: string]: number }>(
     {},
@@ -83,28 +68,19 @@ const PointOfSale: React.FC = () => {
     phonenumber: '',
   });
 
-  // - Helpers
-
   // Check if an item is in the cart
-  const isInCart = (productId: number, itemId?: number) => {
-    
+  const isInCart = (productId: number | string, itemId?: number) => {
     const product = groupedCart.find(
       (product: any) => product.categoryId.id === productId,
     );
-    if (product === undefined) return false;
+    if (!product) return false;
     const item = product?.items.find((itm: any) => itm.stock.id === itemId);
-    
-
-    if (item === undefined) return false;
-    return true;
+    return !!item;
   };
 
   // Add an item to the cart
   const addToCart = (category: any, item?: any) => {
-    
     setCart((prevCart: any) => {
-      
-
       const existingItem = prevCart.find(
         (cartItem: any) => cartItem.stock.id === item.id,
       );
@@ -139,8 +115,6 @@ const PointOfSale: React.FC = () => {
         },
       ];
     });
-    updateTotal();
-    
   };
 
   const removeFromCart = (productId: number | string) => {
@@ -149,27 +123,17 @@ const PointOfSale: React.FC = () => {
         (cartItem: any) => cartItem.category.id !== productId,
       );
     });
-    updateTotal();
   };
 
   // Toggle grouped items visibility
   const toggleExpand = (productId: string) => {
-    setExpandedProducts((prev: any) => {
-      const newExpandedProducts = Object.keys(prev).reduce(
-        (acc: any, key: string) => {
-          acc[key] = false;
-          return acc;
-        },
-        {},
-      );
-      return {
-        ...newExpandedProducts,
-        [productId]: !prev[productId],
-      };
-    });
-    // Initialize item pagination when expanding
-    if (itemPages && !itemPages[productId]) {
-      setItemPages((prev: any) => ({
+    setExpandedProducts((prev) => ({
+      ...prev,
+      [productId]: !prev[productId],
+    }));
+
+    if (!itemPages[productId]) {
+      setItemPages((prev) => ({
         ...prev,
         [productId]: 1,
       }));
@@ -198,22 +162,23 @@ const PointOfSale: React.FC = () => {
   useEffect(() => {
     if (Object.values(soldprice).some((price) => price <= 0)) {
       setCheckoutDisabled(true);
+    } else {
+      setCheckoutDisabled(false);
     }
-  });
+  }, [soldprice]);
 
   const updateQuantity = (productId: number | string, units: number) => {
-    const selected = groupedProducts.find(
-      (item) => item.categoryId.id === productId,
+    const selected: any = groupedProducts.find(
+      (item: any) => item.categoryId.id === productId,
     );
-    if (units < 0 || (selected?.quantity && selected?.quantity < units)) return;
+    if (units < 1 || (selected?.quantity && selected?.quantity < units)) return;
     setCart((prevCart: any) => {
       return prevCart.map((cartItem: any) =>
-        cartItem.stock.id === productId
+        cartItem.category.id === productId
           ? { ...cartItem, quantity: units }
           : cartItem,
       );
     });
-    // updateTotal();
   };
 
   useEffect(() => {
@@ -237,13 +202,24 @@ const PointOfSale: React.FC = () => {
         if (!assignedShop) {
           throw new Error('Shop data not found in user profile');
         }
-        setOutletData(assignedShop);
+
+        // Fetch consolidated shop data
+        const shopResponse = await axios.get(
+          `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${
+            assignedShop.shopName
+          }`,
+          { withCredentials: true },
+        );
+
+        // Transform the data to match our consolidated structure
+        const transformedData = transformDataForPOS(shopResponse.data);
+        setConsolidatedData(transformedData);
       } catch (error: any) {
         setMessage({
           text:
             error.response?.data.message ||
             error.message ||
-            'Failed to load user data',
+            'Failed to load data',
           type: 'error',
         });
       }
@@ -251,54 +227,6 @@ const PointOfSale: React.FC = () => {
 
     fetchUserData();
   }, []);
-
-  const fetchInventoryData = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${outletData.shopName}`,
-        {
-          withCredentials: true,
-        },
-      );
-
-      if (response.status === 200) {
-        const { phoneItems = [], stockItems = [] } =
-          response.data.shop.filteredShop;
-        let products: Product[] = [];
-        for (const item of phoneItems) {
-          products.push({
-            ...item,
-            category: 'phone',
-          });
-        }
-        for (const item of stockItems) {
-          products.push({
-            ...item,
-            category: 'accessory',
-          });
-        }
-        setInventory([...products]);
-        
-      } else {
-        setMessage({
-          text: response.data.message || 'Shop data could not be fetched.',
-          type: 'error',
-        });
-      }
-    } catch (error: any) {
-      setMessage({
-        text:
-          error.response?.message || error?.message || 'Something went wrong',
-        type: 'error',
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (outletData) {
-      fetchInventoryData();
-    }
-  }, [outletData]);
 
   const handleCheckout = async () => {
     try {
@@ -331,12 +259,10 @@ const PointOfSale: React.FC = () => {
         `${import.meta.env.VITE_SERVER_HEAD}/api/sales/items/sale`,
         {
           customerdetails: formData,
-          shopName: outletData.shopName,
+          shopName: consolidatedData?.shopInfo.name,
           bulksales: [...bulkSales],
         },
-        {
-          withCredentials: true,
-        },
+        { withCredentials: true },
       );
 
       if (response.status === 200) {
@@ -357,19 +283,16 @@ const PointOfSale: React.FC = () => {
       });
     } finally {
       setSubmitting(false);
-      fetchInventoryData();
     }
   };
 
-  // Handle current page changes
   const handleItemPageChange = (productId: string, page: number) => {
-    setItemPages((prev: { [key: string]: number }) => ({
+    setItemPages((prev) => ({
       ...prev,
       [productId]: page,
     }));
   };
 
-  // Format price string to KES
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
@@ -382,7 +305,6 @@ const PointOfSale: React.FC = () => {
   const groupedCart = React.useMemo<GroupedCartItem[]>(() => {
     if (!cart) return [];
     const grouped = cart.reduce((acc: any, item: CartItem) => {
-      
       const categoryId = item?.category.id;
       if (!categoryId) return acc;
 
@@ -402,73 +324,73 @@ const PointOfSale: React.FC = () => {
     return Object.values(grouped);
   }, [cart]);
 
-  const groupedProducts: Product[] = React.useMemo(() => {
-    if (!inventory) return [];
+  const allProducts = React.useMemo(() => {
+    if (!consolidatedData) return [];
+    return [
+      ...consolidatedData.products.mobiles,
+      ...consolidatedData.products.accessories,
+    ];
+  }, [consolidatedData]);
 
-    const grouped = inventory.reduce((acc: any, item: any) => {
-      const categoryId = item.categoryId.id;
+  const groupedProducts = React.useMemo(() => {
+    if (!allProducts) return [];
+
+    const grouped = allProducts.reduce((acc: any, product: Product) => {
+      const itemType = product.type;
+      const categoryId =
+        itemType === 'mobiles' ? `m-${product.productId}` : `a-${product.id}`;
+
+      if (!categoryId) return acc;
 
       if (!acc[categoryId]) {
         acc[categoryId] = {
-          categoryId: item.categoryId,
-          stock: item.stock,
+          categoryId: {
+            id: categoryId,
+            itemName: product.name,
+            itemType: product.type,
+            brand: product.brand,
+            itemModel: product.model,
+            minPrice: product.priceRange.min,
+            maxPrice: product.priceRange.max,
+          },
+          stock: product,
           items: [],
-          quantity: 0,
         };
       }
-
-      if (
-        item.stock.stockStatus.toLowerCase() === 'distributed' ||
-        (item.categoryId.itemType === 'accessories' &&
-          item.stock.stockStatus.toLowerCase() === 'available')
-      ) {
-        acc[categoryId].items.push(item.stock);
-
-        if (item.categoryId.itemType === 'accessories') {
-          
-          acc[categoryId].quantity += item.quantity; // Sum availableStock for accessories
-        } else {
-          acc[categoryId].quantity += 1; // Count each phone as 1
-        }
-      }
-
+      acc[categoryId].items.push(product);
+      const quantity =
+        itemType === 'accessories'
+          ? product.quantity
+          : acc[categoryId] && acc[categoryId].items.length;
+      acc[categoryId].quantity = quantity;
       return acc;
     }, {});
-    
+
     return Object.values(grouped);
-  }, [inventory]);
+  }, [allProducts]);
 
   const filteredProducts = React.useMemo(() => {
-    
-    return Object.entries(groupedProducts).filter(
-      ([_, product]: [string, Product]) => {
-        const matchesSearch =
-          product.categoryId.itemName
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          product.categoryId.brand
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          product.categoryId.itemModel
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          product.stock?.IMEI?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesBrand =
-          !selectedBrand || product.categoryId.brand === selectedBrand;
-        
-        return matchesSearch && matchesBrand;
-      },
-    );
+    return groupedProducts.filter((product: any) => {
+      const matchesSearch =
+        product.categoryId.itemName
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        product.categoryId.brand
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        product.categoryId.itemModel
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        product.stock?.IMEI?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesBrand =
+        !selectedBrand || product.categoryId.brand === selectedBrand;
+      return matchesSearch && matchesBrand;
+    });
   }, [groupedProducts, searchTerm, selectedBrand]);
 
   const paginatedProducts = React.useMemo(() => {
     const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    const paginated = filteredProducts.slice(
-      startIndex,
-      startIndex + PRODUCTS_PER_PAGE,
-    );
-    
-    return paginated;
+    return filteredProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
   }, [filteredProducts, currentPage]);
 
   const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
@@ -476,13 +398,22 @@ const PointOfSale: React.FC = () => {
   const brands = React.useMemo(
     () => [
       ...new Set(
-        Object.values(groupedProducts).map(
-          (product: Product) => product.categoryId.brand,
-        ),
+        groupedProducts.map((product: any) => product.categoryId.brand),
       ),
     ],
     [groupedProducts],
   );
+
+  if (!consolidatedData) {
+    return (
+      <div className="dark:bg-boxdark-2 min-h-screen mx-auto py-4">
+        <Breadcrumb pageName="Point of Sale" />
+        <div className="flex justify-center items-center h-64">
+          <p>Loading shop data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -495,6 +426,24 @@ const PointOfSale: React.FC = () => {
       )}
       <div className="dark:bg-boxdark-2 min-h-screen mx-auto py-4">
         <Breadcrumb pageName="Point of Sale" />
+
+        {/* Shop Info Header */}
+        <div className="mb-6 p-4 bg-bodydark1 dark:bg-boxdark rounded-lg">
+          <h1 className="text-xl font-bold text-black dark:text-slate-200">
+            {consolidatedData.shopInfo.name}
+          </h1>
+          <p className="text-gray-600 dark:text-slate-400">
+            {consolidatedData.shopInfo.address}
+          </p>
+          {consolidatedData.shopInfo.seller && (
+            <div className="mt-2">
+              <p className="text-sm text-gray-600 dark:text-slate-400">
+                Seller: {consolidatedData.shopInfo.seller.name} (
+                {consolidatedData.shopInfo.seller.phone})
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Navigation Tab */}
         <div className="sticky flex justify-center mb-8 border-b dark:border-boxdark border-slate-300">
@@ -567,6 +516,7 @@ const PointOfSale: React.FC = () => {
                   {filteredProducts.length} products
                 </div>
               </div>
+
               {paginatedProducts.length === 0 ? (
                 <SuchEmpty
                   message="No products found"
@@ -577,210 +527,206 @@ const PointOfSale: React.FC = () => {
                 <>
                   {/* Product List */}
                   <div className="grid gap-4">
-                    {paginatedProducts.map(
-                      ([productId, product]: [string, Product]) => (
+                    {paginatedProducts.map((product: any) => (
+                      <div
+                        key={product.categoryId.id}
+                        className="overflow-hidden rounded-md"
+                      >
                         <div
-                          key={productId}
-                          className="overflow-hidden rounded-md"
+                          className={`cursor-pointer bg-bodydark/50 p-3 dark:bg-boxdark text-black transition-all duration-500 rounded-lg shadow-sm
+							${
+                isInCart(product.categoryId.id, product.stock.id) &&
+                product.categoryId.itemType === 'accessories'
+                  ? 'border border-primary/70'
+                  : 'border dark:border-slate-700'
+              }
+							`}
+                          onClick={() =>
+                            product.categoryId.itemType === 'mobiles'
+                              ? toggleExpand(product.categoryId.id.toString())
+                              : isInCart(
+                                  product.categoryId.id,
+                                  product.stock.id,
+                                )
+                              ? removeFromCart(product.categoryId.id)
+                              : addToCart(product.categoryId, product.stock)
+                          }
                         >
-                          <div
-                            className={`cursor-pointer bg-bodydark/50 p-3 dark:bg-boxdark text-black transition-all duration-500 rounded-lg shadow-sm
-                            ${
-                              isInCart(
-                                product.categoryId.id,
-                                product.stock.id,
-                              ) && product.categoryId.itemType === 'accessories'
-                                ? 'border border-primary/70'
-                                : 'border dark:border-slate-700'
-                            }
-                            `}
-                            onClick={() =>
-                              product.categoryId.itemType === 'mobiles'
-                                ? toggleExpand(productId)
-                                : isInCart(
-                                    product.categoryId.id,
-                                    product.stock.id,
-                                  )
-                                ? removeFromCart(product.categoryId.id)
-                                : addToCart(
-                                    product.categoryId,
-                                    product.stock,
-                                  )
-                            }
-                          >
-                            {/* <div className='text-white'>
-                              Category ID: {JSON.stringify(product.categoryId)}
-                              <hr />
-                              Stock: {JSON.stringify(product.stock)}
-                            </div> */}
-                            <div className="flex flex-col justify-start">
-                              <div className="w-full flex justify-between">
-                                <div className="flex items-center gap-4">
-                                  <div className="bg-bodydark/40 dark:bg-boxdark-2/40 p-2 rounded-lg">
-                                    <Smartphone className="w-6 h-6 text-primary dark:text-blue-600" />
-                                  </div>
-                                  <div className="text-gray-500 dark:text-slate-200">
-                                    <h2 className="md:text-xl font-semibold">
-                                      {product.categoryId.itemName} ID:{' '}
-                                      {product.stock?.id}
-                                    </h2>
-                                    <p className="text-gray-500 dark:text-slate-400">
-                                      {product.categoryId.brand} -{' '}
-                                      {product.categoryId.itemModel}
-                                    </p>
-                                  </div>
+                          <div className="flex flex-col justify-start">
+                            <div className="w-full flex justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="bg-bodydark/40 dark:bg-boxdark-2/40 p-2 rounded-lg">
+                                  <Smartphone className="w-6 h-6 text-primary dark:text-blue-600" />
                                 </div>
-                                {product.categoryId.itemType === 'mobiles' ? (
-                                  expandedProducts[productId] ? (
-                                    <ChevronUp className="w-5 h-5 text-boxdark-2 dark:text-gray-400" />
-                                  ) : (
-                                    <ChevronDown className="w-5 h-5 text-boxdark-2 dark:text-gray-400" />
-                                  )
-                                ) : (
-                                  isInCart(
-                                    product.stock.id,
-                                    product.stock.id,
-                                  ) && (
-                                    <CheckCircle className="text-primary absolute top-2 right-2 h-4 w-4" />
-                                  )
-                                )}
+                                <div className="text-gray-500 dark:text-slate-200">
+                                  <h2 className="md:text-xl font-semibold">
+                                    {product.categoryId.itemName}
+                                  </h2>
+                                  <h3 className="text-sm text-gray-500 dark:text-slate-400">
+                                    {product.stock.batchNumber}
+                                  </h3>
+                                  <p className="text-gray-500 dark:text-slate-400">
+                                    {product.categoryId.brand} -{' '}
+                                    {product.categoryId.itemModel}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="w-full flex justify-between items-center mt-4">
-                                <div className="text-right flex gap-2 text-xs md:text-base text-gray-600">
-                                  <p className="hidden md:block text-gray-600 dark:text-slate-400">
-                                    Price Range
-                                  </p>
-                                  <p className="font-medium text-slate-400">
-                                    <span className="text-red-600 dark:text-red-400/70">
-                                      {formatPrice(product.categoryId.minPrice)}
-                                    </span>{' '}
-                                    /{' '}
-                                    <span className="text-green-600 dark:text-green-400/70">
-                                      {Number(
-                                        product.categoryId.maxPrice,
-                                      ).toLocaleString()}
-                                    </span>
-                                  </p>
-                                </div>
-                                <div className="flex items-center space-x-2 dark:text-gray-400 md:text-lg">
-                                  <Package className="w-5 h-5" />
-                                  <span className="font-medium">
-                                    {product.quantity}
+                              {product.categoryId.itemType === 'mobiles' ? (
+                                expandedProducts[product.categoryId.id] ? (
+                                  <ChevronUp className="w-5 h-5 text-boxdark-2 dark:text-gray-400" />
+                                ) : (
+                                  <ChevronDown className="w-5 h-5 text-boxdark-2 dark:text-gray-400" />
+                                )
+                              ) : (
+                                isInCart(
+                                  product.stock.id,
+                                  product.stock.id,
+                                ) && (
+                                  <CheckCircle className="text-primary absolute top-2 right-2 h-4 w-4" />
+                                )
+                              )}
+                            </div>
+                            <div className="w-full flex justify-between items-center mt-4">
+                              <div className="text-right flex gap-2 text-xs md:text-base text-gray-600">
+                                <p className="hidden md:block text-gray-600 dark:text-slate-400">
+                                  Price Range
+                                </p>
+                                <p className="font-medium text-slate-400">
+                                  <span className="text-red-600 dark:text-red-400/70">
+                                    {formatPrice(product.categoryId.minPrice)}
+                                  </span>{' '}
+                                  /{' '}
+                                  <span className="text-green-600 dark:text-green-400/70">
+                                    {Number(
+                                      product.categoryId.maxPrice,
+                                    ).toLocaleString()}
                                   </span>
-                                </div>
+                                </p>
+                              </div>
+                              <div className="flex items-center space-x-2 dark:text-gray-400 md:text-lg">
+                                <Package className="w-5 h-5" />
+                                <span className="font-medium">
+                                  {product.quantity}
+                                </span>
                               </div>
                             </div>
                           </div>
+                        </div>
 
-                          {product.categoryId.itemType === 'mobiles' && (
-                            <div
-                              className={`bg-bodydark1 dark:bg-boxdark/60 p-2 transition-all duration-500 ${
-                                expandedProducts[productId]
-                                  ? 'max-h-screen opacity-100'
-                                  : 'max-h-0 opacity-0 overflow-hidden'
-                              }`}
-                            >
-                              {/* Items Pagination */}
-                              <div className="flex justify-between items-center mb-4 text-gray-600 dark:text-slate-400">
-                                <p className="text-sm">
-                                  Showing items{' '}
-                                  {(itemPages[productId] - 1) * ITEMS_PER_PAGE +
-                                    1}{' '}
-                                  -
-                                  {Math.min(
-                                    itemPages[productId] * ITEMS_PER_PAGE,
-                                    product.items.length,
-                                  )}{' '}
-                                  of {product.items.length}
-                                </p>
-                                <div className="flex gap-2 dark:text-slate-400">
-                                  <button
-                                    className="px-3 py-1 text-xs md:text-base border border-primary/40 rounded hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-500"
-                                    disabled={itemPages[productId] === 1}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleItemPageChange(
-                                        productId,
-                                        itemPages[productId] - 1,
-                                      );
-                                    }}
-                                  >
-                                    <ChevronLeft className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    className="px-3 py-1 text-xs md:text-base border border-primary/40 rounded hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-500"
-                                    disabled={
-                                      itemPages[productId] * ITEMS_PER_PAGE >=
-                                      product.items.length
-                                    }
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleItemPageChange(
-                                        productId,
-                                        itemPages[productId] + 1,
-                                      );
-                                    }}
-                                  >
-                                    <ChevronRight className="w-4 h-4" />
-                                  </button>
-                                </div>
+                        {product.categoryId.itemType === 'mobiles' && (
+                          <div
+                            className={`bg-bodydark1 dark:bg-boxdark/60 p-2 transition-all duration-500 ${
+                              expandedProducts[product.categoryId.id]
+                                ? 'max-h-screen opacity-100'
+                                : 'max-h-0 opacity-0 overflow-hidden'
+                            }`}
+                          >
+                            {/* Items Pagination */}
+                            <div className="flex justify-between items-center mb-4 text-gray-600 dark:text-slate-400">
+                              <p className="text-sm">
+                                Showing items{' '}
+                                {(itemPages[product.categoryId.id] - 1) *
+                                  ITEMS_PER_PAGE +
+                                  1}{' '}
+                                -
+                                {Math.min(
+                                  itemPages[product.categoryId.id] *
+                                    ITEMS_PER_PAGE,
+                                  product.items.length,
+                                )}{' '}
+                                of {product.items.length}
+                              </p>
+                              <div className="flex gap-2 dark:text-slate-400">
+                                <button
+                                  className="px-3 py-1 text-xs md:text-base border border-primary/40 rounded hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-500"
+                                  disabled={
+                                    itemPages[product.categoryId.id] === 1
+                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleItemPageChange(
+                                      product.categoryId.id.toString(),
+                                      itemPages[product.categoryId.id] - 1,
+                                    );
+                                  }}
+                                >
+                                  <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <button
+                                  className="px-3 py-1 text-xs md:text-base border border-primary/40 rounded hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-500"
+                                  disabled={
+                                    itemPages[product.categoryId.id] *
+                                      ITEMS_PER_PAGE >=
+                                    product.items.length
+                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleItemPageChange(
+                                      product.categoryId.id.toString(),
+                                      itemPages[product.categoryId.id] + 1,
+                                    );
+                                  }}
+                                >
+                                  <ChevronRight className="w-4 h-4" />
+                                </button>
                               </div>
+                            </div>
 
-                              {/* Items List */}
-                              {product.items.length === 0 ? (
-                                <div className="w-full h-12 flex justify-center items-center gap-4 text-yellow-500">
-                                  <TriangleAlert />
-                                  <span>This product is out of stock</span>
-                                </div>
-                              ) : (
-                                <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-3">
-                                  {product.items
-                                    .slice(
-                                      (itemPages[productId] - 1) *
-                                        ITEMS_PER_PAGE,
-                                      itemPages[productId] * ITEMS_PER_PAGE,
-                                    )
-                                    .map((item: any) => (
-                                      <div
-                                        key={item.id}
-                                        onClick={() =>
-                                          addToCart(product.categoryId, item)
-                                        }
-                                        className={`relative cursor-pointer bg-bodydark/50 dark:bg-boxdark p-4 rounded-lg shadow-sm flex justify-between items-center border hover:scale-110 transition-transform duration-300
-                                      ${
-                                        isInCart(product.categoryId.id, item.id)
-                                          ? 'border-primary/70'
-                                          : 'dark:border-slate-700'
-                                      }`}
-                                      >
-                                        {isInCart(
-                                          product.categoryId.id,
-                                          item.id,
-                                        ) && (
-                                          <CheckCircle className="text-primary absolute top-2 right-2 h-4 w-4" />
-                                        )}
-                                        <div className="text-xs">
-                                          <p className="font-medium text-black dark:text-slate-300">
-                                            IMEI: {item.IMEI} ID: {item.id}
-                                          </p>
-                                          <div className="text-sm dark:text-slate-400 mt-1">
-                                            {item.discount > 0 && (
-                                              <p className="text-green-600">
-                                                Discount:{' '}
-                                                {formatPrice(item.discount)}
-                                              </p>
-                                            )}
-                                          </div>
+                            {/* Items List */}
+                            {product.items.length === 0 ? (
+                              <div className="w-full h-12 flex justify-center items-center gap-4 text-yellow-500">
+                                <TriangleAlert />
+                                <span>This product is out of stock</span>
+                              </div>
+                            ) : (
+                              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-3">
+                                {product.items
+                                  .slice(
+                                    (itemPages[product.categoryId.id] - 1) *
+                                      ITEMS_PER_PAGE,
+                                    itemPages[product.categoryId.id] *
+                                      ITEMS_PER_PAGE,
+                                  )
+                                  .map((item: any) => (
+                                    <div
+                                      key={item.id}
+                                      onClick={() =>
+                                        addToCart(product.categoryId, item)
+                                      }
+                                      className={`relative cursor-pointer bg-bodydark/50 dark:bg-boxdark p-4 rounded-lg shadow-sm flex justify-between items-center border hover:scale-110 transition-transform duration-300
+									  ${
+                      isInCart(product.categoryId.id, item.id)
+                        ? 'border-primary/70'
+                        : 'dark:border-slate-700'
+                    }`}
+                                    >
+                                      {isInCart(
+                                        product.categoryId.id,
+                                        item.id,
+                                      ) && (
+                                        <CheckCircle className="text-primary absolute top-2 right-2 h-4 w-4" />
+                                      )}
+                                      <div className="text-xs">
+                                        <p className="font-medium text-black dark:text-slate-300">
+                                          IMEI: {item.IMEI}
+                                        </p>
+                                        <div className="text-sm dark:text-slate-400 mt-1">
+                                          {item.discount > 0 && (
+                                            <p className="text-green-600">
+                                              Discount:{' '}
+                                              {formatPrice(item.discount)}
+                                            </p>
+                                          )}
                                         </div>
                                       </div>
-                                    ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ),
-                    )}
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
 
                   {/* Products Pagination */}
@@ -844,16 +790,13 @@ const PointOfSale: React.FC = () => {
                             <p className="text-sm text-gray-600 dark:text-slate-400">
                               {product.categoryId.brand} -{' '}
                               {product.categoryId.itemModel}
-                              {/* {product.stock?.id} */}
                             </p>
                             <div className="flex items-center mt-2 space-x-3">
                               {product.categoryId.itemType === 'mobiles' ? (
                                 <span className="text-black dark:text-slate-200">
-                                  {/* Selected quantity - Total quantity remaining */}
                                   {product.items.length}
                                 </span>
                               ) : (
-                                // Increment or decrement quantity
                                 <div className="flex items-center gap-2">
                                   <button
                                     onClick={() =>
@@ -872,6 +815,15 @@ const PointOfSale: React.FC = () => {
                                   >
                                     <ChevronDown className="h-4 w-4 text-black dark:text-red-400" />
                                   </button>
+                                  <span>
+                                    {Number(
+                                      cart.find(
+                                        (item: any) =>
+                                          item.category.id ===
+                                          product.categoryId.id,
+                                      )?.quantity,
+                                    )}
+                                  </span>
                                   <span className="text-black dark:text-slate-200">
                                     {
                                       cart.find(
@@ -880,7 +832,6 @@ const PointOfSale: React.FC = () => {
                                           product.categoryId.id,
                                       )?.quantity
                                     }
-                                    {/* {JSON.stringify(product)} */}
                                   </span>
                                   <button
                                     onClick={() => {
@@ -921,16 +872,14 @@ const PointOfSale: React.FC = () => {
                               onChange={(e) => {
                                 setSoldPrice({
                                   ...soldprice,
-                                  [product.categoryId.id]: e.target.value,
+                                  [product.categoryId.id]: Number(
+                                    e.target.value,
+                                  ),
                                 });
-                                updateTotal();
                               }}
                               className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
                             />
                             {'per Item'}
-                            {/* <p className="font-semibold text-black dark:text-slate-200">
-                            {formatPrice(product.categoryId.minPrice * product.items.length)}
-                          </p> */}
                           </div>
                         </div>
                         {(soldprice?.[product.categoryId.id] ?? 0) >
@@ -1031,8 +980,7 @@ const PointOfSale: React.FC = () => {
                         setCart([]);
                         setFormData({ name: '', email: '', phonenumber: '' });
                       }}
-                      className={`
-                        flex justify-center rounded-lg border border-slate-300 dark:border-slate-600 py-2 px-6 font-medium text-black dark:text-white hover:bg-opacity-90`}
+                      className={`flex justify-center rounded-lg border border-slate-300 dark:border-slate-600 py-2 px-6 font-medium text-black dark:text-white hover:bg-opacity-90`}
                     >
                       Clear Cart
                     </button>
@@ -1054,4 +1002,4 @@ const PointOfSale: React.FC = () => {
   );
 };
 
-export default PointOfSale;
+export default PointOfSales;

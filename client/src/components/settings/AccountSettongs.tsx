@@ -93,7 +93,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
         { password },
         { withCredentials: true },
       );
-      console.log(response.data);
+      
       setMessage({
         text:
           response.data.message ||
@@ -101,7 +101,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
         type: 'success',
       });
     } catch (error: any) {
-      console.error(error);
+      alert("An error occurred");
       setMessage({
         text:
           error.response.data.message ||
@@ -125,7 +125,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
     const backImage = new FormData();
     backImage.append('images', backId as File);
 
-    console.log(frontId, backId);
+    
 
     // Send a request to upload the documents
     try {
@@ -145,7 +145,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
         backImage,
         { withCredentials: true },
       );
-      console.log(frontIdResponse.data, backIdResponse.data);
+      
       setMessage({
         text:
           frontIdResponse.data.message ||
@@ -154,7 +154,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
         type: 'success',
       });
     } catch (error: any) {
-      console.error(error);
+      alert("An error occurred");
       setMessage({
         text:
           error.response.data.message ||

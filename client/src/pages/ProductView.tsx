@@ -21,6 +21,7 @@ import { DecodedToken } from '../types/decodedToken';
 import jwt_decode from 'jwt-decode';
 import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
 import { getUserProfile } from '../api/user_manager';
+import { Shop } from '@/types/shop';
 
 interface Outlet {
   id: string;
@@ -34,6 +35,7 @@ interface Outlet {
 interface SelectedItem {
   stockId: string;
   category: string;
+  quantity: number;
 }
 
 const useQuery = () => new URLSearchParams(useLocation().search);
@@ -104,7 +106,7 @@ const ProductView = () => {
         setOutletListings(mappedOutlets);
       }
     } catch (error) {
-      console.error('Error fetching outlets:', error);
+      alert("An error occurred");
     }
   }, []);
 
@@ -114,16 +116,18 @@ const ProductView = () => {
     }
     try {
       setLoading(true);
-      console.log(shopName);
       
-      // console.log(`/api/category/get-category/shop/${currentUser.assignedShop.shopName}/${productId}`);
-      console.log(user.role, currentUser.role);
+
       
+      
+
       const response = await axios.get(
         currentUser.role === 'seller'
           ? `${
               import.meta.env.VITE_SERVER_HEAD
-            }/api/category/get-category/shop/${currentUser.assignedShop.shopName}/${productId}`
+            }/api/category/get-category/shop/${
+              currentUser.assignedShop.shopName
+            }/${productId}`
           : `${
               import.meta.env.VITE_SERVER_HEAD
             }/api/category/get-category/${productId}`,
@@ -135,31 +139,30 @@ const ProductView = () => {
         throw new Error(response.data.message || 'Failed to fetch product');
       }
       const fetchedProduct = response.data.data;
-      console.log(fetchedProduct);
 
-      // if (user.role === 'seller') {
-      //   fetchedProduct.Items = fetchedProduct.Items.filter(
-      //     (item: any) => item.stockStatus?.toLowerCase() === 'distributed',
-      //   );
-      // }
       const uniqueOutlets = new Set();
       fetchedProduct.Items.forEach((item: any) => {
-        item.mobileItems.forEach((mobileItem: any) => {
-          console.log(
-            mobileItem.shops.shopName,
-            shopName,
-            mobileItem.shops.shopName === shopName,
-          );
+        if (item.itemType === 'mobiles') {
+          item.mobileItems.forEach((mobileItem: any) => {
 
-          if (mobileItem.shops.shopName !== shopName) {
-            uniqueOutlets.add(JSON.stringify(mobileItem.shops));
-          }
-        });
+            if (mobileItem.shops.shopName !== shopName) {
+              uniqueOutlets.add(JSON.stringify(mobileItem.shops));
+            }
+          });
+        }
+        if (item.itemType === 'accessories') {
+          item.accessoryItems.forEach((accessoryItem: any) => {
+
+            if (accessoryItem.shops.shopName !== shopName) {
+              uniqueOutlets.add(JSON.stringify(accessoryItem.shops));
+            }
+          });
+        }
       });
       setOutlets(Array.from(uniqueOutlets).map((shop) => JSON.parse(shop)));
       setProduct(fetchedProduct);
     } catch (error: any) {
-      console.error('Error fetching product:', error);
+      alert("An error occurred");
     } finally {
       setLoading(false);
     }
@@ -173,7 +176,7 @@ const ProductView = () => {
           setCurrentUser(user_res?.data.user);
         }
       } catch (error) {
-        console.error(error);
+        alert("An error occurred");
       }
     };
     fetchUserData();
@@ -184,110 +187,135 @@ const ProductView = () => {
     fetchProduct();
   }, [fetchProduct]);
 
+  // Added a function to handle quantity changes for accessories
+  const handleQuantityChange = (stockId: string, newQuantity: number) => {
+    setSelectedItems((prev) =>
+      prev.map((item) =>
+        item.stockId === stockId
+          ? {
+              ...item,
+              quantity: Math.min(
+                newQuantity,
+                product.Items.find((i) => i.id === stockId)?.availableStock ||
+                  0,
+              ),
+            }
+          : item,
+      ),
+    );
+  };
+
+  // Modified to handle accessories
   const selectRandomItems = useCallback(
     (n: number) => {
-      if (
-        !product?.Items ||
-        product.Items.filter((item) => {
-          return (
-            item.stockStatus?.toLowerCase() === 'available' ||
-            item.stockStatus?.toLowerCase() === 'ok' ||
-            item.stockStatus?.toLowerCase() === 'distributed'
-          );
-        }).length < n
-      ) {
-        setDistributeError('Not enough items available for distribution');
-        return;
+      if (product?.itemType === 'mobiles') {
+        // Existing mobile logic
+      } else {
+        // Accessories
+        const availableItems = product.Items.filter(
+          (item) => (item.availableStock || 0) > 0,
+        );
+        let remaining = n;
+        const selected: SelectedItem[] = [];
+        const shuffled = [...availableItems].sort(() => 0.5 - Math.random());
+        for (const item of shuffled) {
+          if (remaining <= 0) break;
+          const allocate = Math.min(item.availableStock || 0, remaining);
+          selected.push({
+            stockId: item.id,
+            category: product.itemType,
+            quantity: allocate,
+          });
+          remaining -= allocate;
+        }
+        if (remaining > 0) {
+          setDistributeError('Not enough stock available');
+          return;
+        }
+        setSelectedItems(selected);
       }
-
-      const shuffled = [
-        ...product.Items.filter(
-          (item) =>
-            item.stockStatus?.toLowerCase() === 'available' ||
-            item.stockStatus?.toLowerCase() === 'ok' ||
-            item.stockStatus?.toLowerCase() === 'distributed',
-        ),
-      ].sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, n).map((item) => ({
-        stockId: item.id,
-        category: product.itemType,
-        quantity: 1,
-      }));
-
-      setSelectedItems(selected);
     },
     [product],
   );
 
   const toggleItemSelection = useCallback(
     (item: any) => {
-      const itemData = {
-        stockId: item.id,
-        category: product?.itemType,
-      };
-
       setSelectedItems((prev) => {
         const isSelected = prev.some((i) => i.stockId === item.id);
         if (isSelected) {
           return prev.filter((i) => i.stockId !== item.id);
         } else {
-          if (prev.length >= quantity!) {
-            setDistributeError(
-              'Cannot select more items than specified quantity',
+          if (product?.itemType === 'mobiles') {
+            if (prev.length >= quantity!) {
+              setDistributeError(
+                'Cannot select more items than specified quantity',
+              );
+              return prev;
+            }
+            return [
+              ...prev,
+              { stockId: item.id, category: product.itemType, quantity: 1 },
+            ];
+          } else {
+            // Accessories
+            const currentTotal = prev.reduce((sum, i) => sum + i.quantity, 0);
+            if (currentTotal >= quantity!) return prev;
+            const allocate = Math.min(
+              item.availableStock,
+              quantity! - currentTotal,
             );
-            return prev;
+            return [
+              ...prev,
+              {
+                stockId: item.id,
+                category: product.itemType,
+                quantity: allocate,
+              },
+            ];
           }
-          return [...prev, { ...itemData, category: itemData.category || '' }];
         }
       });
     },
-    [product, quantity],
+    [product?.itemType, quantity],
   );
 
   const handleDistribute = async (event: React.FormEvent) => {
     event.preventDefault();
-    // if (user.role !== 'manager' && user.role !== 'superuser') {
-    //   return setDistributeError(
-    //     'You are not authorized to distribute products',
-    //   );
-    // }
     if (!shopName || !quantity || !productId || selectedItems.length === 0) {
       return setDistributeError(
         'Please fill in all required fields and select items',
       );
     }
-    if (selectedItems.length !== quantity) {
+
+    const totalQuantity = selectedItems.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+    if (totalQuantity !== quantity) {
       return setDistributeError(
-        'Selected items count must match the specified quantity',
+        'Selected items quantity must match the specified quantity',
       );
     }
 
     setDistributing(true);
     try {
-      // return;
       const response = await axios.post(
         user.role === 'manager' || user.role === 'superuser'
           ? `${
               import.meta.env.VITE_SERVER_HEAD
             }/api/distribution/bulk-distribution`
           : `${import.meta.env.VITE_SERVER_HEAD}/api/transfer/bulk-transfer`,
-        user.role === 'manager' || user.role === 'superuser'
-          ? {
-              shopDetails: {
-                mainShop: 'Kahawa 2323',
-                distributedShop: shopName,
-              },
-              category: product?.itemType,
-              bulkDistribution: selectedItems,
-            }
-          : {
-              shopDetails: {
-                mainShop: currentUser.assignedShop.shopName,
-                distributedShop: shopName,
-              },
-              category: product?.itemType,
-              bulkDistribution: selectedItems,
-            },
+        {
+          shopDetails: {
+            mainShop:
+              user.role === 'manager' || user.role === 'superuser'
+                ? 'Kahawa 2323'
+                : currentUser.assignedShop.shopName,
+            distributedShop: shopName,
+          },
+          category: product?.itemType,
+          bulkDistribution: selectedItems,
+        },
         { withCredentials: true },
       );
 
@@ -305,7 +333,7 @@ const ProductView = () => {
         fetchProduct(); // Refresh product data
       }
     } catch (error: any) {
-      console.error('Error:', error);
+      alert("An error occurred");
       setDistributeError(
         error.response?.data?.message ||
           error.message ||
@@ -332,13 +360,7 @@ const ProductView = () => {
           {user.role === 'manager' ? 'Distribute Product' : 'Transfer Product'}
         </h2>
       </div>
-      {/* {user.role === 'seller' ? (
-        <div className="bg-white dark:bg-boxdark rounded-lg shadow-md p-6">
-          <p className="text-gray-500 dark:text-yellow-400">
-            Feature is under Maintenance
-          </p>
-        </div>
-      ) : ( */}
+
       <form onSubmit={handleDistribute} className="p-6 space-y-6">
         <div className="grid md:grid-cols-2 gap-6">
           <div>
@@ -351,7 +373,7 @@ const ProductView = () => {
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
             >
               <option value="">Select a shop</option>
-              {outletListings.map((shop) => (
+              {outletListings.map((shop: Partial<Shop>) => (
                 <option key={shop.id} value={shop.shopName}>
                   {shop.shopName} -- {shop.address}
                 </option>
@@ -470,10 +492,177 @@ const ProductView = () => {
     </div>
   );
 
+  const accessoriesDistributeSection = () => (
+    <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
+      <div className="p-4 bg-gray-50 dark:bg-meta-4 border-b dark:border-strokedark">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+          {user.role === 'manager'
+            ? 'Distribute Accessories'
+            : 'Transfer Accessories'}
+        </h2>
+      </div>
+
+      <form onSubmit={handleDistribute} className="p-6 space-y-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Select Shop
+            </label>
+            <select
+              value={shopName}
+              onChange={(e) => setShopName(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
+            >
+              <option value="">Select a shop</option>
+              {outletListings.map((shop: Partial<Shop>) => (
+                <option key={shop.id} value={shop.shopName}>
+                  {shop.shopName} -- {shop.address}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Quantity
+            </label>
+            <input
+              min={1}
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
+            />
+          </div>
+        </div>
+
+        <div className="flex space-x-4 items-center">
+          <button
+            type="button"
+            onClick={() => setSelectionMode('random')}
+            className={`flex items-center px-4 py-2 rounded-lg ${
+              selectionMode === 'random'
+                ? 'bg-primary text-white'
+                : 'bg-gray-100 dark:bg-meta-4 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <Shuffle className="w-4 h-4 mr-2" />
+            Random Selection
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectionMode('manual')}
+            className={`flex items-center px-4 py-2 rounded-lg ${
+              selectionMode === 'manual'
+                ? 'bg-primary text-white'
+                : 'bg-gray-100 dark:bg-meta-4 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <List className="w-4 h-4 mr-2" />
+            Manual Selection
+          </button>
+        </div>
+
+        {quantity! > 0 && (
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
+              Selected Items (
+              {selectedItems.reduce((sum, item) => sum + item.quantity, 0)}/
+              {quantity})
+            </h3>
+            <div className="max-h-60 overflow-y-auto">
+              {product?.Items?.filter(
+                (item) => (item.availableStock || 0) > 0,
+              ).map((item) => {
+                const selectedItem = selectedItems.find(
+                  (i) => i.stockId === item.id,
+                );
+                const isSelected = !!selectedItem;
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() =>
+                      selectionMode === 'manual' && toggleItemSelection(item)
+                    }
+                    className={`p-3 border rounded-lg mb-2 cursor-pointer ${
+                      isSelected
+                        ? 'border-primary bg-primary/10'
+                        : 'border-gray-200 dark:border-strokedark'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {item.batchNumber || item.serialNumber} - Available:{' '}
+                        {item.availableStock}
+                      </span>
+                      {isSelected && (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            value={selectedItem.quantity}
+                            min={1}
+                            max={item.availableStock}
+                            onChange={(e) => {
+                              e.stopPropagation(); // Stop event propagation
+                              handleQuantityChange(
+                                item.id,
+                                parseInt(e.target.value),
+                              );
+                            }}
+                            onClick={(e) => e.stopPropagation()} // Stop event propagation
+                            className="w-20 px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
+                          />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Stop event propagation
+                              toggleItemSelection(item);
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {distributeError && (
+          <div className="text-red-500 text-sm mt-2">{distributeError}</div>
+        )}
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={
+              distributing ||
+              selectedItems.reduce((sum, item) => sum + item.quantity, 0) !==
+                quantity
+            }
+            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
+          >
+            {distributing
+              ? 'Processing...'
+              : user.role === 'manager'
+              ? 'Distribute'
+              : 'Transfer'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeSection) {
       case 'distribute_product':
-        return renderDistributeSection();
+        return product?.itemType === 'mobiles'
+          ? renderDistributeSection()
+          : product?.itemType === 'accessories'
+          ? accessoriesDistributeSection()
+          : null;
 
       case 'transfer_history':
         return (
@@ -492,7 +681,6 @@ const ProductView = () => {
         );
 
       case 'shops_in_stock':
-
         return (
           <div className="bg-white dark:bg-boxdark rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
@@ -532,7 +720,7 @@ const ProductView = () => {
                         </td>
                       </tr>
                     ) : (
-                      outlets.map((shop) => (
+                      outlets.map((shop: Partial<Shop>) => (
                         <tr
                           key={shop.id}
                           className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"

@@ -143,7 +143,7 @@ const UserView: React.FC = () => {
 
         const data = await response.json();
 
-        console.log(data);
+        
         
         setUserProfile(data.user);
       } catch (error) {
@@ -336,12 +336,12 @@ const UserView: React.FC = () => {
                       </div>
                     </div>
                   ))}
-                  <button
+                  {/* <button
                     onClick={() => navigate('/outlet/sales')}
                     className="text-blue-500 dark:text-primary underline cursor-pointer"
                   >
                     View all sales
-                  </button>
+                  </button> */}
                 </div>
               )}
             </CardContent>
@@ -393,12 +393,12 @@ const UserView: React.FC = () => {
                         </div>
                       </div>
                     ))}
-                  <button
+                  {/* <button
                     onClick={() => navigate('/assignmentHistory/:userId')}
                     className="text-blue-500 dark:text-primary underline cursor-pointer"
                   >
                     View full history
-                  </button>
+                  </button> */}
                 </div>
               )}
             </CardContent>

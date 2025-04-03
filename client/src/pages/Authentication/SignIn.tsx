@@ -45,7 +45,8 @@ const SignIn: React.FC = () => {
             setUser({ ...decoded });
             navigate(`/`);
           } else {
-            alert('Unathorized');
+            alert('Unauthorized');
+            setMessage('Unauthorized');
             localStorage.clear();
           }
 
@@ -56,7 +57,7 @@ const SignIn: React.FC = () => {
         setLoading(false);
       }
     } catch (error: any) {
-      console.error(error);
+      alert('An error occurred');
       setMessage(error.response?.data?.message || error.message);
       setLoading(false);
     }

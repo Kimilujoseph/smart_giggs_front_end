@@ -26,6 +26,9 @@ import jwt_decode from 'jwt-decode';
 import { DecodedToken } from '@/types/decodedToken';
 import Message from '@/components/alerts/Message';
 import ModalAlert from '@/components/alerts/Alert';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { setTime } from 'node_modules/react-datepicker/dist/date_utils';
 
 interface Sale {
   id: string;
@@ -140,6 +143,7 @@ const SalesBackup = () => {
     null,
   );
   const [timeFrame, setTimeFrame] = useState('day');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState(0);
   const [fetchingSales, setFetchingSales] = useState(false);
   const token = localStorage.getItem('tk');
@@ -153,10 +157,10 @@ const SalesBackup = () => {
         const response = await axios(
           `${
             import.meta.env.VITE_SERVER_HEAD
-          }/api/sales/all?period=${timeFrame}`,
+          }/api/sales/all?period=${timeFrame === 'custom' ? selectedDate.toISOString() : timeFrame}`,
           { withCredentials: true },
         );
-        console.log(response.data);
+        
 
         if (response.status !== 200) {
           throw new Error(
@@ -170,7 +174,7 @@ const SalesBackup = () => {
           type: 'success',
         });
       } catch (error: any) {
-        console.error('Error fetching sales data:', error);
+        alert("An error occurred");
         setMessage({
           text:
             error.response?.data?.message ||
@@ -284,16 +288,31 @@ const SalesBackup = () => {
           </p>
         </div>
         <div className="flex justify-end items-center mt-4">
-          <div>
+          <div className="flex space-x-4">
+            <DatePicker
+              selected={timeFrame === "day" ? new Date() : selectedDate}
+              onChange={(date: Date | null) => {
+                if (date) {
+                  setSelectedDate(date);
+                  setTimeFrame("custom");
+                }
+              }}
+              dateFormat="d MMM yyyy"
+              className="cursor-pointer border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
+            />
             <select
               value={timeFrame}
-              onChange={(e) => setTimeFrame(e.target.value)}
+              onChange={(e) => {
+                setTimeFrame(e.target.value)
+                setSelectedDate(new Date())
+              }}
               className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
             >
               <option value="day">Today</option>
               <option value="week">Past Week</option>
               <option value="month">Past Month</option>
               <option value="year">Past Year</option>
+              <option value="custom">Custom</option>
             </select>
           </div>
         </div>
@@ -320,7 +339,9 @@ const SalesBackup = () => {
         />
         <StatCard
           title="Products Sold / Total Units"
-          value={`${metrics.productMetrics.length} / ${metrics.totalUnits?.toLocaleString()}`}
+          value={`${
+            metrics.productMetrics.length
+          } / ${metrics.totalUnits?.toLocaleString()}`}
           valueType="number"
           secondaryValue={`Avg. ticket: ${metrics.avgTicketSize?.toLocaleString()}`}
           icon={Package}

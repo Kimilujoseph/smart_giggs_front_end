@@ -60,7 +60,7 @@ const ProductTransferHistory = ({
   const fetchTransferHistory = async () => {
     try {
       setIsLoading(true);
-      console.log(productId);
+      
       
       const response = await axios.get(
         `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/${
@@ -90,7 +90,7 @@ const ProductTransferHistory = ({
         setTransferHistory([]);
       }
     } catch (error: any) {
-      console.error('Error fetching transfer history', error);
+      alert("An error occurred");
       setMessage({
         text:
           error.response.data.message ||

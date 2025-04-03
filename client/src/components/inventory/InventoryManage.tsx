@@ -35,7 +35,7 @@ const InventoryManager = () => {
   }, []);
 
   useEffect(()=>{
-    console.log(user)
+    
   },[user])
 
 

@@ -156,7 +156,7 @@ const OutletSales = () => {
           }/api/sales/user/${user?.id}?period=${timeFrame}`,
           { withCredentials: true },
         );
-        console.log(response.data);
+        
 
         if (response.status !== 200) {
           throw new Error(
@@ -164,7 +164,7 @@ const OutletSales = () => {
           );
         }
         const data = await response.data;
-        console.log(data);
+        
         
         setSalesData(data.data);
         setMessage({
@@ -172,7 +172,6 @@ const OutletSales = () => {
           type: 'success',
         });
       } catch (error: any) {
-        console.error('Error fetching sales data:', error);
         setMessage({
           text:
             error.response?.data?.message ||

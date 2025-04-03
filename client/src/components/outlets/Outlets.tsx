@@ -46,7 +46,7 @@ const OutletManager = () => {
         throw new Error(response.data?.message || 'Failed to create shop');
       }
     } catch (error: any) {
-      console.error('Error creating shop:', error);
+      alert("An error occurred");
       setMessage({
         text:
           error.response.data.message ||

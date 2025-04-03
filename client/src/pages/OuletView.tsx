@@ -350,7 +350,7 @@ const OutletView: React.FC = () => {
 
         // Update the state with the total count of pending items
         setNewStockTally(pendingPhoneItemsCount + pendingAccessoryItemsCount);
-        console.log(`Outlet`, outlet);
+        
 
         setOutletFormData({
           name: outlet.name,

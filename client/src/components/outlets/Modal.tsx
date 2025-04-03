@@ -5,7 +5,6 @@ import axios from 'axios';
 import { X } from 'lucide-react';
 import ClickOutside from '../ClickOutside';
 import Message from '../alerts/Message';
-import { set, setMilliseconds } from 'date-fns';
 
 interface ProductItem {
   transferId: any;
@@ -26,6 +25,7 @@ interface ProductItem {
   };
   quantity: number;
   status?: string;
+  itemType?: 'phone' | 'accessory';
 }
 
 interface ModalProps {
@@ -35,124 +35,55 @@ interface ModalProps {
   shopData: Shop;
 }
 
-const Modal: React.FC<ModalProps> = ({
-  onClose,
-  shopData,
-  refreshShopData,
-}) => {
+const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => {
   const [filter, setFilter] = useState<'phone' | 'accessory'>('phone');
-  const [message, setMessage] = useState<{ text: string; type: string } | null>(
-    null,
-  );
+  const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
 
   const handleFilterChange = (filterType: 'phone' | 'accessory') => {
     setFilter(filterType);
   };
 
-  const handleApprove = async ({ productID, transferId }: any) => {
+  const handleApprove = async ({ productID, transferId, quantity }: any) => {
     try {
       const token = localStorage.getItem('tk');
-      if (token) {
-        const res = await axios.post(
-          // `${import.meta.env.VITE_SERVER_HEAD}/api/shop/confirm/${
-          //   filter === 'phone' ? 'mobile' : 'accessory'
-          // }/${shopData.name}/${productID}/${transferId}/
-          // `,
-          filter === 'phone'
-            ? `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/confirm/phone`
-            : `${
-                import.meta.env.VITE_SERVER_HEAD
-              }/api/inventory/accessory/confirm-distribution`,
-          {
-            productId: productID,
-            transferId: transferId,
-            shopname: shopData.name,
-          },
-          { withCredentials: true },
-        );
-        if (res.status == 200) {
-          setMessage({
-            text: 'Product approved succesfully!',
-            type: 'success',
-          });
-          refreshShopData();
-        }
+      if (!token) return;
+
+      const endpoint = filter === 'phone'
+        ? `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/confirm/phone`
+        : `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/accessory/confirm-distribution`;
+
+      const payload = filter === 'phone'
+        ? { productId: productID, transferId, shopname: shopData.name }
+        : { productId: productID, transferId, shopname: shopData.name, quantity };
+
+      const res = await axios.post(endpoint, payload, { withCredentials: true });
+
+      if (res.status === 200) {
+        setMessage({ text: 'Product approved successfully!', type: 'success' });
+        refreshShopData();
       }
     } catch (error: any) {
-      console.error(error);
       setMessage({
-        text: 'Failed to approve product',
-        type: `${error.response.status === 404 ? 'warning' : 'error'}`,
+        text: error.response?.data?.message || 'Failed to approve product',
+        type: error.response?.status === 404 ? 'warning' : 'error'
       });
     }
   };
 
   const renderItems = () => {
-    const items =
-      filter === 'phone'
-        ? shopData.newPhoneItem.filter((item) => item.status === 'pending')
-        : shopData.newAccessory.filter((item) => item.status === 'pending');
-    console.log("items", items);
-    return items?.map((item: ProductItem | any, index: number) => (
-      // <div
-      //   key={index}
-      //   className="p-3 grid grid-cols-9 gap-2 border-b border-[#eee] dark:border-strokedark"
-      // >
-      //   <div className="text-sm tracking-wide text-black dark:text-white">
-      //     {index + 1}
-      //   </div>
-      //   <div className="text-sm tracking-wide text-black dark:text-white">
-      //     {item.categoryId?.itemName}
-      //   </div>
-      //   <div className="text-sm tracking-wide text-black dark:text-white">
-      //     {item.categoryId?.itemModel}
-      //   </div>
-      //   {/* <div className="text-sm tracking-wide text-black dark:text-white">
-      //     {item.quantity}
-      //   </div> */}
-      //   {/* Placeholder for Status */}
-      //   <div className="text-sm px-2 tracking-wide text-black text-center dark:text-white flex items-center justify-center">
-      //     <span
-      //       className={`${
-      //         item.status === 'confirmed' ? 'bg-success/60' : 'bg-warning/60'
-      //       } px-2 rounded-full text-center`}
-      //     >
-      //       {item.status}
-      //     </span>
-      //   </div>
-      //   <div className="text-sm tracking-wide text-black dark:text-white col-span-2">
-      //     <span className="text-danger">
-      //       {item.categoryId?.minPrice} {item.stock?.minprice}
-      //     </span>{' '}
-      //     -{' '}
-      //     <span className="text-primary">
-      //       {item.categoryId?.maxPrice} {item.stock?.maxprice}
-      //     </span>
-      //   </div>
-      //   {/* Placeholder for Remarks */}
-      //   {/* <div className="text-sm tracking-wide text-black dark:text-white">
-      //     -
-      //   </div> */}
-      //   {/* Placeholder for Actions */}
-      //   <button
-      //     className="px-2 text-sm tracking-wide text-black text-center dark:text-white flex items-center justify-center"
-      //     onClick={() =>
-      //       handleApprove({
-      //         transferId: item.transferId,
-      //         productID: item.productID?.id || item.stock?.id,
-      //       })
-      //     }
-      //   >
-      //     <span className={`bg-success px-2 rounded`}>Approve</span>
-      //   </button>
-      // </div>
+    const items = filter === 'phone'
+      ? shopData.newPhoneItem.filter((item: any) => item.status === 'pending')
+      : shopData.newAccessory.filter((item: any) => item.status === 'pending');
+
+    return items.map((item: ProductItem | any, index: number) => (
       <tr
         key={index}
         className="border-b border-[#eee] dark:border-strokedark w-full text-center *:p-2"
       >
         <td>{item.categoryId.itemModel}</td>
         <td>{item.categoryId.itemName}</td>
-        <td>{item.stock?.IMEI || '-'}</td>
+        <td>{filter === 'phone' ? item.stock?.IMEI : item.stock.batchNumber}</td>
+        <td>{filter === 'accessory' ? item.quantity : '-'}</td>
         <td>
           <span
             className={`${
@@ -173,10 +104,11 @@ const Modal: React.FC<ModalProps> = ({
               handleApprove({
                 transferId: item.transferId,
                 productID: item.stock?.id,
+                quantity: item.quantity
               })
             }
           >
-            <span className={`bg-success px-2 rounded`}>Approve</span>
+            <span className="bg-success px-2 rounded">Approve</span>
           </button>
         </td>
       </tr>
@@ -184,7 +116,7 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="relative w-full  overflow-y-auto md:w-3/4 xl:w-1/2 z-9999 bg-white dark:bg-boxdark shadow my-8 p-4 border border-bodydark1 dark:border-primary/40 rounded-lg">
+    <div className="relative w-full overflow-y-auto md:w-3/4 xl:w-1/2 z-9999 bg-white dark:bg-boxdark shadow my-8 p-4 border border-bodydark1 dark:border-primary/40 rounded-lg">
       {message && (
         <Message
           message={message.text}
@@ -235,10 +167,15 @@ const Modal: React.FC<ModalProps> = ({
             <div className="flex flex-col items-end">
               <button
                 onClick={() => {
-                  shopData.newPhoneItem.map((item: any) => {
+                  const items = filter === 'phone'
+                    ? shopData.newPhoneItem
+                    : shopData.newAccessory;
+                  
+                  items.forEach((item: any) => {
                     handleApprove({
                       transferId: item.transferId,
-                      productID: item.stock.id,
+                      productID: item.stock?.id,
+                      quantity: item.quantity
                     });
                   });
                 }}
@@ -249,24 +186,13 @@ const Modal: React.FC<ModalProps> = ({
               <table className="w-full">
                 <thead className="bg-boxdark dark:bg-boxdark-2">
                   <tr className="text-center *:py-3">
-                    <th className="font-medium text-black dark:text-white">
-                      Model
-                    </th>
-                    <th className="font-medium text-black dark:text-white">
-                      Product
-                    </th>
-                    <th className="font-medium text-black dark:text-white">
-                      IMEI
-                    </th>
-                    <th className="font-medium text-black dark:text-white">
-                      Status
-                    </th>
-                    <th className="font-medium text-black dark:text-white">
-                      Min/Max Price
-                    </th>
-                    <th className="font-medium text-black dark:text-white">
-                      Actions
-                    </th>
+                    <th>Model</th>
+                    <th>Product</th>
+                    <th>{filter === 'phone' ? 'IMEI' : 'Batch'}</th>
+                    <th>Qty</th>
+                    <th>Status</th>
+                    <th>Price Range</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>{renderItems()}</tbody>

@@ -59,7 +59,7 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
       const products = res.data.data.map((i: any) => ({ ...i, isMobile: true }));
       setInventory(products);
     } catch (error) {
-      console.error('Error fetching inventory:', error);
+      // console.error('Error fetching inventory:', error)
     } finally {
       setLoading(false);
     }

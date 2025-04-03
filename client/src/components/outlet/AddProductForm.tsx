@@ -332,7 +332,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Product data:', product);
+    
     try {
       const res = await axios.post(
         `${
@@ -359,12 +359,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         { withCredentials: true },
       );
       if (res && res.data && res.data.message === 'product added') {
-        console.log(res);
+        
         alert(res.data.message);
       }
     } catch (error) {
-      console.error(error);
-      alert(error.response.data.message);
+      alert("An error occurred while adding the product.");
     }
   };
 

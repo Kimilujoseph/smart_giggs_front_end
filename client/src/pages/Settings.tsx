@@ -43,7 +43,7 @@ const Settings: React.FC = () => {
       const tokenObj = localStorage.getItem('tk');
       if (tokenObj) {
         const decoded = jwt_decode<DecodedToken>(tokenObj);
-        // console.log(decoded.email);
+        
         const response = await axios.get(
           `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${decoded.email}`,
           { withCredentials: true },
@@ -75,7 +75,7 @@ const Settings: React.FC = () => {
         setUserProfile(userObj);
       }
     } catch (error) {
-      console.error('Error fetching user data', error);
+      alert("An error occurred");
     }
   };
 
@@ -90,7 +90,7 @@ const Settings: React.FC = () => {
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
-    console.log('ID file bucket:---', files);
+    
     if (files && files[0]) {
       const file = files[0];
       readFile(file, name);
@@ -109,14 +109,14 @@ const Settings: React.FC = () => {
   };
   const updateProfile = async () => {
     try {
-      console.log(userProfile);
+      
 
       const res = await axios.put(`${import.meta.env.VITE_SERVER_HEAD}/api/user/update/profile`, userProfile);
       if(res){
         setSuccessMessage(res.data.message)
       }
     } catch (error) {
-      console.error('Error updating profile', error);
+      alert("An error occurred");
     }
   };
 

@@ -35,7 +35,7 @@ const OutletsTable: React.FC<OutletTableProps> = () => {
           },
         );
         if (res.data) {
-          console.log('Outlets:', res.data.shops);
+          
           
           const mappedOutlets = res.data.shops.map((shop: any) => ({
             ...shop,
@@ -43,12 +43,12 @@ const OutletsTable: React.FC<OutletTableProps> = () => {
             // contact: shop.contact || '--',
             // availableStock: shop.availableStock || 0,
           }));
-          console.log('Mapped Outlets:', mappedOutlets);
+          
           
           setOutlets(mappedOutlets);
         }
       } catch (error) {
-        console.error('Error fetching outlets data:', error);
+        alert('Error fetching outlets data');
       } finally {
         setLoading(false);
       }

@@ -35,7 +35,7 @@ const UsersManager = () => {
         setPackageData(user_res?.data);
       }
     } catch (error) {
-      console.error(error);
+      alert('Error fetching users data');
     }
   };
 

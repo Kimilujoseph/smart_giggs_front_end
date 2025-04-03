@@ -22,7 +22,7 @@ const Message: React.FC<MessageProps> = ({ message, type, onClose }) => {
     return () => clearTimeout(timer);
   }, []);
   return (
-    <div className="fixed top-4 left-0 right-0 z-9999 flex justify-center">
+    <div className="error-message fixed top-4 left-0 right-0 z-9999 flex justify-center">
       <div className="m-2 flex items-center justify-between max-w-md bg-white dark:bg-boxdark border border-primary/[0.2] dark:border-gray-700 rounded-lg shadow-lg p-4">
         <div className="flex items-center justify-center">
           <div className="mr-4">

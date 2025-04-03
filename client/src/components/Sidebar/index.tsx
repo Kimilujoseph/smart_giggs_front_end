@@ -27,9 +27,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   useEffect(() => {
     const tokenObj = localStorage.getItem('tk');
     if (tokenObj) {
-      const decoded = jwt_decode(tokenObj) as DecodedToken;
-      console.log(decoded.role);
-      
+      const decoded = jwt_decode(tokenObj) as DecodedToken;      
       if (
         decoded.role === 'superuser' ||
         decoded.role === 'manager' ||

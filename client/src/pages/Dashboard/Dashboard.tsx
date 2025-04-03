@@ -81,7 +81,7 @@ const Dashboard: React.FC = () => {
         { withCredentials: true },
       );
       const analyticsReport = salesDataResponse.data.data;
-      console.log(analyticsReport);
+      
       
 
       setAnalyticsData(analyticsReport);

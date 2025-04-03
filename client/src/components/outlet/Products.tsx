@@ -37,14 +37,11 @@ const ProductsTable: React.FC<ProductTableProps> = () => {
         }
         setInventory(products);
       } catch (error) {
-        console.error('Error fetching inventory data:', error);
+        alert('Error fetching inventory data');
       }
     })();
   }, []);
 
-  useEffect(() => {
-    console.log(product);
-  }, [product]);
   return (
     <>
       <div className="rounded-sm border border-stroke bg-white  shadow-default dark:border-strokedark dark:bg-boxdark">
