@@ -238,19 +238,25 @@ const PointOfSales: React.FC = () => {
       }
 
       groupedCart.forEach((product: any) => {
+        console.log(product);
+        
         const items = product.items.map((item: any) => ({
           productId: item.stock.id,
           soldprice: soldprice[product.categoryId.id],
+          transferId: item.stock.transferId,
           soldUnits:
             product.categoryId.itemType === 'accessories' ? item.quantity : 1,
         }));
         bulkSales.push({
-          CategoryId: product.categoryId.id,
+          CategoryId: product.categoryId.id.split('-')[1],
           itemType: product.categoryId.itemType,
           items: [...items],
           paymentmethod: paymentMethod,
         });
       });
+
+      console.log(bulkSales);
+      // return;
 
       const token = localStorage.getItem('tk');
       if (!token) throw new Error('Token not found. User not authenticated.');
@@ -338,9 +344,10 @@ const PointOfSales: React.FC = () => {
     const grouped = allProducts.reduce((acc: any, product: Product) => {
       const itemType = product.type;
       const categoryId =
-        itemType === 'mobiles' ? `m-${product.productId}` : `a-${product.id}`;
+        itemType === 'mobiles' ? `m-${product.productId}` : `a-${product.productId}-${product.id}`;
 
       if (!categoryId) return acc;
+      
 
       if (!acc[categoryId]) {
         acc[categoryId] = {
@@ -815,15 +822,6 @@ const PointOfSales: React.FC = () => {
                                   >
                                     <ChevronDown className="h-4 w-4 text-black dark:text-red-400" />
                                   </button>
-                                  <span>
-                                    {Number(
-                                      cart.find(
-                                        (item: any) =>
-                                          item.category.id ===
-                                          product.categoryId.id,
-                                      )?.quantity,
-                                    )}
-                                  </span>
                                   <span className="text-black dark:text-slate-200">
                                     {
                                       cart.find(

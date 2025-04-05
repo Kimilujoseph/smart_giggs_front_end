@@ -1,3 +1,6 @@
+const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoibWFuYWdlciIsImVtYWlsIjoibWFuYWdlckBjYXB0ZWNoLmNvLmtlIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+const actualToken = localStorage.getItem('tk');
+
 describe('SignIn Page', () => {
   beforeEach(() => {
     cy.visit('/auth/signin')
@@ -30,10 +33,11 @@ describe('SignIn Page', () => {
 
   it('should handle successful login', () => {
     // Mock successful login response
+
     cy.intercept('POST', '/api/user/user/signin', {
       statusCode: 200,
       body: {
-        token: 'mock-token',
+        token: mockToken,
         status: 200,
         message: 'Login successful'
       }
@@ -80,7 +84,7 @@ describe('SignIn Page', () => {
     cy.intercept('POST', '/api/user/user/signin', {
       statusCode: 200,
       body: {
-        token: 'mock-token',
+        token: mockToken,
         role: 'unauthorized_role'
       }
     }).as('loginRequest')
@@ -118,7 +122,7 @@ describe('SignIn Page', () => {
     cy.intercept('POST', '/api/user/user/signin', {
       statusCode: 200,
       body: {
-        token: 'mock-token',
+        token: mockToken,
         status: 200,
         message: 'Login successful'
       }
@@ -131,7 +135,7 @@ describe('SignIn Page', () => {
     cy.wait('@loginRequest')
 
     // Refresh the page
-    // cy.reload()
+    cy.reload()
 
     // Check if still logged in (not on signin page)
     cy.url().should('not.include', '/auth/signin')
@@ -144,7 +148,7 @@ describe('SignIn Page', () => {
         delay: 1000,
         statusCode: 200,
         body: {
-          token: 'mock-token',
+          token: mockToken,
           status: 200,
           message: 'Login successful'
         }

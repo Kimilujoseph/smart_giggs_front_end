@@ -207,7 +207,6 @@ const ProductDetail = ({
 
   const filteredUnits = product?.Items.filter((item) => {
     if (!product?.Items) return [];
-    
 
     const matchesSearch =
       searchQuery.toLowerCase() === '' ||
@@ -368,11 +367,13 @@ const ProductDetail = ({
                               htmlFor="imei"
                               className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
                             >
-                              IMEI Number
+                              IMEI Number*
                             </label>
                             <input
                               id="imei"
+                              required={product.itemType === 'mobiles'}
                               type="text"
+                              maxLength={15}
                               value={IMEI}
                               placeholder="15 digit IMEI"
                               onChange={(e) => setIMEI(e.target.value)}
@@ -380,33 +381,17 @@ const ProductDetail = ({
                             />
                           </div>
                         )}
-                        {/* Serial Number */}
-                        {/* <div>
-                          <label
-                            htmlFor="serialNumber"
-                            className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                          >
-                            Serial Number
-                          </label>
-                          <input
-                            id="serialNumber"
-                            type="text"
-                            value={newserialNumber}
-                            onChange={(e) => setNewSerialNumber(e.target.value)}
-                            placeholder="1111-2222-XXXX"
-                            className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
-                          />
-                        </div> */}
                         {/* Batch Number */}
                         <div>
                           <label
                             htmlFor="batch"
                             className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
                           >
-                            Batch Number
+                            Batch Number{product.itemType === 'accessories' && '*'}
                           </label>
                           <input
                             id="batch"
+                            required={product.itemType === 'accessories'}
                             type="text"
                             value={newBatchNumber}
                             onChange={(e) => setNewBatchNumber(e.target.value)}
@@ -437,11 +422,12 @@ const ProductDetail = ({
                             htmlFor="productcost"
                             className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
                           >
-                            Item Cost
+                            Item Cost*
                           </label>
                           <input
                             id="productcost"
                             min={0}
+                            required
                             type="number"
                             value={productcost}
                             onChange={(e) => setCost(e.target.value)}
@@ -456,12 +442,13 @@ const ProductDetail = ({
                             htmlFor="quantity"
                             className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
                           >
-                            Quantity
+                            Quantity*
                           </label>
                           <input
                             id="quantity"
                             min={1}
                             defaultValue={1}
+                            required
                             type="number"
                             value={quantity}
                             onChange={(e) => setQuantity(e.target.value)}
@@ -475,11 +462,12 @@ const ProductDetail = ({
                             htmlFor="supplierName"
                             className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
                           >
-                            Supplier
+                            Supplier*
                           </label>
                           <input
                             id="supplierName"
                             type="text"
+                            required
                             value={supplierName}
                             onChange={(e) => setSupplierName(e.target.value)}
                             placeholder="Techno Mobile Dist."
@@ -493,15 +481,17 @@ const ProductDetail = ({
                               className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
                               htmlFor="financer"
                             >
-                              Financer
+                              Financer*
                             </label>
                             <select
                               name="financer"
                               id="financer"
+                              required
                               placeholder="Select Financer"
                               onChange={(e) => setFinancer(e.target.value)}
                               className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black text-sm outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                             >
+                              <option value="">Select a Financier</option>
                               <option value="captech">Captech</option>
                               <option value="watu">Watu Simu</option>
                               <option value="mkopa">M-Kopa</option>
@@ -548,7 +538,7 @@ const ProductDetail = ({
                       {/* Submit */}
                       <div className="mt-5 flex justify-end">
                         <button
-                          onClick={() => setIsOpen(!isOpen)}
+                          onClick={() => addingUnit && setIsOpen(!isOpen)}
                           disabled={addingUnit}
                           type="submit"
                           className="w-full sm:w-auto px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all duration-150 flex items-center justify-center font-medium shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-boxdark"
@@ -568,7 +558,9 @@ const ProductDetail = ({
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder={`Search by Serial or ${product.itemType === 'mobiles' ? "IMEI" : "Batch Number"}...`}
+                    placeholder={`Search by Serial or ${
+                      product.itemType === 'mobiles' ? 'IMEI' : 'Batch Number'
+                    }...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"

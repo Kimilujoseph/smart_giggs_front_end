@@ -6,19 +6,20 @@ import {
   Bar,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
+  Legend,
 } from 'recharts';
 import {
   TrendingUp,
   DollarSign,
   Package,
-  Store,
   ArrowUp,
   ArrowDown,
+  Users,
+  Percent,
+  Box,
 } from 'lucide-react';
 import { CircularProgress } from '@mui/material';
 import axios, { AxiosError } from 'axios';
@@ -28,33 +29,62 @@ import Message from '@/components/alerts/Message';
 import ModalAlert from '@/components/alerts/Alert';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { setTime } from 'node_modules/react-datepicker/dist/date_utils';
 
 interface Sale {
-  id: string;
-  productId: string;
-  sellerId: string;
-  shopId: string;
-  CategoryId: string;
-  createdAt: string;
-  soldprice: number;
+  soldprice: number | string;
   netprofit: number;
-  totalsoldunits: number;
-  totalnetprice: number;
-  totaltransaction: number;
-  sellername: string;
-  productname: string;
+  commission: number;
+  productcost: number | string;
   productmodel: string;
-  productcost: number;
-  category: string;
+  productname: string;
+  totalnetprice: number | string;
+  totalsoldunits: number;
+  totaltransaction: number;
+  _id: {
+    productId: number;
+    sellerId: number;
+    shopId: number;
+  };
+  financeDetails: {
+    financeStatus: string;
+    financeAmount: number;
+    financer: string;
+  };
+  CategoryId?: number;
+  createdAt: string;
   batchNumber?: string;
+  category: string;
+  sellername: string;
+  shopname: string;
 }
 
-interface SalesData {
+interface AnalyticsData {
+  sellerAnalytics: {
+    sellerName: string;
+    totalSales: string;
+    netprofit: number;
+    totaltransacted: number;
+  }[];
+  productAnalytics: {
+    productName?: string;
+    totalSales: string | number;
+    totaltransacted: number;
+    netprofit: number;
+  }[];
+  totalProducts: number;
+  totalSellers: number;
+}
+
+interface SalesResponse {
+  analytics: {
+    analytics: AnalyticsData;
+  };
   sales: Sale[];
-  totalSales: number;
+  salesPerMonth: any[];
+  totalSales: string;
   totalProfit: number;
   totalCommission: number;
+  totalfinanceSalesPending: number;
   totalPages: number;
   currentPage: number;
 }
@@ -108,7 +138,13 @@ const SalesBackup = () => {
           <span className="text-sm font-bold italic text-bodydark2">KES</span>
         )}
         <div className="text-title-md font-bold text-black dark:text-white">
-          {fetchingSales ? <CircularProgress size={24} /> : value}
+          {fetchingSales ? (
+            <CircularProgress size={24} />
+          ) : valueType === 'currency' ? (
+            new Intl.NumberFormat('en-KE').format(Number(value))
+          ) : (
+            value
+          )}
         </div>
         {secondaryValue && (
           <div className="text-bodydark text-sm">{secondaryValue}</div>
@@ -131,14 +167,7 @@ const SalesBackup = () => {
     </div>
   );
 
-  const [salesData, setSalesData] = useState<SalesData>({
-    sales: [],
-    totalSales: 0,
-    totalProfit: 0,
-    totalCommission: 0,
-    totalPages: 1,
-    currentPage: 1,
-  });
+  const [salesData, setSalesData] = useState<SalesResponse | null>(null);
   const [message, setMessage] = useState<{ text: string; type: string } | null>(
     null,
   );
@@ -148,49 +177,53 @@ const SalesBackup = () => {
   const [fetchingSales, setFetchingSales] = useState(false);
   const token = localStorage.getItem('tk');
   const [axiosError, setAxiosError] = useState<AxiosError | null>(null);
-  const user: DecodedToken | null = jwt_decode(token!) || null;
+  const user: DecodedToken | null = token ? jwt_decode(token) : null;
 
   useEffect(() => {
     const fetchSalesData = async () => {
       setFetchingSales(true);
       try {
-        const response = await axios(
+        const response = await axios.get(
           `${
             import.meta.env.VITE_SERVER_HEAD
-          }/api/sales/all?period=${timeFrame === 'custom' ? selectedDate.toISOString() : timeFrame}`,
+          }/api/sales/all?period=${timeFrame}${
+            timeFrame === 'custom' ? `&date=${selectedDate.toISOString()}` : ''
+          }`,
           { withCredentials: true },
         );
-        
 
         if (response.status !== 200) {
           throw new Error(
             response.data.message || 'Failed to fetch sales data',
           );
         }
-        const data = await response.data.data;
+
+        const data = response.data.data;
         setSalesData(data);
         setMessage({
           text: 'Sales data fetched successfully',
           type: 'success',
         });
       } catch (error: any) {
-        alert("An error occurred");
+        console.error('Error fetching sales data:', error);
+        setAxiosError(error);
         setMessage({
           text:
             error.response?.data?.message ||
             error.message ||
-            'Failed to fetch sales',
-          type: `${error.response?.status! === 404 ? 'warning' : 'error'}`,
+            'Failed to fetch sales data',
+          type: error.response?.status === 404 ? 'warning' : 'error',
         });
       } finally {
         setFetchingSales(false);
       }
     };
+
     fetchSalesData();
-  }, [timeFrame]);
+  }, [timeFrame, selectedDate]);
 
   const calculateMetrics = () => {
-    if (salesData?.sales?.length === 0)
+    if (!salesData || salesData.sales.length === 0) {
       return {
         totalSales: 0,
         totalUnits: 0,
@@ -199,53 +232,74 @@ const SalesBackup = () => {
         avgTicketSize: 0,
         productMetrics: [],
         categoryMetrics: [],
+        financeMetrics: [],
+        sellerMetrics: salesData?.analytics?.analytics?.sellerAnalytics || [],
       };
+    }
 
     const totalUnits = salesData.sales.reduce(
-      (sum, item) => sum + item.totaltransaction,
+      (sum, item) => sum + (item.totaltransaction || 0),
       0,
     );
-    const avgTicketSize = salesData.totalSales / totalUnits || 0;
+    const avgTicketSize = Number(salesData.totalSales) / totalUnits || 0;
 
     // Calculate product metrics
     const productData = new Map();
     salesData.sales.forEach((item) => {
-      const productKey = item.productname;
+      const productKey = item.productname || 'Unknown Product';
       if (!productData.has(productKey)) {
         productData.set(productKey, {
-          name: item.productname,
+          name: productKey,
           sales: 0,
           units: 0,
           profit: 0,
-          model: item.productmodel,
-          category: item.category,
+          model: item.productmodel || 'N/A',
+          category: item.category || 'Uncategorized',
         });
       }
       const product = productData.get(productKey);
-      product.sales += item.soldprice;
-      product.units += item.totaltransaction;
-      product.profit += item.netprofit;
+      product.sales += Number(item.soldprice) || 0;
+      product.units += Number(item.totaltransaction) || 0;
+      product.profit += Number(item.netprofit) || 0;
     });
     const productMetrics = Array.from(productData.values());
 
     // Calculate category metrics
     const categoryData = new Map();
     salesData.sales.forEach((item) => {
-      const categoryKey = item.category;
+      const categoryKey = item.category || 'Uncategorized';
       if (!categoryData.has(categoryKey)) {
         categoryData.set(categoryKey, {
-          name: item.category,
+          name: categoryKey,
           sales: 0,
           units: 0,
           profit: 0,
         });
       }
       const category = categoryData.get(categoryKey);
-      category.sales += item.soldprice;
-      category.units += item.totaltransaction;
-      category.profit += item.netprofit;
+      category.sales += Number(item.soldprice) || 0;
+      category.units += Number(item.totaltransaction) || 0;
+      category.profit += Number(item.netprofit) || 0;
     });
     const categoryMetrics = Array.from(categoryData.values());
+
+    // Calculate finance metrics
+    const financeData = new Map();
+    salesData.sales.forEach((item) => {
+      const financeKey = item.financeDetails?.financer || 'Cash';
+      if (!financeData.has(financeKey)) {
+        financeData.set(financeKey, {
+          name: financeKey,
+          sales: 0,
+          units: 0,
+          status: item.financeDetails?.financeStatus || 'N/A',
+        });
+      }
+      const finance = financeData.get(financeKey);
+      finance.sales += Number(item.soldprice) || 0;
+      finance.units += Number(item.totaltransaction) || 0;
+    });
+    const financeMetrics = Array.from(financeData.values());
 
     return {
       totalSales: salesData.totalSales,
@@ -255,15 +309,29 @@ const SalesBackup = () => {
       avgTicketSize,
       productMetrics,
       categoryMetrics,
+      financeMetrics,
+      sellerMetrics: salesData.analytics.analytics.sellerAnalytics,
     };
   };
 
   const metrics = calculateMetrics();
 
+  const formatCurrency = (value: number | string) => {
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      maximumFractionDigits: 0,
+    }).format(Number(value));
+  };
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
   if (axiosError) {
     return (
       <ModalAlert
-        message={`${axiosError.code}: ${axiosError.message}`}
+        message={`${axiosError.code || 'Error'}: ${
+          axiosError.message || 'Failed to fetch data'
+        }`}
         onClose={() => setAxiosError(null)}
       />
     );
@@ -278,6 +346,7 @@ const SalesBackup = () => {
           onClose={() => setMessage(null)}
         />
       )}
+      
       <div className="mb-8">
         <div>
           <h1 className="text-title-lg font-bold text-black dark:text-white mb-2">
@@ -287,85 +356,86 @@ const SalesBackup = () => {
             Comprehensive sales performance insights
           </p>
         </div>
-        <div className="flex justify-end items-center mt-4">
-          <div className="flex space-x-4">
+        
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 gap-4">
+          <div className="flex space-x-2">
+            <TabButton selected={activeTab === 0} onClick={() => setActiveTab(0)}>
+              Overview
+            </TabButton>
+            <TabButton selected={activeTab === 1} onClick={() => setActiveTab(1)}>
+              Products
+            </TabButton>
+            <TabButton selected={activeTab === 2} onClick={() => setActiveTab(2)}>
+              Sellers
+            </TabButton>
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
             <DatePicker
-              selected={timeFrame === "day" ? new Date() : selectedDate}
-              onChange={(date: Date | null) => {
-                if (date) {
-                  setSelectedDate(date);
-                  setTimeFrame("custom");
-                }
+              selected={selectedDate}
+              onChange={(date: Date) => {
+                setSelectedDate(date);
+                setTimeFrame('custom');
               }}
               dateFormat="d MMM yyyy"
-              className="cursor-pointer border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
+              className="cursor-pointer border border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none"
             />
             <select
               value={timeFrame}
               onChange={(e) => {
-                setTimeFrame(e.target.value)
-                setSelectedDate(new Date())
+                setTimeFrame(e.target.value);
+                if (e.target.value !== 'custom') {
+                  setSelectedDate(new Date());
+                }
               }}
-              className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
+              className="border border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none"
             >
               <option value="day">Today</option>
-              <option value="week">Past Week</option>
-              <option value="month">Past Month</option>
-              <option value="year">Past Year</option>
-              <option value="custom">Custom</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+              <option value="custom">Custom Date</option>
             </select>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 text-sm md:text-lg lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
         <StatCard
           title="Total Revenue"
-          value={metrics.totalSales?.toLocaleString()}
+          value={metrics.totalSales}
           valueType="currency"
           icon={DollarSign}
         />
         <StatCard
           title="Net Profit"
-          value={metrics.totalProfit?.toLocaleString() || '-'}
+          value={metrics.totalProfit}
           valueType="currency"
           icon={TrendingUp}
         />
         <StatCard
-          title="Commission Paid"
-          value={metrics.totalCommission?.toLocaleString() || '-'}
+          title="Commission"
+          value={metrics.totalCommission}
+          secondaryValue={`${((metrics.totalCommission / Number(metrics.totalSales)) * 100 || 0)}% of revenue`}
           valueType="currency"
-          icon={TrendingUp}
+          icon={Percent}
         />
         <StatCard
-          title="Products Sold / Total Units"
-          value={`${
-            metrics.productMetrics.length
-          } / ${metrics.totalUnits?.toLocaleString()}`}
+          title="Products Sold"
+          value={`${metrics.productMetrics.length} / ${metrics.totalUnits}`}
+          secondaryValue={`Avg. ticket: ${formatCurrency(metrics.avgTicketSize)}`}
           valueType="number"
-          secondaryValue={`Avg. ticket: ${metrics.avgTicketSize?.toLocaleString()}`}
           icon={Package}
         />
-      </div>
-
-      <div className="border-b border-stroke dark:border-strokedark mb-6">
-        <div className="flex space-x-4">
-          <TabButton selected={activeTab === 0} onClick={() => setActiveTab(0)}>
-            Overview
-          </TabButton>
-          <TabButton selected={activeTab === 1} onClick={() => setActiveTab(1)}>
-            Products
-          </TabButton>
-        </div>
       </div>
 
       {activeTab === 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <div className="bg-white dark:bg-boxdark rounded-lg shadow-card p-6 border border-stroke dark:border-strokedark">
-            <h2 className="text-title-xs md:text-title-sm lg:text-title-lg font-semibold mb-4 text-black dark:text-white">
-              Category Revenue Distribution
+            <h2 className="text-title-sm lg:text-title-lg font-semibold mb-4 text-black dark:text-white">
+              Revenue by Category
             </h2>
-            <div className="h-90">
+            <div className="h-[300px]">
               {fetchingSales ? (
                 <div className="flex justify-center items-center h-full">
                   <CircularProgress />
@@ -375,7 +445,7 @@ const SalesBackup = () => {
                   No data available
                 </div>
               ) : (
-                <ResponsiveContainer>
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={metrics.categoryMetrics}
@@ -384,49 +454,48 @@ const SalesBackup = () => {
                       cx="50%"
                       cy="50%"
                       outerRadius={80}
-                      label
+                      fill="#8884d8"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
                       {metrics.categoryMetrics.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={
-                            [
-                              '#42C8B7',
-                              '#80CAEE',
-                              '#10B981',
-                              '#FFBA00',
-                              '#FF6766',
-                            ][index % 5]
-                          }
-                        />
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               )}
             </div>
           </div>
+          
           <div className="bg-white dark:bg-boxdark rounded-lg shadow-card p-6 border border-stroke dark:border-strokedark">
-            <h2 className="text-title-xs md:text-title-sm lg:text-title-lg font-semibold mb-4 text-black dark:text-white">
-              Product Performance
+            <h2 className="text-title-sm lg:text-title-lg font-semibold mb-4 text-black dark:text-white">
+              Top Products
             </h2>
-            <div className="h-90">
+            <div className="h-[300px]">
               {fetchingSales ? (
                 <div className="flex justify-center items-center h-full">
                   <CircularProgress />
                 </div>
-              ) : metrics.categoryMetrics.length === 0 ? (
+              ) : metrics.productMetrics.length === 0 ? (
                 <div className="flex justify-center items-center h-full text-bodydark2">
                   No data available
                 </div>
               ) : (
-                <ResponsiveContainer>
-                  <BarChart data={metrics.productMetrics}>
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="sales" fill="#42C8B7" />
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={metrics.productMetrics
+                      .sort((a, b) => b.sales - a.sales)
+                      .slice(0, 5)}
+                    layout="vertical"
+                  >
+                    <XAxis type="number" tickFormatter={(value) => formatCurrency(value)} />
+                    <YAxis type="category" dataKey="name" width={100} />
+                    <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                    <Legend />
+                    <Bar dataKey="sales" fill="#42C8B7" name="Revenue" />
+                    <Bar dataKey="profit" fill="#FFBB28" name="Profit" />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -459,43 +528,113 @@ const SalesBackup = () => {
                   <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
                     Profit
                   </th>
+                  <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
+                    Margin
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stroke dark:divide-strokedark">
-                {metrics.productMetrics.length === 0 && (
+                {metrics.productMetrics.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-500">
-                      No data available
+                    <td colSpan={7} className="py-8 text-center text-gray-500">
+                      {fetchingSales ? 'Loading...' : 'No sales data available'}
                     </td>
                   </tr>
+                ) : (
+                  metrics.productMetrics
+                    .sort((a, b) => b.sales - a.sales)
+                    .map((item, index) => (
+                      <tr
+                        key={index}
+                        className="hover:bg-gray-2 dark:hover:bg-meta-4 transition-colors duration-200"
+                      >
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
+                          {item.name}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
+                          {item.model}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
+                          {item.category}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
+                          {formatCurrency(item.sales)}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
+                          {item.units}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
+                          {formatCurrency(item.profit)}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
+                          {item.sales > 0
+                            ? `${Math.round((item.profit / item.sales) * 100)}%`
+                            : 'N/A'}
+                        </td>
+                      </tr>
+                    ))
                 )}
-                {metrics.productMetrics.map((item, index) => (
-                  <tr
-                    key={index}
-                    className="hover:bg-gray-2 dark:hover:bg-meta-4 transition-colors duration-200"
-                  >
-                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                      {item.name}
-                    </td>
-                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                      {item.model}
-                    </td>
-                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                      {item.category}
-                    </td>
-                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
-                      {item.sales.toLocaleString()}
-                    </td>
-                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
-                      {item.units}
-                    </td>
-                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
-                      {item.profit.toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 2 && (
+        <div className="grid grid-cols-1 gap-4 lg:gap-6">
+          <div className="bg-white dark:bg-boxdark rounded-lg shadow-card p-6 border border-stroke dark:border-strokedark">
+            <h2 className="text-title-sm lg:text-title-lg font-semibold mb-4 text-black dark:text-white">
+              Seller Performance
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-stroke dark:border-strokedark bg-gray-2 dark:bg-meta-4">
+                    <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-bodydark2 uppercase">
+                      Seller
+                    </th>
+                    <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
+                      Revenue
+                    </th>
+                    <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
+                      Transactions
+                    </th>
+                    <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
+                      Profit
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stroke dark:divide-strokedark">
+                  {metrics.sellerMetrics.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-gray-500">
+                        {fetchingSales ? 'Loading...' : 'No seller data available'}
+                      </td>
+                    </tr>
+                  ) : (
+                    metrics.sellerMetrics.map((seller, index) => (
+                      <tr
+                        key={index}
+                        className="hover:bg-gray-2 dark:hover:bg-meta-4 transition-colors duration-200"
+                      >
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
+                          {seller.sellerName}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
+                          {formatCurrency(seller.totalSales)}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
+                          {seller.totaltransacted}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
+                          {formatCurrency(seller.netprofit)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

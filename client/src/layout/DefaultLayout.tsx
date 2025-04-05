@@ -6,6 +6,7 @@ import jwt_decode from 'jwt-decode';
 import { DecodedToken } from '../types/decodedToken';
 import { useAppContext } from '../context/AppContext';
 import Modal from '../components/alerts/Modal';
+import Footer from '@/components/footer/Footer';
 
 const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -64,6 +65,7 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
                   <Outlet />
               </main>
               {/* <!-- ===== Main Content End ===== --> */}
+              <Footer />
             </div>
             {/* <!-- ===== Content Area End ===== --> */}
           </div>

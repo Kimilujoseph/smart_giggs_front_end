@@ -30,6 +30,8 @@ import jwt_decode from 'jwt-decode';
 import Message from './components/alerts/Message';
 import SalesBackup from './pages/SalesBackup';
 import PointOfSales from './components/pointOfSale/PointOfSales';
+import SalesBackup2 from './pages/SalesBackup2';
+import OutletSalesBackup from './components/outlet/OutletSalesBackup';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -193,7 +195,7 @@ function App() {
                 element={
                   <>
                     <PageTitle title="Sales | Captech" />
-                    <SalesBackup />
+                    <SalesBackup2 />
                   </>
                 }
               />
@@ -220,7 +222,7 @@ function App() {
                 element={
                   <>
                     <PageTitle title="Outlet Outlet | Captech" />
-                    <OutletSales />
+                    <OutletSalesBackup />
                   </>
                 }
               />

@@ -105,8 +105,8 @@ const ProductView = () => {
         }));
         setOutletListings(mappedOutlets);
       }
-    } catch (error) {
-      alert("An error occurred");
+    } catch (error: any) {
+      alert(error.response.message  || error.message || "An error occurred while fetching outlets")      
     }
   }, []);
 
@@ -122,7 +122,7 @@ const ProductView = () => {
       
 
       const response = await axios.get(
-        currentUser.role === 'seller'
+        currentUser?.role === 'seller'
           ? `${
               import.meta.env.VITE_SERVER_HEAD
             }/api/category/get-category/shop/${
@@ -159,14 +159,14 @@ const ProductView = () => {
           });
         }
       });
-      setOutlets(Array.from(uniqueOutlets).map((shop) => JSON.parse(shop)));
+      setOutlets(Array.from(uniqueOutlets).map((shop: any) => JSON.parse(shop)));
       setProduct(fetchedProduct);
     } catch (error: any) {
-      alert("An error occurred");
+      alert(error.response?.message || error.message || "An error occurred while fetching product details");      
     } finally {
       setLoading(false);
     }
-  }, [productId, user.role, currentUser]);
+  }, [productId, user?.role, currentUser]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -175,8 +175,8 @@ const ProductView = () => {
         if (user_res?.data) {
           setCurrentUser(user_res?.data.user);
         }
-      } catch (error) {
-        alert("An error occurred");
+      } catch (error: any) {
+        alert(error.response.message || error.message || "An error occurred user data");        
       }
     };
     fetchUserData();
@@ -300,7 +300,7 @@ const ProductView = () => {
     setDistributing(true);
     try {
       const response = await axios.post(
-        user.role === 'manager' || user.role === 'superuser'
+        user?.role === 'manager' || user?.role === 'superuser'
           ? `${
               import.meta.env.VITE_SERVER_HEAD
             }/api/distribution/bulk-distribution`
@@ -333,7 +333,7 @@ const ProductView = () => {
         fetchProduct(); // Refresh product data
       }
     } catch (error: any) {
-      alert("An error occurred");
+      alert(error.response.message || error.message || "An error occurred during distribution");
       setDistributeError(
         error.response?.data?.message ||
           error.message ||

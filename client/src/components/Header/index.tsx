@@ -2,6 +2,7 @@ import DropdownUser from './DropdownUser';
 import DarkModeSwitcher from './DarkModeSwitcher';
 import SlidingMessages from '../SliderMessage';
 import { useEffect, useState } from 'react';
+import { HelpCircle } from 'lucide-react';
 
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;
@@ -39,7 +40,6 @@ const Header = (props: {
   };
   return (
     <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-boxdark dark:drop-shadow-none">
-  
       <div className="flex flex-grow items-center justify-between px-4 py-2 shadow-2 md:px-6 2xl:px-11">
         <div className="flex items-center gap-2 sm:gap-4 lg:hidden">
           {/* <!-- Hamburger Toggle BTN --> */}
@@ -85,8 +85,16 @@ const Header = (props: {
           </button>
           {/* <!-- Hamburger Toggle BTN --> */}
         </div>
-        <div className="flex item-center max-sm:hidden">
-          <SlidingMessages />
+        <div className="flex item-centers-center gap-2 sm:gap-4">
+          <div className="block">
+            <span className="text-xs md:text-sm font-semibold text-gray-700 dark:text-white">
+              {formatDate(currentTime)}
+            </span>
+            &nbsp;
+            <span className="text-xs md:text-sm font-semibold text-gray-700 dark:text-white">
+              {formatTime(currentTime)}
+            </span>
+          </div>
         </div>
 
         <div className="hidden sm:block">

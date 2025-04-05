@@ -1,51 +1,59 @@
 describe('User Creation by Manager', () => {
   beforeEach(() => {
     // Login as manager first
-    cy.login('manager@captech.co.ke', 'password123')
+    cy.visit('/auth/signin')
+    cy.get('input[type="email"]').type('manager@captech.co.ke')
+    cy.get('input[type="password"]').type('password123')
+    cy.get('button[type="submit"]').click()
+    
+    // Wait for login to complete and redirect
+    cy.url().should('not.include', '/auth/signin')
+    
+    // Visit users page
     cy.visit('/users')
   })
 
   it('should display the add user button', () => {
-    cy.get('a[onclick*="setToggleAddUser"]').should('exist')
-    cy.get('a[onclick*="setToggleAddUser"]').should('contain', 'Add User')
+    cy.get('a[class*="rounded-full border border-primary"]').should('exist')
+    cy.get('a[class*="rounded-full border border-primary"]').should('contain', 'Add User')
   })
 
   it('should open the user creation form when add user button is clicked', () => {
-    cy.get('a[onclick*="setToggleAddUser"]').click()
+    cy.get('a[class*="rounded-full border border-primary"]').click()
     cy.get('form').should('exist')
     cy.get('h1').should('contain', 'Account Information')
   })
 
   it('should show validation errors for empty form submission', () => {
-    cy.get('a[onclick*="setToggleAddUser"]').click()
+    cy.get('a[class*="rounded-full border border-primary"]').click()
     cy.get('button[type="submit"]').click()
     
     // Check for required field validation
-    cy.get('select[name="userType"]').should('have.attr', 'required')
-    cy.get('input[name="name"]').should('have.attr', 'required')
-    cy.get('input[name="email"]').should('have.attr', 'required')
-    cy.get('input[name="phone"]').should('have.attr', 'required')
-    cy.get('input[name="password"]').should('have.attr', 'required')
-    cy.get('input[name="nextofKinName"]').should('have.attr', 'required')
-    cy.get('input[name="nextofKinPhone"]').should('have.attr', 'required')
+    cy.get('select[value]').should('have.attr', 'required')
+    cy.get('input[placeholder="Enter full name"]').should('have.attr', 'required')
+    cy.get('input[placeholder="Enter your email address"]').should('have.attr', 'required')
+    cy.get('input[placeholder="Enter phone number"]').should('have.attr', 'required')
+    cy.get('input[placeholder="Enter password"]').should('have.attr', 'required')
+    cy.get('input[placeholder="Enter full name"]').eq(1).should('have.attr', 'required')
+    cy.get('input[placeholder="Enter phone number"]').eq(1).should('have.attr', 'required')
   })
 
   it('should show validation error for invalid email format', () => {
-    cy.get('a[onclick*="setToggleAddUser"]').click()
-    cy.get('input[name="email"]').type('invalid-email')
+    cy.get('a[class*="rounded-full border border-primary"]').click()
+    cy.get('input[placeholder="Enter your email address"]').type('invalid-email')
     cy.get('button[type="submit"]').click()
     
     // Check for email validation
-    cy.get('input[name="email"]').should('have.attr', 'type', 'email')
+    cy.get('input[placeholder="Enter your email address"]').should('have.attr', 'type', 'email')
   })
 
   it('should show validation error for password length', () => {
-    cy.get('a[onclick*="setToggleAddUser"]').click()
-    cy.get('input[name="password"]').type('short')
+    cy.get('a[class*="rounded-full border border-primary"]').click()
+    cy.get('input[placeholder="Enter password"]').type('short')
     cy.get('button[type="submit"]').click()
     
     // Check for password length validation
-    cy.get('input[name="password"]').should('have.attr', 'minLength', '8')
+    cy.get('input[placeholder="Enter password"]').should('have.attr', 'minLength', '8')
   })
 
   it('should successfully create a seller user', () => {
@@ -57,16 +65,16 @@ describe('User Creation by Manager', () => {
       }
     }).as('createSeller')
 
-    cy.get('a[onclick*="setToggleAddUser"]').click()
+    cy.get('a[class*="rounded-full border border-primary"]').click()
     
     // Fill in the form
-    cy.get('select[name="userType"]').select('seller')
-    cy.get('input[name="name"]').type('Test Seller')
-    cy.get('input[name="email"]').type('test.seller@example.com')
-    cy.get('input[name="phone"]').type('+254712345678')
-    cy.get('input[name="password"]').type('password123')
-    cy.get('input[name="nextofKinName"]').type('Next of Kin')
-    cy.get('input[name="nextofKinPhone"]').type('+254712345679')
+    cy.get('select[value]').select('seller')
+    cy.get('input[placeholder="Enter full name"]').first().type('Test Seller')
+    cy.get('input[placeholder="Enter your email address"]').type('test.seller@example.com')
+    cy.get('input[placeholder="Enter phone number"]').first().type('+254712345678')
+    cy.get('input[placeholder="Enter password"]').type('password123')
+    cy.get('input[placeholder="Enter full name"]').eq(1).type('Next of Kin')
+    cy.get('input[placeholder="Enter phone number"]').eq(1).type('+254712345679')
     
     cy.get('button[type="submit"]').click()
 
@@ -90,16 +98,16 @@ describe('User Creation by Manager', () => {
       }
     }).as('createManager')
 
-    cy.get('a[onclick*="setToggleAddUser"]').click()
+    cy.get('a[class*="rounded-full border border-primary"]').click()
     
     // Fill in the form
-    cy.get('select[name="userType"]').select('manager')
-    cy.get('input[name="name"]').type('Test Manager')
-    cy.get('input[name="email"]').type('test.manager@example.com')
-    cy.get('input[name="phone"]').type('+254712345680')
-    cy.get('input[name="password"]').type('password123')
-    cy.get('input[name="nextofKinName"]').type('Next of Kin')
-    cy.get('input[name="nextofKinPhone"]').type('+254712345681')
+    cy.get('select[value]').select('manager')
+    cy.get('input[placeholder="Enter full name"]').first().type('Test Manager')
+    cy.get('input[placeholder="Enter your email address"]').type('test.manager@example.com')
+    cy.get('input[placeholder="Enter phone number"]').first().type('+254712345680')
+    cy.get('input[placeholder="Enter password"]').type('password123')
+    cy.get('input[placeholder="Enter full name"]').eq(1).type('Next of Kin')
+    cy.get('input[placeholder="Enter phone number"]').eq(1).type('+254712345681')
     
     cy.get('button[type="submit"]').click()
 
@@ -123,16 +131,16 @@ describe('User Creation by Manager', () => {
       }
     }).as('createUser')
 
-    cy.get('a[onclick*="setToggleAddUser"]').click()
+    cy.get('a[class*="rounded-full border border-primary"]').click()
     
     // Fill in the form
-    cy.get('select[name="userType"]').select('seller')
-    cy.get('input[name="name"]').type('Test Seller')
-    cy.get('input[name="email"]').type('existing@example.com')
-    cy.get('input[name="phone"]').type('+254712345678')
-    cy.get('input[name="password"]').type('password123')
-    cy.get('input[name="nextofKinName"]').type('Next of Kin')
-    cy.get('input[name="nextofKinPhone"]').type('+254712345679')
+    cy.get('select[value]').select('seller')
+    cy.get('input[placeholder="Enter full name"]').first().type('Test Seller')
+    cy.get('input[placeholder="Enter your email address"]').type('existing@example.com')
+    cy.get('input[placeholder="Enter phone number"]').first().type('+254712345678')
+    cy.get('input[placeholder="Enter password"]').type('password123')
+    cy.get('input[placeholder="Enter full name"]').eq(1).type('Next of Kin')
+    cy.get('input[placeholder="Enter phone number"]').eq(1).type('+254712345679')
     
     cy.get('button[type="submit"]').click()
 
@@ -149,16 +157,16 @@ describe('User Creation by Manager', () => {
       forceNetworkError: true
     }).as('createUser')
 
-    cy.get('a[onclick*="setToggleAddUser"]').click()
+    cy.get('a[class*="rounded-full border border-primary"]').click()
     
     // Fill in the form
-    cy.get('select[name="userType"]').select('seller')
-    cy.get('input[name="name"]').type('Test Seller')
-    cy.get('input[name="email"]').type('test.seller@example.com')
-    cy.get('input[name="phone"]').type('+254712345678')
-    cy.get('input[name="password"]').type('password123')
-    cy.get('input[name="nextofKinName"]').type('Next of Kin')
-    cy.get('input[name="nextofKinPhone"]').type('+254712345679')
+    cy.get('select[value]').select('seller')
+    cy.get('input[placeholder="Enter full name"]').first().type('Test Seller')
+    cy.get('input[placeholder="Enter your email address"]').type('test.seller@example.com')
+    cy.get('input[placeholder="Enter phone number"]').first().type('+254712345678')
+    cy.get('input[placeholder="Enter password"]').type('password123')
+    cy.get('input[placeholder="Enter full name"]').eq(1).type('Next of Kin')
+    cy.get('input[placeholder="Enter phone number"]').eq(1).type('+254712345679')
     
     cy.get('button[type="submit"]').click()
 
@@ -169,8 +177,8 @@ describe('User Creation by Manager', () => {
   })
 
   it('should cancel form submission', () => {
-    cy.get('a[onclick*="setToggleAddUser"]').click()
-    cy.get('button[onclick*="setToggleAddUser(false)"]').click()
+    cy.get('a[class*="rounded-full border border-primary"]').click()
+    cy.get('button[class*="bg-warning"]').click()
     
     // Check if form is closed
     cy.get('form').should('not.exist')
@@ -188,22 +196,22 @@ describe('User Creation by Manager', () => {
       })
     }).as('createUser')
 
-    cy.get('a[onclick*="setToggleAddUser"]').click()
+    cy.get('a[class*="rounded-full border border-primary"]').click()
     
     // Fill in the form
-    cy.get('select[name="userType"]').select('seller')
-    cy.get('input[name="name"]').type('Test Seller')
-    cy.get('input[name="email"]').type('test.seller@example.com')
-    cy.get('input[name="phone"]').type('+254712345678')
-    cy.get('input[name="password"]').type('password123')
-    cy.get('input[name="nextofKinName"]').type('Next of Kin')
-    cy.get('input[name="nextofKinPhone"]').type('+254712345679')
+    cy.get('select[value]').select('seller')
+    cy.get('input[placeholder="Enter full name"]').first().type('Test Seller')
+    cy.get('input[placeholder="Enter your email address"]').type('test.seller@example.com')
+    cy.get('input[placeholder="Enter phone number"]').first().type('+254712345678')
+    cy.get('input[placeholder="Enter password"]').type('password123')
+    cy.get('input[placeholder="Enter full name"]').eq(1).type('Next of Kin')
+    cy.get('input[placeholder="Enter phone number"]').eq(1).type('+254712345679')
     
     cy.get('button[type="submit"]').click()
 
     // Check loading state
     cy.get('button[type="submit"]').should('contain', 'Submitting...')
     cy.get('button[type="submit"]').should('be.disabled')
-    cy.get('button[onclick*="setToggleAddUser(false)"]').should('be.disabled')
+    cy.get('button[class*="bg-warning"]').should('be.disabled')
   })
 }) 

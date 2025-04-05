@@ -57,8 +57,8 @@ const SignIn: React.FC = () => {
         setLoading(false);
       }
     } catch (error: any) {
-      alert('An error occurred');
-      setMessage(error.response?.data?.message || error.message);
+      alert(error.response?.data?.message || error.message || 'An error occurred');
+      setMessage(error.response?.data?.message || error.message || 'An error occurred');
       setLoading(false);
     }
   };
