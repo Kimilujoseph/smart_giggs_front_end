@@ -38,7 +38,7 @@ const Footer: React.FC = () => {
   return (
     <footer
       style={{ zIndex: 999999 }}
-      className="bottom-0 left-0 right-0 w-full py-1 px-6 bg-white dark:bg-boxdark border-t border-gray-200 dark:border-gray-700 shadow-sm"
+      className="fixed lg:relative bottom-0 left-0 right-0 w-full py-1 px-6 bg-white dark:bg-boxdark border-t border-gray-200 dark:border-gray-700 shadow-sm"
     >
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
         <div className="text-center md:text-left">
@@ -57,14 +57,6 @@ const Footer: React.FC = () => {
             </a>
           </div>
         </div>
-
-        <button
-          id="help"
-          className="text-sm text-primary hover:text-primary/80 mt-2 md:mt-0 transition-colors"
-          onClick={openChat}
-        >
-          Report a problem
-        </button>
       </div>
     </footer>
   );

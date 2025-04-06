@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import jwt_decode from 'jwt-decode';
 import { DecodedToken } from '../../types/decodedToken';
+import Footer from '../footer/Footer';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -21,13 +22,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     storedSidebarExpanded === null ? false : storedSidebarExpanded === 'true',
   );
 
-  const version = 'v.1.1.1';
+  const version = 'v1.0.0';
   const [userRole, setUserRole] = useState<string>('');
 
   useEffect(() => {
     const tokenObj = localStorage.getItem('tk');
     if (tokenObj) {
-      const decoded = jwt_decode(tokenObj) as DecodedToken;      
+      const decoded = jwt_decode(tokenObj) as DecodedToken;
       if (
         decoded.role === 'superuser' ||
         decoded.role === 'manager' ||
@@ -615,7 +616,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           </svg>
           Account Settings
         </NavLink>
-        <div className="text-xs font-bold my-4 uppercase">{version}</div>
+      </div>
+      <div>
+        <Footer />
       </div>
     </aside>
   );

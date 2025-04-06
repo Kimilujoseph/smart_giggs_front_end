@@ -12,14 +12,18 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [user, setUser] = useState<object>({});
-  const { successMessage, setSuccessMessage } = useAppContext(); 
+  const { successMessage, setSuccessMessage } = useAppContext();
   const navigate = useNavigate();
 
   useEffect(() => {
     const tokenObj = localStorage.getItem('tk');
     if (tokenObj) {
       const decoded = jwt_decode(tokenObj) as DecodedToken;
-      if (decoded.role === 'superuser' || decoded.role === 'manager' || decoded.role === 'seller') {
+      if (
+        decoded.role === 'superuser' ||
+        decoded.role === 'manager' ||
+        decoded.role === 'seller'
+      ) {
         setUser(decoded);
         setLoggedIn(true);
       }
@@ -42,7 +46,10 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
             {/* <!-- ===== Sidebar End ===== --> */}
 
             {/* <!-- ===== Content Area Start ===== --> */}
-            <div id='content-area' className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden sm:m-2">
+            <div
+              id="content-area"
+              className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden sm:m-2"
+            >
               {/* <!-- ===== Header Start ===== --> */}
               <Header
                 sidebarOpen={sidebarOpen}
@@ -61,11 +68,16 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
               {/* <!-- ===== Modal End ===== --> */}
 
               {/* <!-- ===== Main Content Start ===== --> */}
-              <main className='p-2'>
-                  <Outlet />
+              <main className="p-2">
+                <Outlet />
               </main>
               {/* <!-- ===== Main Content End ===== --> */}
-              <Footer />
+
+              {/* <!-- ===== Footer Start ===== --> */}
+              <div className='lg:hidden'>
+                <Footer />
+              </div>
+              {/* <!-- ===== Footer End ===== --> */}
             </div>
             {/* <!-- ===== Content Area End ===== --> */}
           </div>
