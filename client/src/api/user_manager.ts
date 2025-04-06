@@ -22,7 +22,6 @@ export const getUserProfile = async ({ email }: { email: string }) => {
         }
 
     } catch (error) {
-        console.error(error)
         return { data: [], code: 3, error: true }
     }
 }

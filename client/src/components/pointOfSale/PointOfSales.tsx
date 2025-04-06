@@ -237,9 +237,7 @@ const PointOfSales: React.FC = () => {
         return;
       }
 
-      groupedCart.forEach((product: any) => {
-        console.log(product);
-        
+      groupedCart.forEach((product: any) => {        
         const items = product.items.map((item: any) => ({
           productId: item.stock.id,
           soldprice: soldprice[product.categoryId.id],
@@ -254,9 +252,6 @@ const PointOfSales: React.FC = () => {
           paymentmethod: paymentMethod,
         });
       });
-
-      console.log(bulkSales);
-      // return;
 
       const token = localStorage.getItem('tk');
       if (!token) throw new Error('Token not found. User not authenticated.');

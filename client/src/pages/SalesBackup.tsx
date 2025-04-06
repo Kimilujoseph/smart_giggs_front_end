@@ -205,7 +205,6 @@ const SalesBackup = () => {
           type: 'success',
         });
       } catch (error: any) {
-        console.error('Error fetching sales data:', error);
         setAxiosError(error);
         setMessage({
           text:

@@ -29,6 +29,7 @@ import Message from '@/components/alerts/Message';
 import ModalAlert from '@/components/alerts/Alert';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { use } from 'chai';
 
 // Type definitions
 interface Sale {
@@ -171,7 +172,9 @@ const SalesBackup2 = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState(0);
   const [fetchingData, setFetchingData] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ text: string; type: string } | null>(
+    null,
+  );
   const [financerFilter, setFinancerFilter] = useState<string | null>(null);
 
   // Get token and user info
@@ -192,32 +195,34 @@ const SalesBackup2 = () => {
           { withCredentials: true },
         );
 
-        if (response.data.success) {
+        if (response.status === 200) {
           setSalesData(response.data.data);
           setMessage({
             text: 'Sales data fetched successfully',
             type: 'success',
           });
-        } else {
-          throw new Error(
-            response.data.message || 'Failed to fetch sales data',
-          );
         }
       } catch (error: any) {
-        console.error('Error fetching sales data:', error);
+        const is404 = error.response?.status === 404;
 
-        setError(
-          error.response?.data?.message ||
-            error.message ||
-            'An error occurred while fetching sales data',
-        );
+        if (is404) {
+          setSalesData(null); // Clear old data on 404
+        }
+
+        const errorMessage = is404
+          ? `${
+              error.response?.data?.error || 'No data found'
+            } for filter '${timeFrame}'`
+          : error.response?.data?.error || error.message;
+
+        setError({
+          text: errorMessage,
+          type: is404 ? 'warning' : 'error',
+        });
 
         setMessage({
-          text:
-            error.response?.data?.message ||
-            error.message ||
-            'Failed to fetch sales',
-          type: error.response?.status === 404 ? 'warning' : 'error',
+          text: errorMessage,
+          type: is404 ? 'warning' : 'error',
         });
       } finally {
         setFetchingData(false);
@@ -373,18 +378,45 @@ const SalesBackup2 = () => {
 
   // Error display component
   const ErrorDisplay = () => (
-    <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg border border-red-200 dark:border-red-800 flex items-start gap-4">
-      <AlertCircle className="text-red-500 mt-1 w-6 h-6 flex-shrink-0" />
+    <div
+      className={`${
+        error?.type === 'warning'
+          ? 'text-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+          : 'text-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+      }  p-6 rounded-lg border   flex items-start gap-4`}
+    >
+      <AlertCircle
+        className={`
+      ${error?.type === 'warning' ? 'text-warning' : 'text-red-500'}
+        mt-1 w-6 h-6 flex-shrink-0`}
+      />
       <div>
-        <h3 className="text-red-700 dark:text-red-400 font-medium mb-2">
+        <h3
+          className={`
+        ${error?.type === 'warning' ? 'text-warning' : 'text-red-400'}
+          font-medium mb-2`}
+        >
           Error Loading Data
         </h3>
-        <p className="text-red-600 dark:text-red-300">{error}</p>
+        <p
+          className={`
+          ${error?.type === 'warning' ? 'text-yellow-500' : 'text-red-500'}
+          `}
+        >
+          {error?.text}
+        </p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 bg-red-100 hover:bg-red-200 dark:bg-red-800 dark:hover:bg-red-700 text-red-700 dark:text-red-200 px-4 py-2 rounded-md transition-colors font-medium"
+          className={`mt-4 
+            ${
+              error?.type === 'warning'
+                ? 'bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:hover:bg-yellow-700 text-yellow-700 dark:text-yellow-200'
+                : 'bg-red-100 hover:bg-red-200 dark:bg-red-800 dark:hover:bg-red-700 text-red-700 dark:text-red-200'
+            }
+            
+            px-4 py-2 rounded-md transition-colors font-medium`}
         >
-          Retry
+          Reload
         </button>
       </div>
     </div>
@@ -421,7 +453,7 @@ const SalesBackup2 = () => {
 
   return (
     <div className="md:px-4 py-8">
-      {message && (
+      {message && message.type === 'error' && (
         <Message
           message={message.text}
           type={message.type}
@@ -497,9 +529,7 @@ const SalesBackup2 = () => {
         </div>
       </div>
 
-      {error ? (
-        <ErrorDisplay />
-      ) : fetchingData ? (
+      {fetchingData ? (
         <LoadingSkeleton />
       ) : (
         <>
@@ -635,25 +665,25 @@ const SalesBackup2 = () => {
                         <Tooltip
                           cursor={{
                             fill: isDarkMode ? '#1A222C' : '##F1F5F9',
-							fillOpacity: 0.2,
+                            fillOpacity: 0.2,
                             radius: 4,
                           }}
-						  contentStyle={{
-							backgroundColor: isDarkMode ? '#1A222C' : '#F1F5F9',
-							border: 'none',
-							borderRadius: '8px',
-							padding: '8px',
-						  }}
-						  labelStyle={{
-							color: isDarkMode ? '#F1F5F9' : '#1A222C',
-							fontSize: '12px',
-							fontWeight: 'bold',
-						  }}
-						  itemStyle={{
-							color: isDarkMode ? '#F1F5F9' : '#1A222C',
-							fontSize: '12px',
-							fontWeight: 'bold',
-						  }}
+                          contentStyle={{
+                            backgroundColor: isDarkMode ? '#1A222C' : '#F1F5F9',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '8px',
+                          }}
+                          labelStyle={{
+                            color: isDarkMode ? '#F1F5F9' : '#1A222C',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                          }}
+                          itemStyle={{
+                            color: isDarkMode ? '#F1F5F9' : '#1A222C',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                          }}
                           formatter={(value) =>
                             `KES ${Number(value).toLocaleString()}`
                           }

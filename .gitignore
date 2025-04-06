@@ -3,3 +3,4 @@ node_modules/
 captectprojj/node_modules/
 captect/node_modules/
 .env.dev
+*.sql

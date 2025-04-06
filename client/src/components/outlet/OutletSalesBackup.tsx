@@ -209,9 +209,7 @@ const OutletSalesBackup = () => {
           { withCredentials: true },
         );
 
-        if (response.data.success) {
-			console.log(response.data.data);
-			
+        if (response.data.success) {			
           setSalesData(response.data.data);
           setMessage({
             text: 'Sales data fetched successfully',
@@ -224,7 +222,6 @@ const OutletSalesBackup = () => {
           );
         }
       } catch (error: any) {
-        console.error('Error fetching sales data:', error);
         setError(
           error.response?.data?.message ||
             error.message ||
@@ -311,7 +308,7 @@ const OutletSalesBackup = () => {
 
     // Calculate category metrics
     const categoryData = new Map();
-    filteredSales.forEach((item) => {
+    filteredSales.forEach((item) => {      
       const categoryKey = item.category;
       if (!categoryData.has(categoryKey)) {
         categoryData.set(categoryKey, {
@@ -411,7 +408,7 @@ const OutletSalesBackup = () => {
 
   return (
     <div className="md:px-4 py-8">
-      {message && (
+      {message && message.type === 'error' && (
         <Message
           message={message.text}
           type={message.type}
