@@ -20,6 +20,8 @@ import {
   ArrowDown,
   CreditCard,
   Filter,
+  Award,
+  Search,
 } from 'lucide-react';
 import { CircularProgress } from '@mui/material';
 import axios from 'axios';
@@ -29,7 +31,8 @@ import Message from '@/components/alerts/Message';
 import ModalAlert from '@/components/alerts/Alert';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { use } from 'chai';
+import { useLocation } from 'react-router-dom';
+import CommissionPaymentModal from '../components/modals/CommissionPaymentModal';
 
 // Type definitions
 interface Sale {
@@ -78,7 +81,7 @@ interface AnalyticsData {
 }
 
 interface SalesData {
-  sales: Sale[];
+  sales: { sales: Sale[] };
   analytics: {
     analytics: AnalyticsData;
   };
@@ -176,6 +179,15 @@ const SalesBackup2 = () => {
     null,
   );
   const [financerFilter, setFinancerFilter] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageInput, setPageInput] = useState('');
+  const [isCommissionModalOpen, setIsCommissionModalOpen] = useState(false);
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const userId = params.get('userId');
 
   // Get token and user info
   const token = localStorage.getItem('tk');
@@ -188,12 +200,19 @@ const SalesBackup2 = () => {
       setError(null);
 
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_SERVER_HEAD}/api/sales/all?period=${
-            timeFrame === 'custom' ? selectedDate.toISOString() : timeFrame
-          }${financerFilter ? `&financer=${financerFilter}` : ''}`,
-          { withCredentials: true },
-        );
+        let url;
+        if (timeFrame === 'custom') {
+          const formattedDate = selectedDate.toISOString().split('T')[0];
+          url = userId
+            ? `${import.meta.env.VITE_SERVER_HEAD}/api/sales/user/${userId}?date=${formattedDate}`
+            : `${import.meta.env.VITE_SERVER_HEAD}/api/sales/all?date=${formattedDate}`;
+        } else {
+          url = userId
+            ? `${import.meta.env.VITE_SERVER_HEAD}/api/sales/user/${userId}?period=${timeFrame}`
+            : `${import.meta.env.VITE_SERVER_HEAD}/api/sales/all?period=${timeFrame}`;
+        }
+
+        const response = await axios.get(url, { withCredentials: true });
 
         if (response.status === 200) {
           setSalesData(response.data.data);
@@ -230,11 +249,105 @@ const SalesBackup2 = () => {
     };
 
     fetchSalesData();
-  }, [timeFrame, selectedDate, financerFilter]);
+  }, [timeFrame, selectedDate, userId]);
+
+  useEffect(() => {
+    if (salesData?.sales?.sales) {
+      let sales = salesData.sales.sales;
+
+      if (financerFilter) {
+        sales = sales.filter(
+          (sale) => sale.financeDetails.financer === financerFilter,
+        );
+      }
+
+      if (searchQuery) {
+        sales = sales.filter((sale) => {
+          const query = searchQuery.toLowerCase();
+          return (
+            sale.productname?.toLowerCase().includes(query) ||
+            sale.sellername?.toLowerCase().includes(query) ||
+            sale.shopname?.toLowerCase().includes(query)
+          );
+        });
+      }
+
+      setFilteredSales(sales);
+      setCurrentPage(1); // Reset to first page on new filter
+    }
+  }, [salesData, financerFilter, searchQuery]);
+
+  const handleCommissionPayment = async (phone: string, amount: number) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/commission/pay`,
+        { phone, amount, saleId: selectedSale?._id },
+        { withCredentials: true },
+      );
+
+      if (response.status === 200) {
+        setMessage({ text: 'Commission paid successfully', type: 'success' });
+      } else {
+        setMessage({ text: 'Failed to pay commission', type: 'error' });
+      }
+    } catch (error) {
+      setMessage({ text: 'Failed to pay commission', type: 'error' });
+    }
+  };
+
+  const exportToCsv = () => {
+    if (!filteredSales || filteredSales.length === 0) {
+      setMessage({ text: 'No data to export', type: 'warning' });
+      return;
+    }
+
+    const headers = [
+      'Date',
+      'Product',
+      'Model',
+      'Category',
+      'Shop',
+      'Seller',
+      'Units Sold',
+      'Revenue',
+      'Net Profit',
+      'Commission',
+      'Financer',
+      'Finance Status',
+    ];
+
+    const rows = filteredSales.map((sale) =>
+      [
+        new Date(sale.createdAt).toLocaleDateString(),
+        `"${sale.productname || 'N/A'}"`,
+        `"${sale.productmodel || 'N/A'}"`,
+        `"${sale.category || 'N/A'}"`,
+        `"${sale.shopname || 'N/A'}"`,
+        `"${sale.sellername || 'N/A'}"`,
+        sale.totaltransaction,
+        sale.soldprice,
+        sale.netprofit,
+        sale.commission,
+        `"${sale.financeDetails.financer || 'N/A'}"`,
+        `"${sale.financeDetails.financeStatus || 'N/A'}"`,
+      ].join(',')
+    );
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'sales_report.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Calculate metrics from sales data
   const calculateMetrics = () => {
-    if (!salesData?.sales || salesData.sales.length === 0) {
+    if (!salesData?.sales?.sales || salesData.sales.sales.length === 0) {
       return {
         totalSales: 0,
         totalUnits: 0,
@@ -255,7 +368,7 @@ const SalesBackup2 = () => {
         : salesData.totalSales;
 
     // Calculate total units sold
-    const totalUnits = salesData.sales.reduce(
+    const totalUnits = salesData.sales.sales.reduce(
       (sum, item) => sum + item.totaltransaction,
       0,
     );
@@ -265,7 +378,7 @@ const SalesBackup2 = () => {
 
     // Calculate product metrics
     const productData = new Map();
-    salesData.sales.forEach((item) => {
+    salesData.sales.sales.forEach((item) => {
       const productKey = item.productname || 'Accessory';
       if (!productData.has(productKey)) {
         productData.set(productKey, {
@@ -291,7 +404,7 @@ const SalesBackup2 = () => {
 
     // Calculate category metrics
     const categoryData = new Map();
-    salesData.sales.forEach((item) => {
+    salesData.sales.sales.forEach((item) => {
       const categoryKey = item.category || 'Unknown';
       if (!categoryData.has(categoryKey)) {
         categoryData.set(categoryKey, {
@@ -315,7 +428,7 @@ const SalesBackup2 = () => {
 
     // Calculate financer metrics
     const financerData = new Map();
-    salesData.sales.forEach((item) => {
+    salesData.sales.sales.forEach((item) => {
       const financerKey = item.financeDetails.financer || 'None';
       if (!financerData.has(financerKey)) {
         financerData.set(financerKey, {
@@ -362,10 +475,10 @@ const SalesBackup2 = () => {
 
   // Get unique financers for filter
   const getUniqueFinancers = () => {
-    if (!salesData?.sales) return [];
+    if (!salesData?.sales?.sales) return [];
 
     const financers = new Set();
-    salesData.sales.forEach((sale) => {
+    salesData.sales.sales.forEach((sale) => {
       if (sale.financeDetails?.financer) {
         financers.add(sale.financeDetails.financer);
       }
@@ -425,8 +538,8 @@ const SalesBackup2 = () => {
   // Loading skeleton component
   const LoadingSkeleton = () => (
     <div className="space-y-8">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
+        {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
             className="bg-white dark:bg-boxdark rounded-lg shadow-card p-6 border border-stroke dark:border-strokedark animate-pulse"
@@ -451,9 +564,24 @@ const SalesBackup2 = () => {
     </div>
   );
 
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
+  const paginatedSales = filteredSales.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  const handlePageJump = () => {
+    const page = parseInt(pageInput, 10);
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+    setPageInput('');
+  };
+
   return (
     <div className="md:px-4 py-8">
-      {message && message.type === 'error' && (
+      {message && (
         <Message
           message={message.text}
           type={message.type}
@@ -533,7 +661,7 @@ const SalesBackup2 = () => {
         <LoadingSkeleton />
       ) : (
         <>
-          <div className="grid grid-cols-2 text-sm md:text-lg lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+          <div className="grid grid-cols-2 text-sm md:text-lg lg:grid-cols-5 gap-4 lg:gap-6 mb-8">
             <StatCard
               title="Total Revenue"
               value={metrics.totalSales?.toLocaleString()}
@@ -545,6 +673,12 @@ const SalesBackup2 = () => {
               value={metrics.totalProfit?.toLocaleString() || '-'}
               valueType="currency"
               icon={TrendingUp}
+            />
+            <StatCard
+              title="Total Commission"
+              value={metrics.totalCommission?.toLocaleString() || '-'}
+              valueType="currency"
+              icon={Award}
             />
             <StatCard
               title="Total Units Sold"
@@ -575,12 +709,6 @@ const SalesBackup2 = () => {
               <TabButton
                 selected={activeTab === 1}
                 onClick={() => setActiveTab(1)}
-              >
-                Products
-              </TabButton>
-              <TabButton
-                selected={activeTab === 2}
-                onClick={() => setActiveTab(2)}
               >
                 Financing
               </TabButton>
@@ -688,22 +816,19 @@ const SalesBackup2 = () => {
                             `KES ${Number(value).toLocaleString()}`
                           }
                         />
+                        <Legend />
                         <Bar
                           dataKey="sales"
                           name="Revenue"
                           fill="#42C8B7"
                           activeBar={false}
                         />
-                        <Bar dataKey="profit" name="Profit" activeBar={false}>
-                          {metrics.productMetrics
-                            .slice(0, 5)
-                            .map((entry, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={entry.profit > 0 ? 'blue' : 'red'}
-                              />
-                            ))}
-                        </Bar>
+                        <Bar
+                          dataKey="profit"
+                          name="Profit"
+                          fill="#80CAEE"
+                          activeBar={false}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -713,75 +838,6 @@ const SalesBackup2 = () => {
           )}
 
           {activeTab === 1 && (
-            <div className="bg-white dark:bg-boxdark rounded-lg shadow-card border border-stroke dark:border-strokedark overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-stroke dark:border-strokedark bg-gray-2 dark:bg-meta-4">
-                      <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-bodydark2 uppercase">
-                        Product
-                      </th>
-                      <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-bodydark2 uppercase">
-                        Model
-                      </th>
-                      <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-bodydark2 uppercase">
-                        Category
-                      </th>
-                      <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
-                        Revenue
-                      </th>
-                      <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
-                        Units
-                      </th>
-                      <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
-                        Profit
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-stroke dark:divide-strokedark">
-                    {metrics.productMetrics.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={6}
-                          className="py-8 text-center text-gray-500"
-                        >
-                          No data available
-                        </td>
-                      </tr>
-                    ) : (
-                      metrics.productMetrics.map((item, index) => (
-                        <tr
-                          key={index}
-                          className="hover:bg-gray-2 dark:hover:bg-meta-4 transition-colors duration-200"
-                        >
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                            {item.name || 'Unknown'}
-                          </td>
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                            {item.model || '-'}
-                          </td>
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                            {item.category || '-'}
-                          </td>
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
-                            {item.sales.toLocaleString()}
-                          </td>
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
-                            {item.units}
-                          </td>
-                          <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
-                            {item.profit.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 2 && (
             <div className="grid grid-cols-1 gap-6">
               <div className="bg-white dark:bg-boxdark rounded-lg shadow-card p-6 border border-stroke dark:border-strokedark">
                 <h2 className="text-title-xs md:text-title-sm lg:text-title-md font-semibold mb-4 text-black dark:text-white">
@@ -897,96 +953,149 @@ const SalesBackup2 = () => {
               <h2 className="text-title-sm font-semibold text-black dark:text-white">
                 Sales Records
               </h2>
-              <span className="text-xs text-bodydark bg-bodydark/10 dark:bg-bodydark2/20 px-2 py-1 rounded">
-                {salesData?.sales?.length || 0} records
-              </span>
+              <div className="relative">
+                <span className="absolute top-1/2 left-3 -translate-y-1/2">
+                  <Search className="w-4 h-4 text-bodydark" />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search sales..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-transparent pl-9 pr-4 text-black dark:text-white focus:outline-none"
+                />
+              </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-auto">
                 <thead>
-                  <tr className="border-b border-stroke dark:border-strokedark bg-gray-2 dark:bg-meta-4">
-                    <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-bodydark2 uppercase">
+                  <tr className="bg-gray-2 text-left dark:bg-meta-4">
+                    <th className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white">
                       Date
                     </th>
-                    <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-bodydark2 uppercase">
+                    <th className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white">
                       Product
                     </th>
-                    <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-bodydark2 uppercase">
+                    <th className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white">
                       Shop
                     </th>
-                    <th className="px-4 md:px-6 py-4 text-left text-xs font-medium text-bodydark2 uppercase">
+                    <th className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white">
                       Seller
                     </th>
-                    <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
+                    <th className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white text-right">
                       Units
                     </th>
-                    <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
+                    <th className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white text-right">
                       Revenue
                     </th>
-                    <th className="px-4 md:px-6 py-4 text-right text-xs font-medium text-bodydark2 uppercase">
+                    <th className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white text-right">
                       Profit
                     </th>
-                    <th className="px-4 md:px-6 py-4 text-center text-xs font-medium text-bodydark2 uppercase">
+                    <th className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white text-right">
+                      Commission
+                    </th>
+                    <th className="py-4 px-4 font-medium text-black dark:text-white text-center">
                       Finance
+                    </th>
+                    <th className="py-4 px-4 font-medium text-black dark:text-white text-center">
+                      Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stroke dark:divide-strokedark">
-                  {!salesData?.sales || salesData.sales.length === 0 ? (
+                <tbody>
+                  {paginatedSales.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={8}
-                        className="py-8 text-center text-gray-500"
+                        colSpan={10}
+                        className="py-10 text-center text-bodydark"
                       >
-                        No sales records found
+                        No sales records found.
                       </td>
                     </tr>
                   ) : (
-                    salesData.sales.map((sale, index) => (
+                    paginatedSales.map((sale, index) => (
                       <tr
                         key={index}
-                        className="hover:bg-gray-2 dark:hover:bg-meta-4 transition-colors duration-200"
+                        className="hover:bg-gray-2 dark:hover:bg-meta-4"
                       >
-                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                          {new Date(sale.createdAt).toLocaleDateString()}
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                          <p className="text-black dark:text-white">
+                            {new Date(sale.createdAt).toLocaleDateString()}
+                          </p>
                         </td>
-                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                          {sale.productname || 'Unknown Product'}
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                          <p className="font-medium text-black dark:text-white">
+                            {sale.productname || 'Unknown Product'}
+                          </p>
+                          <p className="text-xs text-bodydark">
+                            {sale.productmodel || '-'}
+                          </p>
                         </td>
-                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                          {sale.shopname || '-'}
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                          <p className="text-black dark:text-white">
+                            {sale.shopname || '-'}
+                          </p>
                         </td>
-                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                          {sale.sellername || '-'}
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                          <p className="text-black dark:text-white">
+                            {sale.sellername || '-'}
+                          </p>
                         </td>
-                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
-                          {sale.totaltransaction}
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-right">
+                          <p className="text-black dark:text-white">
+                            {sale.totaltransaction}
+                          </p>
                         </td>
-                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
-                          {typeof sale.soldprice === 'string'
-                            ? sale.soldprice
-                            : sale.soldprice?.toLocaleString()}
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-right">
+                          <p className="text-black dark:text-white">
+                            {typeof sale.soldprice === 'string'
+                              ? sale.soldprice
+                              : sale.soldprice?.toLocaleString()}
+                          </p>
                         </td>
-                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-black dark:text-white">
-                          {sale.netprofit?.toLocaleString()}
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-right">
+                          <p
+                            className={`${
+                              sale.netprofit < 0
+                                ? 'text-red-500'
+                                : 'text-green-500'
+                            }`}
+                          >
+                            {sale.netprofit?.toLocaleString()}
+                          </p>
                         </td>
-                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-center">
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-right">
+                          <p className="text-black dark:text-white">
+                            {sale.commission?.toLocaleString()}
+                          </p>
+                        </td>
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
                           {sale.financeDetails?.financer ? (
-                            <span
-                              className={`px-2 py-1 rounded text-xs ${
-                                sale.financeDetails.financeStatus === 'pending'
-                                  ? 'bg-warning/10 text-warning'
-                                  : 'bg-success/10 text-success'
+                            <p
+                              className={`inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium ${
+                                sale.financeDetails.financeStatus ===
+                                'pending'
+                                  ? 'bg-warning text-warning'
+                                  : 'bg-success text-success'
                               }`}
                             >
-                              {sale.financeDetails.financeStatus === 'pending'
-                                ? 'Pending'
-                                : 'Paid'}
-                            </span>
+                              {sale.financeDetails.financeStatus}
+                            </p>
                           ) : (
-                            <span className="text-xs text-bodydark">None</span>
+                            <p className="text-bodydark">None</p>
                           )}
+                        </td>
+                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
+                          <button
+                            onClick={() => {
+                              setSelectedSale(sale);
+                              setIsCommissionModalOpen(true);
+                            }}
+                            className="bg-primary hover:bg-primary/90 text-white px-3 py-1 rounded-md text-xs font-medium"
+                          >
+                            Pay
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -996,32 +1105,42 @@ const SalesBackup2 = () => {
             </div>
 
             {/* Pagination */}
-            {salesData?.totalPages && salesData.totalPages > 1 && (
+            {totalPages > 1 && (
               <div className="px-6 py-4 border-t border-stroke dark:border-strokedark flex justify-between items-center">
                 <div className="text-sm text-bodydark">
-                  Showing page {salesData.currentPage} of {salesData.totalPages}
+                  Showing page {currentPage} of {totalPages}
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => {
-                      // Pagination logic would go here
-                    }}
-                    disabled={salesData.currentPage <= 1}
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage <= 1}
                     className={`px-3 py-1 rounded text-sm ${
-                      salesData.currentPage <= 1
+                      currentPage <= 1
                         ? 'bg-gray-100 text-bodydark cursor-not-allowed dark:bg-boxdark-2'
                         : 'bg-primary text-white hover:bg-primary/90'
                     }`}
                   >
                     Previous
                   </button>
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      value={pageInput}
+                      onChange={(e) => setPageInput(e.target.value)}
+                      className="w-12 text-center border-stroke dark:border-strokedark bg-transparent rounded-md px-2 py-1 text-sm focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
+                    />
+                    <button
+                      onClick={handlePageJump}
+                      className="ml-2 px-3 py-1 rounded text-sm bg-primary text-white hover:bg-primary/90"
+                    >
+                      Go
+                    </button>
+                  </div>
                   <button
-                    onClick={() => {
-                      // Pagination logic would go here
-                    }}
-                    disabled={salesData.currentPage >= salesData.totalPages}
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage >= totalPages}
                     className={`px-3 py-1 rounded text-sm ${
-                      salesData.currentPage >= salesData.totalPages
+                      currentPage >= totalPages
                         ? 'bg-gray-100 text-bodydark cursor-not-allowed dark:bg-boxdark-2'
                         : 'bg-primary text-white hover:bg-primary/90'
                     }`}
@@ -1034,11 +1153,9 @@ const SalesBackup2 = () => {
           </div>
 
           {/* Export Options */}
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-end gap-4">
             <button
-              onClick={() => {
-                // Export logic would go here
-              }}
+              onClick={exportToCsv}
               className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
             >
               <svg
@@ -1058,6 +1175,11 @@ const SalesBackup2 = () => {
           </div>
         </>
       )}
+      <CommissionPaymentModal
+        isOpen={isCommissionModalOpen}
+        onClose={() => setIsCommissionModalOpen(false)}
+        onPaymentSubmit={handleCommissionPayment}
+      />
     </div>
   );
 };

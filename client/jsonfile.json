@@ -1,0 +1,380 @@
+{
+  "success": true,
+  "message": "General sales data retrieved successfully",
+  "data": {
+    "analytics": {
+      "analytics": {
+        "sellerAnalytics": [
+          {
+            "sellerName": "MERCY WANJIRU MWANGI ",
+            "totalSales": 75800,
+            "netprofit": 10200,
+            "totaltransacted": 27
+          }
+        ],
+        "productAnalytics": [
+          {
+            "productName": "REDMI 14C 256/8GB",
+            "totalSales": 16900,
+            "netprofit": 2900,
+            "totaltransacted": 1
+          },
+          {
+            "productName": "INFINIX HOT 50i 128/6GB",
+            "totalSales": 15500,
+            "netprofit": 2200,
+            "totaltransacted": 1
+          },
+          {
+            "productName": "SAMSUNG GALAXY A05 - 64/4GB",
+            "totalSales": 12000,
+            "netprofit": 1000,
+            "totaltransacted": 1
+          },
+          {
+            "productName": "S-COLOR S800",
+            "totalSales": 5000,
+            "netprofit": -300,
+            "totaltransacted": 1
+          },
+          {
+            "productName": "LUXUS U72  16/1GB",
+            "totalSales": 5000,
+            "netprofit": 1200,
+            "totaltransacted": 1
+          },
+          {
+            "productName": "KGTEL",
+            "totalSales": 2000,
+            "netprofit": 400,
+            "totaltransacted": 2
+          },
+          {
+            "productName": "IFINEX",
+            "totalSales": 1000,
+            "netprofit": 200,
+            "totaltransacted": 1
+          },
+          {
+            "productName": "SKYTEL",
+            "totalSales": 1000,
+            "netprofit": 200,
+            "totaltransacted": 1
+          },
+          {
+            "productName": "OKING",
+            "totalSales": 1000,
+            "netprofit": 250,
+            "totaltransacted": 1
+          },
+          {
+            "productName": "LUXUS ",
+            "totalSales": 1000,
+            "netprofit": 300,
+            "totaltransacted": 1
+          }
+        ],
+        "totalProducts": 10,
+        "totalSellers": 1
+      }
+    },
+    "sales": {
+      "sales": [
+        {
+          "soldprice": 13000,
+          "netprofit": 900,
+          "commission": 600,
+          "IMEI": "860350074681469",
+          "productcost": 11500,
+          "productmodel": "Y03",
+          "productname": "VIVO Y03   64/4GB",
+          "totalnetprice": 13000,
+          "totalsoldunits": 1,
+          "totaltransaction": 1,
+          "_id": {
+            "productId": 1034,
+            "sellerId": 10,
+            "shopId": 2
+          },
+          "financeDetails": {
+            "financeStatus": "paid",
+            "financeAmount": 11500,
+            "financer": "captech limited"
+          },
+          "CategoryId": 37,
+          "createdAt": "2025-05-05T08:11:10.000Z",
+          "batchNumber": "24/4/2025",
+          "category": "mobiles",
+          "sellername": "MERCY WANJIRU MWANGI ",
+          "shopname": "CAPTECH 001 AA"
+        },
+        {
+          "soldprice": 5000,
+          "netprofit": 1200,
+          "commission": 300,
+          "IMEI": "355623058681826",
+          "productcost": 3500,
+          "productmodel": "U72 16/1GB",
+          "productname": "LUXUS U72  16/1GB",
+          "totalnetprice": 5000,
+          "totalsoldunits": 1,
+          "totaltransaction": 1,
+          "_id": {
+            "productId": 155,
+            "sellerId": 10,
+            "shopId": 2
+          },
+          "financeDetails": {
+            "financeStatus": "paid",
+            "financeAmount": 3500,
+            "financer": "captech limited"
+          },
+          "CategoryId": 62,
+          "createdAt": "2025-05-05T08:10:24.000Z",
+          "batchNumber": "4/4/2025",
+          "category": "mobiles",
+          "sellername": "MERCY WANJIRU MWANGI ",
+          "shopname": "CAPTECH 001 AA"
+        },
+        {
+          "soldprice": 15500,
+          "netprofit": 2200,
+          "commission": 300,
+          "IMEI": "359601653321861",
+          "productcost": 13000,
+          "productmodel": "HOT 50i 128/6GB",
+          "productname": "INFINIX HOT 50i 128/6GB",
+          "totalnetprice": 15500,
+          "totalsoldunits": 1,
+          "totaltransaction": 1,
+          "_id": {
+            "productId": 953,
+            "sellerId": 10,
+            "shopId": 2
+          },
+          "financeDetails": {
+            "financeStatus": "paid",
+            "financeAmount": 13000,
+            "financer": "captech limited"
+          },
+          "CategoryId": 50,
+          "createdAt": "2025-05-01T09:29:32.000Z",
+          "batchNumber": "11/4/2025",
+          "category": "mobiles",
+          "sellername": "MERCY WANJIRU MWANGI ",
+          "shopname": "CAPTECH 001 AA"
+        },
+        {
+          "soldprice": 1000,
+          "netprofit": 300,
+          "commission": 0,
+          "IMEI": "351989092555894",
+          "productcost": 700,
+          "productmodel": "LUXUS ",
+          "productname": "LUXUS ",
+          "totalnetprice": 1000,
+          "totalsoldunits": 1,
+          "totaltransaction": 1,
+          "_id": {
+            "productId": 952,
+            "sellerId": 10,
+            "shopId": 2
+          },
+          "financeDetails": {
+            "financeStatus": "paid",
+            "financeAmount": 700,
+            "financer": "captech limited"
+          },
+          "CategoryId": 1,
+          "createdAt": "2025-05-01T07:35:15.000Z",
+          "batchNumber": "11/4/2025",
+          "category": "mobiles",
+          "sellername": "MERCY WANJIRU MWANGI ",
+          "shopname": "CAPTECH 001 AA"
+        },
+        {
+          "soldprice": 1000,
+          "netprofit": 250,
+          "commission": 0,
+          "IMEI": "862810053924451",
+          "productcost": 750,
+          "productmodel": "OKING",
+          "productname": "OKING",
+          "totalnetprice": 1000,
+          "totalsoldunits": 1,
+          "totaltransaction": 1,
+          "_id": {
+            "productId": 467,
+            "sellerId": 10,
+            "shopId": 2
+          },
+          "financeDetails": {
+            "financeStatus": "paid",
+            "financeAmount": 750,
+            "financer": "captech limited"
+          },
+          "CategoryId": 9,
+          "createdAt": "2025-04-29T18:04:00.000Z",
+          "batchNumber": "5/4/2025",
+          "category": "mobiles",
+          "sellername": "MERCY WANJIRU MWANGI ",
+          "shopname": "CAPTECH 001 AA"
+        },
+        {
+          "soldprice": 1000,
+          "netprofit": 200,
+          "commission": 0,
+          "IMEI": "357052470358094",
+          "productcost": 800,
+          "productmodel": "SKYTEL",
+          "productname": "SKYTEL",
+          "totalnetprice": 1000,
+          "totalsoldunits": 1,
+          "totaltransaction": 1,
+          "_id": {
+            "productId": 185,
+            "sellerId": 10,
+            "shopId": 2
+          },
+          "financeDetails": {
+            "financeStatus": "paid",
+            "financeAmount": 800,
+            "financer": "captech limited"
+          },
+          "CategoryId": 7,
+          "createdAt": "2025-04-29T14:23:09.000Z",
+          "batchNumber": "4/4/2025",
+          "category": "mobiles",
+          "sellername": "MERCY WANJIRU MWANGI ",
+          "shopname": "CAPTECH 001 AA"
+        },
+        {
+          "soldprice": 5000,
+          "netprofit": -300,
+          "commission": 300,
+          "IMEI": "6927680348014",
+          "productcost": 5000,
+          "productmodel": "S800",
+          "productname": "S-COLOR S800",
+          "totalnetprice": 5000,
+          "totalsoldunits": 1,
+          "totaltransaction": 1,
+          "_id": {
+            "productId": 697,
+            "sellerId": 10,
+            "shopId": 2
+          },
+          "financeDetails": {
+            "financeStatus": "paid",
+            "financeAmount": 5000,
+            "financer": "captech limited"
+          },
+          "CategoryId": 97,
+          "createdAt": "2025-04-29T06:03:33.000Z",
+          "batchNumber": "6/4/2025",
+          "category": "mobiles",
+          "sellername": "MERCY WANJIRU MWANGI ",
+          "shopname": "CAPTECH 001 AA"
+        },
+        {
+          "soldprice": 1000,
+          "netprofit": 200,
+          "commission": 0,
+          "IMEI": "865195075916538",
+          "productcost": 800,
+          "productmodel": "IFINEX",
+          "productname": "IFINEX",
+          "totalnetprice": 1000,
+          "totalsoldunits": 1,
+          "totaltransaction": 1,
+          "_id": {
+            "productId": 296,
+            "sellerId": 10,
+            "shopId": 2
+          },
+          "financeDetails": {
+            "financeStatus": "paid",
+            "financeAmount": 800,
+            "financer": "captech limited"
+          },
+          "CategoryId": 3,
+          "createdAt": "2025-04-28T06:14:54.000Z",
+          "batchNumber": "5/4/2025",
+          "category": "mobiles",
+          "sellername": "MERCY WANJIRU MWANGI ",
+          "shopname": "CAPTECH 001 AA"
+        },
+        {
+          "soldprice": 1000,
+          "netprofit": 200,
+          "commission": 0,
+          "IMEI": "865444034844401",
+          "productcost": 800,
+          "productmodel": "KGTEL",
+          "productname": "KGTEL",
+          "totalnetprice": 1000,
+          "totalsoldunits": 1,
+          "totaltransaction": 1,
+          "_id": {
+            "productId": 337,
+            "sellerId": 10,
+            "shopId": 2
+          },
+          "financeDetails": {
+            "financeStatus": "paid",
+            "financeAmount": 800,
+            "financer": "captech limited"
+          },
+          "CategoryId": 2,
+          "createdAt": "2025-04-27T09:46:22.000Z",
+          "batchNumber": "5/4/2025",
+          "category": "mobiles",
+          "sellername": "MERCY WANJIRU MWANGI ",
+          "shopname": "CAPTECH 001 AA"
+        },
+        {
+          "soldprice": 16900,
+          "netprofit": 2900,
+          "commission": 300,
+          "IMEI": "861109075625902",
+          "productcost": 13700,
+          "productmodel": "14C  256/8GB",
+          "productname": "REDMI 14C 256/8GB",
+          "totalnetprice": 16900,
+          "totalsoldunits": 1,
+          "totaltransaction": 1,
+          "_id": {
+            "productId": 137,
+            "sellerId": 10,
+            "shopId": 2
+          },
+          "financeDetails": {
+            "financeStatus": "paid",
+            "financeAmount": 13700,
+            "financer": "captech limited"
+          },
+          "CategoryId": 57,
+          "createdAt": "2025-04-26T11:56:13.000Z",
+          "batchNumber": "4/4/2025",
+          "category": "mobiles",
+          "sellername": "MERCY WANJIRU MWANGI ",
+          "shopname": "CAPTECH 001 AA"
+        }
+      ],
+      "totalSales": 75800,
+      "totalProfit": 8750,
+      "totalCommission": 2800,
+      "financeSales": 0,
+      "totalPages": 3,
+      "currentPage": 1
+    },
+    "salesPerMonth": [],
+    "totalSales": 75800,
+    "totalProfit": 8750,
+    "totalCommission": 2800,
+    "totalfinancePending": 0,
+    "totalPages": 3,
+    "currentPage": 1,
+    "itemsPerPage": 10
+  }
+}

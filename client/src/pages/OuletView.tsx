@@ -64,6 +64,10 @@ const OutletView: React.FC = () => {
     text: string;
     type: string;
   } | null>(null);
+  const [showPendingStockModal, setShowPendingStockModal] = useState(false);
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const [lowStockPage, setLowStockPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const token: string | null = localStorage.getItem('tk') || null;
   const decoded: DecodedToken | null = jwt_decode(token!) || null;
   const sections = [
@@ -77,15 +81,16 @@ const OutletView: React.FC = () => {
         }
       : null,
     {
-      name: 'Phones',
-      key: 'Phones',
-      icon: PhoneIcon,
+      name: 'Inventory',
+      key: 'Inventory',
+      icon: Package,
     },
     {
-      name: 'Accessories',
-      key: 'Accessories',
-      icon: HeadphonesIcon,
+        name: 'Low Stock',
+        key: 'Low Stock',
+        icon: AlertTriangle,
     },
+    
     userPermissions === 'manager' || userPermissions === 'superuser'
       ? {
           name: 'Outlet Sellers',
@@ -148,7 +153,7 @@ const OutletView: React.FC = () => {
   const [outletFormData, setOutletFormData] = useState({
     name: '',
     address: '',
-    id: '',
+    _id: '',
   });
 
   const [assignmentData, setAssignmentData] = useState({
@@ -299,7 +304,7 @@ const OutletView: React.FC = () => {
         setOutletFormData({
           name: assignedShop.shopName,
           address: assignedShop.address,
-          id: assignedShop.id,
+          _id: assignedShop._id,
         });
         setShopName(assignedShop.shopName);
       }
@@ -355,7 +360,7 @@ const OutletView: React.FC = () => {
         setOutletFormData({
           name: outlet.name,
           address: outlet.address,
-          id: outlet.id,
+          _id: outlet._id,
         });
       }
     } catch (error) {}
@@ -377,12 +382,17 @@ const OutletView: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const payload = {
+        shopName: outletFormData.name,
+        address: outletFormData.address,
+    };
+
     try {
       const response = await axios.put(
         `${import.meta.env.VITE_SERVER_HEAD}/api/shop/update/${
-          outletFormData.id
+          outletFormData._id
         }`,
-        outletFormData,
+        payload,
         { withCredentials: true },
       );
 
@@ -392,7 +402,7 @@ const OutletView: React.FC = () => {
         setOutletFormData({
           name: outletUpdated.name,
           address: outletUpdated.address,
-          id: outletUpdated.id,
+          _id: outletFormData._id, // Keep the existing _id
         });
       } else {
         alert(`Error: ${response.data.message}`);
@@ -402,31 +412,21 @@ const OutletView: React.FC = () => {
     }
   };
 
-  const items =
-    activeSection === 'Phones' ? shop?.phoneItems : shop?.stockItems;
+  const paginatedInventory = useMemo(() => {
+    const confirmedInventory = [...(shop?.phoneItems || []), ...(shop?.stockItems || [])];
+    const startIndex = (inventoryPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return confirmedInventory.slice(startIndex, endIndex);
+  }, [shop, inventoryPage, itemsPerPage]);
 
-  const groupedItems = useMemo(() => {
-    if (!items) return [];
+  const paginatedLowStock = useMemo(() => {
+    const lowStockItems = shop?.lowStockItems || [];
+    const startIndex = (lowStockPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return lowStockItems.slice(startIndex, endIndex);
+  }, [shop, lowStockPage, itemsPerPage]);
 
-    const grouped = items.reduce((acc: any, item: any) => {
-      const categoryId = item.categoryId.id;
-
-      if (!acc[categoryId]) {
-        acc[categoryId] = {
-          categoryId: item.categoryId,
-          items: [],
-          quantity: 0,
-        };
-      }
-
-      acc[categoryId].items.push(item.stock);
-      acc[categoryId].quantity += item.quantity;
-
-      return acc;
-    }, {});
-
-    return Object.values(grouped);
-  }, [items]);
+  
 
   const renderContent = () => {
     switch (activeSection) {
@@ -435,13 +435,7 @@ const OutletView: React.FC = () => {
         const stats = calculateInventoryStats();
         if (!stats) return null;
 
-        const phonesProgress =
-          (stats.totalPhones / (stats.totalPhones + stats.totalAccessories)) *
-            100 || 0;
-        const accessoriesProgress =
-          (stats.totalAccessories /
-            (stats.totalPhones + stats.totalAccessories)) *
-            100 || 0;
+        const pendingStock = [...(shop?.newPhoneItem || []), ...(shop?.newAccessory || [])];
 
         return (
           <div className="space-y-6">
@@ -508,248 +502,186 @@ const OutletView: React.FC = () => {
               </div>
             </div>
 
-            {/* Detailed Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow">
-                <div className="p-2 text-xl font-bold">Phones Inventory</div>
-                <CardContent className="space-y-4 dark:text-bodydark">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Total Units</span>
-                      <span className="font-medium">{stats.totalPhones}</span>
-                    </div>
-                    <div
-                      className={`h-2 rounded-md
-                      ${
-                        accessoriesProgress < 20
-                          ? 'border border-red-500 bg-red-500'
-                          : accessoriesProgress >= 20 &&
-                            accessoriesProgress < 50
-                          ? 'bg-yellow-500 border-yellow-500'
-                          : 'bg-primary border-primary'
-                      }
-                        `}
-                      style={{
-                        width: `${phonesProgress}%`,
-                      }}
-                    ></div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Models</span>
-                      <span className="font-medium">{stats.phoneModels}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Products</span>
-                      <span className="font-medium">
-                        {stats.phoneCategories}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </div>
-
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow">
-                <div className="p-2 text-xl font-bold">
-                  Accessories Inventory
-                </div>
-                <CardContent className="space-y-4 dark:text-bodydark">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Total Units</span>
-                      <span className="font-medium">
-                        {stats.totalAccessories}
-                      </span>
-                    </div>
-                    <div
-                      className={`h-2 rounded-md
-                        ${
-                          accessoriesProgress < 20
-                            ? 'border border-red-500 bg-red-500'
-                            : accessoriesProgress >= 20 &&
-                              accessoriesProgress < 50
-                            ? 'bg-yellow-500 border-yellow-500'
-                            : 'bg-primary border-primary'
-                        }
-                        `}
-                      style={{
-                        width: `${accessoriesProgress}%`,
-                      }}
-                    >
-                      {}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Models</span>
-                      <span className="font-medium">
-                        {stats.accessoryModels}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Categories</span>
-                      <span className="font-medium">
-                        {stats.accessoryCategories}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </div>
+            {/* Pending Stock Button */}
+            <div className="flex justify-end gap-4">
+                <button onClick={() => navigate(`/shop/sales?shopId=${shop?._id}`)} className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    View Sales Report
+                </button>
+                <button onClick={() => setShowPendingStockModal(true)} className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                    <Package className="w-4 h-4 mr-2" />
+                    View Pending Stock
+                    {pendingStock.length > 0 && <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">{pendingStock.length}</span>}
+                </button>
             </div>
+
+            {/* Pending Stock Modal */}
+            {showPendingStockModal && (
+                <div className="fixed inset-0 w-full h-full z-999 bg-black bg-opacity-50 flex justify-center items-center px-4">
+                    <div className="bg-white dark:bg-boxdark rounded-lg w-full max-w-4xl max-h-full overflow-y-auto">
+                        <div className="p-4 border-b border-gray-200 dark:border-strokedark flex justify-between items-center">
+                            <h2 className="text-lg font-semibold text-black dark:text-white">Pending Stock</h2>
+                            <XIcon className="hover:scale-125 transition-all duration-300 cursor-pointer" onClick={() => setShowPendingStockModal(false)} />
+                        </div>
+                        <div className="p-4">
+                            <div className="max-w-full overflow-x-auto">
+                                <table className="w-full table-auto mx-auto">
+                                    <thead className="text-xs">
+                                        <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                                            <th className="p-3">#</th>
+                                            <th className="p-3">Name</th>
+                                            <th className="p-3">Model</th>
+                                            <th className="p-3">Brand</th>
+                                            <th className="p-3">Quantity</th>
+                                            <th className="p-3">IMEI</th>
+                                            <th className="p-3">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-xs md:text-sm lg:text-base text-center">
+                                        {pendingStock.map((item: any, index: number) => (
+                                            <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
+                                                index % 2 === 1
+                                                ? 'bg-bodydark3 dark:bg-meta-4'
+                                                : 'bg-white dark:bg-boxdark'
+                                            }`}>
+                                                <td className="p-3">{index + 1}</td>
+                                                <td className="p-3 font-medium">{item.categoryId.itemName}</td>
+                                                <td className="p-3">{item.categoryId.itemModel}</td>
+                                                <td className="p-3">{item.categoryId.brand}</td>
+                                                <td className="p-3">{item.quantity}</td>
+                                                <td className="p-3">{item.stock.IMEI}</td>
+                                                <td className="p-3">
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                        item.status.toLowerCase() === 'pending'
+                                                        ? 'bg-yellow-100 text-yellow-800'
+                                                        : 'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                        {item.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
           </div>
         );
       }
-      case 'Phones':
-      case 'Accessories': {
+      case 'Inventory': {
         return (
-          <>
-            {/* Request Modal */}
-            {showRequestModal && (
-              <div className="fixed inset-0 w-full h-full z-999 bg-transparent flex justify-center items-center px-4">
-                <div className="absolute w-full h-full bg-gray-500 opacity-50 dark:opacity-20 " />
-                <div className="bg-bodydark2 w-full md:w-3/4 lg:w-1/3 dark:bg-boxdark-2 rounded-lg w-1/2 h-1/2 z-9999 text-white">
-                  <div className="p-4 w-full">
-                    <div className="flex justify-between">
-                      <h2 className="text-lg font-semibold text-white mb-4">
-                        Request Item
-                      </h2>
-                      <XIcon
-                        className="hover:scale-150 transition-all duration-300 cursor-pointer"
-                        onClick={() => setRequestModalActive(false)}
-                      />
-                    </div>
-                    <div className="space-y-4">
-                      {shop?.sellers
-                        ?.filter((seller) => seller.status === 'assigned')
-                        .map((seller) => (
-                          <div
-                            key={seller.id}
-                            className="flex items-center justify-between p-2 bg-gray-800 rounded-lg"
-                          >
-                            <div>
-                              <p className="text-sm font-medium">
-                                {seller.name}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {seller.phone || 'Not Provided'}
-                              </p>
-                            </div>
-                            <a
-                              href={`tel:${seller.phone}`}
-                              className="text-blue-400 hover:text-blue-600"
-                            >
-                              Call
-                            </a>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
+            <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
+                <div className="p-4 bg-gray-50 dark:bg-meta-4">
+                    <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">Confirmed Inventory</h2>
                 </div>
-              </div>
-            )}
-            <div className="bg-bodydark3 dark:bg-boxdark rounded-lg shadow-md">
-              <div className="p-4 bg-gray-50 dark:bg-meta-4">
-                <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">
-                  Inventory /{' '}
-                  <span className="text-sm text-primary">{activeSection}</span>
-                </h2>
-              </div>
-              <div className="max-w-full overflow-x-auto">
-                <table className="w-full table-auto mx-auto">
-                  <thead className="text-xs">
-                    <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
-                      <th className="p-3">#</th>
-                      <th className="p-3">Name</th>
-                      <th className="p-3">Model</th>
-                      <th className="p-3">Brand</th>
-                      <th className="p-3">Total Units</th>
-                      <th className="p-3">Price Range (KES)</th>
-                      <th className="p-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-xs md:text-sm lg:text-base text-center">
-                    {loading ? (
-                      <tr>
-                        <td colSpan={7} className="h-20 w-full text-center">
-                          <div className="flex justify-center items-center h-full">
-                            <CircularProgress />
-                          </div>
-                        </td>
-                      </tr>
-                    ) : !groupedItems || groupedItems.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={7}
-                          className="py-4 text-center text-black dark:text-white h-24"
-                        >
-                          No {activeSection} found
-                        </td>
-                      </tr>
-                    ) : (
-                      groupedItems.map((group: any, index: number) => (
-                        <tr
-                          key={group.categoryId.id}
-                          className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors
-                        ${
-                          index % 2 === 1
-                            ? 'bg-bodydark3 dark:bg-meta-4'
-                            : 'bg-white dark:bg-boxdark'
-                        }`}
-                        >
-                          <td className="p-3">{index + 1}</td>
-                          <td className="p-3 font-medium">
-                            {group.categoryId.itemName}
-                          </td>
-                          <td className="p-3">{group.categoryId.itemModel}</td>
-                          <td className="p-3">{group.categoryId.brand}</td>
-                          <td className="p-3">
-                            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary">
-                              {group.quantity}
-                            </span>
-                          </td>
-                          <td className="p-3">
-                            <span className="text-red-500">
-                              {group.categoryId.minPrice}
-                            </span>
-                            {' - '}
-                            <span className="text-blue-500">
-                              {group.categoryId.maxPrice}
-                            </span>
-                          </td>
-                          <td className="p-3 text-center">
-                            <button className="w-full flex justify-center items-center">
-                              {userPermissions === 'manager' ||
-                              userPermissions === 'superuser' ? (
-                                <Eye
-                                  onClick={() =>
-                                    navigate(
-                                      `/outlet/inventory/${group.categoryId.id}`,
-                                    )
-                                  }
-                                  className="h-4 w-4"
-                                />
-                              ) : (
-                                <Shuffle
-                                  onClick={() => setRequestModalActive(true)}
-                                  className="h-4 w-4"
-                                />
-                              )}
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                <div className="max-w-full overflow-x-auto">
+                    <table className="w-full table-auto mx-auto">
+                        <thead className="text-xs">
+                            <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                                <th className="p-3">#</th>
+                                <th className="p-3">Name</th>
+                                <th className="p-3">Model</th>
+                                <th className="p-3">Brand</th>
+                                <th className="p-3">Quantity</th>
+                                <th className="p-3">Cost</th>
+                                <th className="p-3">IMEI/Batch</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-xs md:text-sm lg:text-base text-center">
+                            {paginatedInventory.map((item: any, index: number) => (
+                                <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
+                                    index % 2 === 1
+                                    ? 'bg-bodydark3 dark:bg-meta-4'
+                                    : 'bg-white dark:bg-boxdark'
+                                }`}>
+                                    <td className="p-3">{index + 1}</td>
+                                    <td className="p-3 font-medium">{item.categoryId.itemName}</td>
+                                    <td className="p-3">{item.categoryId.itemModel}</td>
+                                    <td className="p-3">{item.categoryId.brand}</td>
+                                    <td className="p-3">{item.quantity}</td>
+                                    <td className="p-3">{item.stock.productcost}</td>
+                                    <td className="p-3">{item.stock.IMEI || item.stock.batchNumber}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="flex justify-end mt-4 p-4">
+                    <button
+                        onClick={() => setInventoryPage(prev => Math.max(prev - 1, 1))}
+                        disabled={inventoryPage === 1}
+                        className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                    >
+                        Previous
+                    </button>
+                    <button
+                        onClick={() => setInventoryPage(prev => prev + 1)}
+                        disabled={paginatedInventory.length < itemsPerPage}
+                        className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                    >
+                        Next
+                    </button>
+                </div>
             </div>
-          </>
-        );
+        )
       }
+      case 'Low Stock': {
+        return (
+            <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
+                <div className="p-4 bg-gray-50 dark:bg-meta-4">
+                    <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">Low Stock Items</h2>
+                </div>
+                <div className="max-w-full overflow-x-auto">
+                    <table className="w-full table-auto mx-auto">
+                        <thead className="text-xs">
+                            <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                                <th className="p-3">#</th>
+                                <th className="p-3">Name</th>
+                                <th className="p-3">Model</th>
+                                <th className="p-3">Brand</th>
+                                <th className="p-3">Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-xs md:text-sm lg:text-base text-center">
+                            {paginatedLowStock.map((item: any, index: number) => (
+                                <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
+                                    index % 2 === 1
+                                    ? 'bg-bodydark3 dark:bg-meta-4'
+                                    : 'bg-white dark:bg-boxdark'
+                                }`}>
+                                    <td className="p-3">{index + 1}</td>
+                                    <td className="p-3 font-medium">{item.categoryId.itemName}</td>
+                                    <td className="p-3">{item.categoryId.itemModel}</td>
+                                    <td className="p-3">{item.categoryId.brand}</td>
+                                    <td className="p-3">{item.quantity}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="flex justify-end mt-4 p-4">
+                    <button
+                        onClick={() => setLowStockPage(prev => Math.max(prev - 1, 1))}
+                        disabled={lowStockPage === 1}
+                        className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                    >
+                        Previous
+                    </button>
+                    <button
+                        onClick={() => setLowStockPage(prev => prev + 1)}
+                        disabled={paginatedLowStock.length < itemsPerPage}
+                        className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
+        )
+      }
+      
 
       case 'Sellers':
         return (

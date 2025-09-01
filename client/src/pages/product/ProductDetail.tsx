@@ -25,6 +25,7 @@ import { format, set } from 'date-fns';
 import capitalizeFirstLetter from '../../common/Loader/TitleCase';
 import { DecodedToken } from '../../types/decodedToken';
 import jwt_decode from 'jwt-decode';
+import EditProductModal from './EditProductModal';
 
 const useQuery = () => new URLSearchParams(useLocation().search);
 
@@ -54,6 +55,20 @@ const ProductDetail = ({
   const [unitPrice, setUnitPrice] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [selectedBatch, setSelectedBatch] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedProductItem, setSelectedProductItem] = useState<any | null>(
+    null,
+  );
+
+  const handleOpenEditModal = (item: any) => {
+    setSelectedProductItem(item);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedProductItem(null);
+  };
 
   // Item details
   const [IMEI, setIMEI] = useState('');
@@ -65,6 +80,10 @@ const ProductDetail = ({
   const [newserialNumber, setNewSerialNumber] = useState('');
   const [financer, setFinancer] = useState('captech');
   const [addingUnit, setAddingUnit] = useState<boolean>(false);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [supplierId, setSupplierId] = useState('');
+  const [productType, setProductType] = useState('');
+  const [storage, setStorage] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -79,6 +98,21 @@ const ProductDetail = ({
     maxPrice: true,
     minPrice: true,
   });
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_SERVER_HEAD}/api/supplier/supplier`,
+          { withCredentials: true },
+        );
+        setSuppliers(response.data.data);
+      } catch (error) {
+        console.error('Failed to fetch suppliers', error);
+      }
+    };
+    fetchSuppliers();
+  }, []);
 
   const handleDisabled = (fieldName: string, value: boolean) => {
     setDisabledFields((prev) => ({
@@ -116,36 +150,50 @@ const ProductDetail = ({
     event.preventDefault();
     try {
       setAddingUnit(true);
-      // return;
-      const data = {
+
+      const commonDetails = {
         CategoryId: productId,
-        IMEI,
-        serialNumber: newserialNumber,
-        batchNumber: newBatchNumber,
         availableStock: Number(quantity),
-        supplierName,
+        batchNumber: newBatchNumber,
         productcost: Number(productcost),
-        color,
-        stockStatus: 'Available',
+        stockStatus: 'available',
         commission: Number(commission),
         discount: Number(discount),
+        supplierId: Number(supplierId),
+        paymentStatus: 'paid',
+        color,
       };
+
+      let payload;
+      if (product?.itemType === 'mobiles') {
+        payload = {
+          phoneDetails: {
+            ...commonDetails,
+            IMEI,
+            productType: productType,
+            storage: storage,
+          },
+          financeDetails: {
+            financer: financer,
+            financeAmount: financer === 'captech' ? productcost : 0,
+            financeStatus: financer === 'captech' ? 'paid' : 'pending',
+          },
+        };
+      } else {
+        payload = {
+          ...commonDetails,
+          productType: productType,
+          faultyItems: 0,
+        };
+      }
+
       const response = await axios.post(
         product?.itemType === 'mobiles'
           ? `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/add-phone-stock`
-          : `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/create-stock`,
-        {
-          ...(product?.itemType === 'mobiles'
-            ? {
-                phoneDetails: data,
-                financeDetails: {
-                  financer: financer,
-                  financeAmount: financer === 'captech' ? productcost : 0,
-                  financeStatus: financer === 'captech' ? 'paid' : 'pending',
-                },
-              }
-            : data),
-        },
+          : `${
+              import.meta.env.VITE_SERVER_HEAD
+            }/api/inventory/add-accessory-stock`,
+        payload,
         { withCredentials: true },
       );
 
@@ -228,6 +276,15 @@ const ProductDetail = ({
           onClose={() => setMessage(null)}
         />
       )}
+      <EditProductModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        productItem={selectedProductItem}
+        onUpdate={() => {
+          refreshProductData();
+          handleCloseEditModal();
+        }}
+      />
       <div className="p-4 sm:p-6 w-auto">
         {/* Responsive Tabs */}
         <div className="overflow-x-auto -mx-4 sm:mx-0">
@@ -447,7 +504,6 @@ const ProductDetail = ({
                           <input
                             id="quantity"
                             min={1}
-                            defaultValue={1}
                             required
                             type="number"
                             value={quantity}
@@ -459,21 +515,82 @@ const ProductDetail = ({
                         {/* Supplier */}
                         <div className="col-span-1">
                           <label
-                            htmlFor="supplierName"
+                            htmlFor="supplierId"
                             className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
                           >
                             Supplier*
                           </label>
-                          <input
-                            id="supplierName"
-                            type="text"
+                          <select
+                            id="supplierId"
                             required
-                            value={supplierName}
-                            onChange={(e) => setSupplierName(e.target.value)}
-                            placeholder="Techno Mobile Dist."
+                            value={supplierId}
+                            onChange={(e) => setSupplierId(e.target.value)}
                             className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
-                          />
+                          >
+                            <option value="">Select a Supplier</option>
+                            {suppliers.map((supplier) => (
+                              <option key={supplier.id} value={supplier.id}>
+                                {supplier.name}
+                              </option>
+                            ))}
+                          </select>
                         </div>
+                        {product.itemType === 'mobiles' && (
+                          <>
+                            <div>
+                              <label
+                                htmlFor="storage"
+                                className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                              >
+                                Storage (e.g., 8/128GB)
+                              </label>
+                              <input
+                                id="storage"
+                                type="text"
+                                value={storage}
+                                onChange={(e) => setStorage(e.target.value)}
+                                placeholder="8/128GB"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
+                              />
+                            </div>
+                            <div>
+                              <label
+                                htmlFor="productType"
+                                className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                              >
+                                Phone Type
+                              </label>
+                              <input
+                                id="productType"
+                                type="text"
+                                value={productType}
+                                onChange={(e) =>
+                                  setProductType(e.target.value)
+                                }
+                                placeholder="e.g., smartphone"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
+                              />
+                            </div>
+                          </>
+                        )}
+                        {product.itemType === 'accessories' && (
+                          <div>
+                            <label
+                              htmlFor="productTypeAccessory"
+                              className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                            >
+                              Product Type
+                            </label>
+                            <input
+                              id="productTypeAccessory"
+                              type="text"
+                              value={productType}
+                              onChange={(e) => setProductType(e.target.value)}
+                              placeholder="e.g., type-C cable"
+                              className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
+                            />
+                          </div>
+                        )}
                         {/* Financer */}
                         {product.itemType === 'mobiles' && (
                           <div className="col-span-1">
@@ -612,18 +729,27 @@ const ProductDetail = ({
                           </th>
                         )}
                         <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Status
+                          Stock Status
+                        </th>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                          Location
+                        </th>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                          Item Status
                         </th>
                         <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
                           Last Updated
                         </th>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-strokedark">
+                                        <tbody className="divide-y divide-gray-200 dark:divide-strokedark">
                       {!filteredUnits || filteredUnits.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={6}
+                            colSpan={8}
                             className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
                           >
                             No items available
@@ -663,13 +789,66 @@ const ProductDetail = ({
                               </span>
                             </td>
                             <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                              {/* {JSON.stringify(item)} */}
+                              {product.itemType === 'mobiles'
+                                ? item.mobileItems &&
+                                  item.mobileItems.length > 0
+                                  ? item.mobileItems[0].shops.shopName
+                                  : 'Warehouse'
+                                : item.accessoryItems &&
+                                  item.accessoryItems.length > 0
+                                ? [
+                                    ...new Set(
+                                      item.accessoryItems.map(
+                                        (i: any) => i.shops.shopName,
+                                      ),
+                                    ),
+                                  ].join(', ')
+                                : 'Warehouse'}
+                            </td>
+                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                              {product.itemType === 'mobiles'
+                                ? item.mobileItems &&
+                                  item.mobileItems.length > 0
+                                  ? item.mobileItems[0].status
+                                  : 'N/A'
+                                : item.accessoryItems &&
+                                  item.accessoryItems.length > 0
+                                ? (() => {
+                                    const statuses = [
+                                      ...new Set(
+                                        item.accessoryItems.map(
+                                          (i: any) => i.status,
+                                        ),
+                                      ),
+                                    ];
+                                    return statuses.length === 1
+                                      ? statuses[0]
+                                      : statuses.length > 1
+                                      ? 'Mixed'
+                                      : 'N/A';
+                                  })()
+                                : 'N/A'}
+                            </td>
+                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
                               {item.updatedAt || item.createdAt
                                 ? format(
                                     new Date(item.updatedAt || item.createdAt),
                                     'MMM dd, HH:mm',
                                   )
                                 : 'N/A'}
+                            </td>
+                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                              <button
+                                onClick={() =>
+                                  handleOpenEditModal({
+                                    ...item,
+                                    itemType: product.itemType,
+                                  })
+                                }
+                                className="text-primary hover:underline"
+                              >
+                                Edit
+                              </button>
                             </td>
                           </tr>
                         ))

@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Product } from '../../types/product';
 import axios from 'axios';
 import { CircularProgress } from '@mui/material';
-import { ChevronLeft, ChevronRight, Eye, X, Filter } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, X, Filter, Edit, Trash2, Plus } from 'lucide-react';
+import { createCategory, updateCategory, deleteCategory } from '../../api/category_manager';
+import CategoryModal from './CategoryModal';
 
 interface ProductTableProps {
   getFreshUserData: () => void;
@@ -14,6 +16,10 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
+
+  // Modal states
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Product | null>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,6 +68,52 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
       // console.error('Error fetching inventory:', error)
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAdd = () => {
+    setEditingCategory(null);
+    setModalOpen(true);
+  };
+
+  const handleEdit = (category: Product) => {
+    setEditingCategory(category);
+    setModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      try {
+        await deleteCategory(id);
+        fetchInventory();
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        alert('Failed to delete category.');
+      }
+    }
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setEditingCategory(null);
+  };
+
+  const handleModalSave = async (categoryData: any) => {
+    try {
+      if (editingCategory) {
+        await updateCategory(editingCategory.id, categoryData);
+      } else {
+        await createCategory(categoryData);
+      }
+      fetchInventory();
+      handleModalClose();
+    } catch (error: any) {
+      console.error('Error saving category:', error);
+      if (error.response && error.response.data && error.response.data.message) {
+        alert(`Failed to save category: ${error.response.data.message}`);
+      } else {
+        alert('Failed to save category.');
+      }
     }
   };
 
@@ -152,6 +204,13 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
         </div>
         
         <div className="flex items-center gap-4 w-full lg:w-auto">
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stroke hover:bg-gray-2 dark:hover:bg-meta-4"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Category</span>
+          </button>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stroke hover:bg-gray-2 dark:hover:bg-meta-4"
@@ -297,13 +356,29 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
                       <p className="text-black dark:text-white">{product.brand}</p>
                     </td>
                     <td className="py-3 px-4">
-                      <button
-                        onClick={() => navigate(`/inventory/${product.id}/${product.isMobile}`)}
-                        className="p-2 rounded-lg hover:bg-gray-2 dark:hover:bg-meta-4"
-                        title="View Details"
-                      >
-                        <Eye className="w-5 h-5 text-primary dark:text-white" />
-                      </button>
+                      <div className="flex items-center space-x-3.5">
+                        <button
+                          onClick={() => navigate(`/inventory/${product.id}/${product.isMobile}`)}
+                          className="p-2 rounded-lg hover:bg-gray-2 dark:hover:bg-meta-4"
+                          title="View Details"
+                        >
+                          <Eye className="w-5 h-5 text-primary" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className="p-2 rounded-lg hover:bg-gray-2 dark:hover:bg-meta-4"
+                          title="Edit Category"
+                        >
+                          <Edit className="w-5 h-5 text-yellow-500" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          className="p-2 rounded-lg hover:bg-gray-2 dark:hover:bg-meta-4"
+                          title="Delete Category"
+                        >
+                          <Trash2 className="w-5 h-5 text-red-500" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -361,6 +436,12 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
           </div>
         )}
       </div>
+      <CategoryModal
+        open={modalOpen}
+        onClose={handleModalClose}
+        onSave={handleModalSave}
+        category={editingCategory}
+      />
     </div>
   );
 };

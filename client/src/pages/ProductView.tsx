@@ -13,6 +13,7 @@ import {
   Store,
   ShoppingBag,
   ArrowRight,
+  TrendingUp,
 } from 'lucide-react';
 import ProductTransferHistory from './product/TransferHistory';
 import ProductDetail from './product/ProductDetail';
@@ -22,6 +23,7 @@ import jwt_decode from 'jwt-decode';
 import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
 import { getUserProfile } from '../api/user_manager';
 import { Shop } from '@/types/shop';
+import CategorySalesReport from '../components/inventory/CategorySalesReport';
 
 interface Outlet {
   id: string;
@@ -63,7 +65,7 @@ const ProductView = () => {
   );
   const [product, setProduct] = useState<Product | null>(null);
   const [shopName, setShopName] = useState<string>('');
-  const [quantity, setQuantity] = useState<number>();
+  const [quantity, setQuantity] = useState<number>(0);
   const [remarks, setRemarks] = useState<string>('');
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [outletListings, setOutletListings] = useState<Outlet[]>([]);
@@ -86,8 +88,8 @@ const ProductView = () => {
       icon: Share2,
     },
     { name: 'Product Details', key: 'product_details', icon: Edit },
-    // { name: 'Transfer History', key: 'transfer_history', icon: History },
     { name: 'Shops in Stock', key: 'shops_in_stock', icon: Package },
+    { name: 'Sales Report', key: 'sales_report', icon: TrendingUp },
   ];
 
   const fetchOutlets = useCallback(async () => {
@@ -751,6 +753,9 @@ const ProductView = () => {
             </div>
           </div>
         );
+
+      case 'sales_report':
+        return <CategorySalesReport categoryId={productId!} />;
 
       default:
         setActiveSection('product_details');

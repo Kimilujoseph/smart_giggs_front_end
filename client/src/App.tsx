@@ -31,6 +31,8 @@ import Message from './components/alerts/Message';
 import SalesBackup from './pages/SalesBackup';
 import PointOfSales from './components/pointOfSale/PointOfSales';
 import SalesBackup2 from './pages/SalesBackup2';
+import UserSales from './pages/UserSales';
+import ShopSales from './pages/ShopSales';
 import OutletSalesBackup from './components/outlet/OutletSalesBackup';
 
 function App() {
@@ -268,6 +270,24 @@ function App() {
                   <>
                     <PageTitle title="Point of sale | Captech" />
                     <PointOfSales />
+                  </>
+                }
+              />
+              <Route
+                path="/user/sales"
+                element={
+                  <>
+                    <PageTitle title="User Sales | Captech" />
+                    <UserSales />
+                  </>
+                }
+              />
+              <Route
+                path="/shop/sales"
+                element={
+                  <>
+                    <PageTitle title="Shop Sales | Captech" />
+                    <ShopSales />
                   </>
                 }
               />
