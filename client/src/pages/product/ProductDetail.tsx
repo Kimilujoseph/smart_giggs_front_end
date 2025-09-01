@@ -26,6 +26,7 @@ import capitalizeFirstLetter from '../../common/Loader/TitleCase';
 import { DecodedToken } from '../../types/decodedToken';
 import jwt_decode from 'jwt-decode';
 import EditProductModal from './EditProductModal';
+import MobileHistoryModal from '../../components/modals/MobileHistoryModal';
 
 const useQuery = () => new URLSearchParams(useLocation().search);
 
@@ -59,6 +60,10 @@ const ProductDetail = ({
   const [selectedProductItem, setSelectedProductItem] = useState<any | null>(
     null,
   );
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [selectedItemIdForHistory, setSelectedItemIdForHistory] = useState<
+    string | null
+  >(null);
   const [openHistories, setOpenHistories] = useState<Record<string, boolean>>({});
 
   const handleOpenEditModal = (item: any) => {
@@ -69,6 +74,16 @@ const ProductDetail = ({
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
     setSelectedProductItem(null);
+  };
+
+  const handleOpenHistoryModal = (itemId: string) => {
+    setSelectedItemIdForHistory(itemId);
+    setIsHistoryModalOpen(true);
+  };
+
+  const handleCloseHistoryModal = () => {
+    setIsHistoryModalOpen(false);
+    setSelectedItemIdForHistory(null);
   };
 
   const toggleHistory = (itemId: string) => {
@@ -289,6 +304,11 @@ const ProductDetail = ({
           refreshProductData();
           handleCloseEditModal();
         }}
+      />
+      <MobileHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={handleCloseHistoryModal}
+        itemId={selectedItemIdForHistory}
       />
       <div className="p-4 sm:p-6 w-auto">
         {/* Responsive Tabs */}
@@ -854,62 +874,78 @@ const ProductDetail = ({
                                 >
                                   Edit
                                 </button>
-                                <button
-                                  onClick={() => toggleHistory(item.id)}
-                                  className="p-1 ml-2 text-gray-500 hover:text-primary"
-                                >
-                                  <ChevronDownIcon
-                                    className={`w-4 h-4 transition-transform ${
-                                      openHistories[item.id]
-                                        ? 'rotate-180'
-                                        : ''
-                                    }`}
-                                  />
-                                </button>
+                                {product.itemType === 'accessories' && (
+                                  <button
+                                    onClick={() => toggleHistory(item.id)}
+                                    className="p-1 ml-2 text-gray-500 hover:text-primary"
+                                  >
+                                    <ChevronDownIcon
+                                      className={`w-4 h-4 transition-transform ${
+                                        openHistories[item.id]
+                                          ? 'rotate-180'
+                                          : ''
+                                      }`}
+                                    />
+                                  </button>
+                                )}
+                                {product.itemType === 'mobiles' && (
+                                  <button
+                                    onClick={() =>
+                                      handleOpenHistoryModal(item.id)
+                                    }
+                                    className="p-1 ml-2 text-primary hover:underline"
+                                  >
+                                    History
+                                  </button>
+                                )}
                               </td>
                             </tr>
-                            {openHistories[item.id] && (
-                              <tr className="bg-gray-50 dark:bg-boxdark-2">
-                                <td colSpan={9}>
-                                  <div className="p-4">
-                                    <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-white">
-                                      Distribution History
-                                    </h4>
-                                    {item.accessoryItems &&
-                                    item.accessoryItems.length > 0 ? (
-                                      <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                                        {item.accessoryItems.map(
-                                          (dist: any, index: number) => (
-                                            <li
-                                              key={index}
-                                              className="flex justify-between"
-                                            >
-                                              <span>
-                                                {dist.quantity} units to{' '}
-                                                <strong>
-                                                  {dist.shops.shopName}
-                                                </strong>
-                                              </span>
-                                              <span className="text-gray-500">
-                                                {new Date(
-                                                  dist.createdAt,
-                                                ).toLocaleDateString()}{' '}
-                                                - {dist.status}
-                                              </span>
-                                            </li>
-                                          ),
-                                        )}
-                                      </ul>
-                                    ) : (
-                                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        No distribution history for this
-                                        batch.
-                                      </p>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
+                            {product.itemType === 'accessories' &&
+                              openHistories[item.id] && (
+                                <tr className="bg-gray-50 dark:bg-boxdark-2">
+                                  <td colSpan={9}>
+                                    <div className="p-4">
+                                      <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-white">
+                                        Distribution History
+                                      </h4>
+                                      {item.accessoryItems &&
+                                      item.accessoryItems.length > 0 ? (
+                                        <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                                          {item.accessoryItems.map(
+                                            (
+                                              dist: any,
+                                              index: number,
+                                            ) => (
+                                              <li
+                                                key={index}
+                                                className="flex justify-between"
+                                              >
+                                                <span>
+                                                  {dist.quantity} units to{' '}
+                                                  <strong>
+                                                    {dist.shops.shopName}
+                                                  </strong>
+                                                </span>
+                                                <span className="text-gray-500">
+                                                  {new Date(
+                                                    dist.createdAt,
+                                                  ).toLocaleDateString()}{' '}
+                                                  - {dist.status}
+                                                </span>
+                                              </li>
+                                            ),
+                                          )}
+                                        </ul>
+                                      ) : (
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                          No distribution history for this
+                                          batch.
+                                        </p>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
                           </React.Fragment>
                         ))
                       )}
