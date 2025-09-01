@@ -59,6 +59,7 @@ const ProductDetail = ({
   const [selectedProductItem, setSelectedProductItem] = useState<any | null>(
     null,
   );
+  const [openHistories, setOpenHistories] = useState<Record<string, boolean>>({});
 
   const handleOpenEditModal = (item: any) => {
     setSelectedProductItem(item);
@@ -68,6 +69,10 @@ const ProductDetail = ({
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
     setSelectedProductItem(null);
+  };
+
+  const toggleHistory = (itemId: string) => {
+    setOpenHistories((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
   };
 
   // Item details
@@ -749,7 +754,7 @@ const ProductDetail = ({
                       {!filteredUnits || filteredUnits.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={8}
+                            colSpan={9}
                             className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
                           >
                             No items available
@@ -757,100 +762,155 @@ const ProductDetail = ({
                         </tr>
                       ) : (
                         filteredUnits.map((item) => (
-                          <tr
-                            key={item.id}
-                            className="hover:bg-bodydark1 dark:hover:bg-meta-4"
-                          >
-                            {product.itemType === 'mobiles' && (
+                          <React.Fragment key={item.id}>
+                            <tr className="hover:bg-bodydark1 dark:hover:bg-meta-4">
+                              {product.itemType === 'mobiles' && (
+                                <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                  {item.IMEI}
+                                </td>
+                              )}
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                                {item.IMEI}
+                                {item.batchNumber || '-'}
                               </td>
-                            )}
-                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                              {item.batchNumber || '-'}
-                            </td>
-                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                              {item.color}
-                            </td>
-                            {product.itemType === 'accessories' && (
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                                {item.availableStock}
+                                {item.color}
                               </td>
-                            )}
-                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
-                              <span
-                                className={getStatusBadgeClass(
-                                  item.stockStatus,
-                                )}
-                              >
-                                {item.stockStatus
-                                  .replace('_', ' ')
-                                  .toUpperCase()}
-                              </span>
-                            </td>
-                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                              {product.itemType === 'mobiles'
-                                ? item.mobileItems &&
-                                  item.mobileItems.length > 0
-                                  ? item.mobileItems[0].shops.shopName
-                                  : 'Warehouse'
-                                : item.accessoryItems &&
-                                  item.accessoryItems.length > 0
-                                ? [
-                                    ...new Set(
-                                      item.accessoryItems.map(
-                                        (i: any) => i.shops.shopName,
-                                      ),
-                                    ),
-                                  ].join(', ')
-                                : 'Warehouse'}
-                            </td>
-                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                              {product.itemType === 'mobiles'
-                                ? item.mobileItems &&
-                                  item.mobileItems.length > 0
-                                  ? item.mobileItems[0].status
-                                  : 'N/A'
-                                : item.accessoryItems &&
-                                  item.accessoryItems.length > 0
-                                ? (() => {
-                                    const statuses = [
+                              {product.itemType === 'accessories' && (
+                                <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                  {item.availableStock}
+                                </td>
+                              )}
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                                <span
+                                  className={getStatusBadgeClass(
+                                    item.stockStatus,
+                                  )}
+                                >
+                                  {item.stockStatus
+                                    .replace('_', ' ')
+                                    .toUpperCase()}
+                                </span>
+                              </td>
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                {product.itemType === 'mobiles'
+                                  ? item.mobileItems &&
+                                    item.mobileItems.length > 0
+                                    ? item.mobileItems[0].shops.shopName
+                                    : 'Warehouse'
+                                  : item.accessoryItems &&
+                                    item.accessoryItems.length > 0
+                                  ? [
                                       ...new Set(
                                         item.accessoryItems.map(
-                                          (i: any) => i.status,
+                                          (i: any) => i.shops.shopName,
                                         ),
                                       ),
-                                    ];
-                                    return statuses.length === 1
-                                      ? statuses[0]
-                                      : statuses.length > 1
-                                      ? 'Mixed'
-                                      : 'N/A';
-                                  })()
-                                : 'N/A'}
-                            </td>
-                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                              {item.updatedAt || item.createdAt
-                                ? format(
-                                    new Date(item.updatedAt || item.createdAt),
-                                    'MMM dd, HH:mm',
-                                  )
-                                : 'N/A'}
-                            </td>
-                            <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                              <button
-                                onClick={() =>
-                                  handleOpenEditModal({
-                                    ...item,
-                                    itemType: product.itemType,
-                                  })
-                                }
-                                className="text-primary hover:underline"
-                              >
-                                Edit
-                              </button>
-                            </td>
-                          </tr>
+                                    ].join(', ')
+                                  : 'Warehouse'}
+                              </td>
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                {product.itemType === 'mobiles'
+                                  ? item.mobileItems &&
+                                    item.mobileItems.length > 0
+                                    ? item.mobileItems[0].status
+                                    : 'N/A'
+                                  : item.accessoryItems &&
+                                    item.accessoryItems.length > 0
+                                  ? (() => {
+                                      const statuses = [
+                                        ...new Set(
+                                          item.accessoryItems.map(
+                                            (i: any) => i.status,
+                                          ),
+                                        ),
+                                      ];
+                                      return statuses.length === 1
+                                        ? statuses[0]
+                                        : statuses.length > 1
+                                        ? 'Mixed'
+                                        : 'N/A';
+                                    })()
+                                  : 'N/A'}
+                              </td>
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                {item.updatedAt || item.createdAt
+                                  ? format(
+                                      new Date(
+                                        item.updatedAt || item.createdAt,
+                                      ),
+                                      'MMM dd, HH:mm',
+                                    )
+                                  : 'N/A'}
+                              </td>
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                <button
+                                  onClick={() =>
+                                    handleOpenEditModal({
+                                      ...item,
+                                      itemType: product.itemType,
+                                    })
+                                  }
+                                  className="text-primary hover:underline"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => toggleHistory(item.id)}
+                                  className="p-1 ml-2 text-gray-500 hover:text-primary"
+                                >
+                                  <ChevronDownIcon
+                                    className={`w-4 h-4 transition-transform ${
+                                      openHistories[item.id]
+                                        ? 'rotate-180'
+                                        : ''
+                                    }`}
+                                  />
+                                </button>
+                              </td>
+                            </tr>
+                            {openHistories[item.id] && (
+                              <tr className="bg-gray-50 dark:bg-boxdark-2">
+                                <td colSpan={9}>
+                                  <div className="p-4">
+                                    <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-white">
+                                      Distribution History
+                                    </h4>
+                                    {item.accessoryItems &&
+                                    item.accessoryItems.length > 0 ? (
+                                      <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                                        {item.accessoryItems.map(
+                                          (dist: any, index: number) => (
+                                            <li
+                                              key={index}
+                                              className="flex justify-between"
+                                            >
+                                              <span>
+                                                {dist.quantity} units to{' '}
+                                                <strong>
+                                                  {dist.shops.shopName}
+                                                </strong>
+                                              </span>
+                                              <span className="text-gray-500">
+                                                {new Date(
+                                                  dist.createdAt,
+                                                ).toLocaleDateString()}{' '}
+                                                - {dist.status}
+                                              </span>
+                                            </li>
+                                          ),
+                                        )}
+                                      </ul>
+                                    ) : (
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        No distribution history for this
+                                        batch.
+                                      </p>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
                         ))
                       )}
                     </tbody>

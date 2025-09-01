@@ -78,8 +78,13 @@ const ProductView = () => {
     'random',
   );
   const [availableItems, setAvailableItems] = useState<any[]>([]);
+  const [openHistories, setOpenHistories] = useState<Record<string, boolean>>({});
 
   const handleCloseModal = () => setShowMessage('');
+
+  const toggleHistory = (batchId: string) => {
+    setOpenHistories((prev) => ({ ...prev, [batchId]: !prev[batchId] }));
+  };
 
   const sections = [
     {
@@ -146,15 +151,13 @@ const ProductView = () => {
       fetchedProduct.Items.forEach((item: any) => {
         if (item.itemType === 'mobiles') {
           item.mobileItems.forEach((mobileItem: any) => {
-
             if (mobileItem.shops.shopName !== shopName) {
               uniqueOutlets.add(JSON.stringify(mobileItem.shops));
             }
           });
         }
-        if (item.itemType === 'accessories') {
+        if (fetchedProduct.itemType === 'accessories') {
           item.accessoryItems.forEach((accessoryItem: any) => {
-
             if (accessoryItem.shops.shopName !== shopName) {
               uniqueOutlets.add(JSON.stringify(accessoryItem.shops));
             }
@@ -571,7 +574,7 @@ const ProductView = () => {
               {selectedItems.reduce((sum, item) => sum + item.quantity, 0)}/
               {quantity})
             </h3>
-            <div className="max-h-60 overflow-y-auto">
+            <div className="max-h-72 overflow-y-auto">
               {product?.Items?.filter(
                 (item) => (item.availableStock || 0) > 0,
               ).map((item) => {
@@ -582,49 +585,97 @@ const ProductView = () => {
                 return (
                   <div
                     key={item.id}
-                    onClick={() =>
-                      selectionMode === 'manual' && toggleItemSelection(item)
-                    }
-                    className={`p-3 border rounded-lg mb-2 cursor-pointer ${
+                    className={`border rounded-lg mb-2 transition-all duration-300 ${
                       isSelected
                         ? 'border-primary bg-primary/10'
                         : 'border-gray-200 dark:border-strokedark'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div
+                      onClick={() =>
+                        selectionMode === 'manual' && toggleItemSelection(item)
+                      }
+                      className="p-3 cursor-pointer flex items-center justify-between"
+                    >
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {item.batchNumber || item.serialNumber} - Available:{' '}
+                        Batch: {item.batchNumber || item.serialNumber} - Stock:{' '}
                         {item.availableStock}
                       </span>
-                      {isSelected && (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            value={selectedItem.quantity}
-                            min={1}
-                            max={item.availableStock}
-                            onChange={(e) => {
-                              e.stopPropagation(); // Stop event propagation
-                              handleQuantityChange(
-                                item.id,
-                                parseInt(e.target.value),
-                              );
-                            }}
-                            onClick={(e) => e.stopPropagation()} // Stop event propagation
-                            className="w-20 px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
-                          />
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation(); // Stop event propagation
-                              toggleItemSelection(item);
-                            }}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {isSelected && (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={selectedItem.quantity}
+                              min={1}
+                              max={item.availableStock}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleQuantityChange(
+                                  item.id,
+                                  parseInt(e.target.value),
+                                );
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-20 px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleItemSelection(item);
+                              }}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleHistory(item.id);
+                          }}
+                          className="p-1 text-gray-500 hover:text-primary"
+                        >
+                          <List className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
+                    {openHistories[item.id] && (
+                      <div className="px-3 pb-3 mt-2 border-t border-gray-200 dark:border-strokedark">
+                        <h4 className="text-sm font-semibold my-2 text-gray-800 dark:text-white">
+                          Distribution History
+                        </h4>
+                        {item.accessoryItems &&
+                        item.accessoryItems.length > 0 ? (
+                          <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                            {item.accessoryItems.map(
+                              (dist: any, index: number) => (
+                                <li
+                                  key={index}
+                                  className="flex justify-between"
+                                >
+                                  <span>
+                                    {dist.quantity} units to{' '}
+                                    <strong>{dist.shops.shopName}</strong>
+                                  </span>
+                                  <span className="text-gray-500">
+                                    {new Date(
+                                      dist.createdAt,
+                                    ).toLocaleDateString()}{' '}
+                                    - {dist.status}
+                                  </span>
+                                </li>
+                              ),
+                            )}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            No distribution history for this batch.
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
