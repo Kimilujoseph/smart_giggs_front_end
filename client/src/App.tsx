@@ -19,7 +19,7 @@ import PointOfSale from './components/pointOfSale/PointOfSale';
 import POSLayout from './layout/POSLayout';
 import AssignmentHistory from './pages/AssignmentHistory';
 import OutletInventoryView from './components/outlet/OutletInventory';
-import Sales from './pages/Sales';
+import SalesDashboard from './pages/Dashboard/SalesDashboard';
 import OutletSales from './components/outlet/OutletSales';
 import { CircularProgress } from '@mui/material';
 import ErrorPage from './pages/ErrorPage';
@@ -30,7 +30,7 @@ import jwt_decode from 'jwt-decode';
 import Message from './components/alerts/Message';
 import SalesBackup from './pages/SalesBackup';
 import PointOfSales from './components/pointOfSale/PointOfSales';
-import SalesBackup2 from './pages/SalesBackup2';
+
 import UserSales from './pages/UserSales';
 import ShopSales from './pages/ShopSales';
 import OutletSalesBackup from './components/outlet/OutletSalesBackup';
@@ -197,7 +197,7 @@ function App() {
                 element={
                   <>
                     <PageTitle title="Sales | Captech" />
-                    <SalesBackup2 />
+                    <SalesDashboard />
                   </>
                 }
               />

@@ -11,8 +11,7 @@ import Footer from '@/components/footer/Footer';
 const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [user, setUser] = useState<object>({});
-  const { successMessage, setSuccessMessage } = useAppContext();
+  const { successMessage, setSuccessMessage, setUser } = useAppContext();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,7 +53,6 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
               <Header
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
-                userData={user}
               />
               {/* <!-- ===== Header End ===== --> */}
 

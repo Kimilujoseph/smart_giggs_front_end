@@ -7,7 +7,6 @@ import { HelpCircle } from 'lucide-react';
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;
   setSidebarOpen: (arg0: boolean) => void;
-  userData: object;
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
