@@ -297,6 +297,38 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             Sales
                           </NavLink>
                         </li>
+                        <li>
+                          <NavLink
+                            to="/financers"
+                            className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${
+                              pathname.includes('financers') &&
+                              'bg-meta-2 dark:bg-meta-4'
+                            }`}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <svg
+                              className="fill-current"
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                                fill="currentColor"
+                              />
+                              <path
+                                d="M12 12.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 7.5 12 7.5s2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zm0-4c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"
+                                fill="currentColor"
+                              />
+                              <path
+                                d="M12 14c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm0 1.5c2.02 0 6 1.08 6 2.5H6c0-1.42 3.98-2.5 6-2.5z"
+                                fill="currentColor"
+                              />
+                            </svg>
+                            Financers
+                          </NavLink>
+                        </li>
                       </>
                     )}
                     {userRole == 'superuser' && (

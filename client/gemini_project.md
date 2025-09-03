@@ -1,127 +1,162 @@
-we have this route for fetching a specific phone product
+in this system we will have finacers who will be financing phone bought 
 
-/api/inventory/profile/mobile/15
-{"status":200,"data":{"findSpecificProduct":{"id":15,"IMEI":"0767128002392","batchNumber":"234-234-6","availableStock":0,"commission":"500","discount":"300","productCost":"120000","color":"black","stockStatus":"distributed","CategoryId":1,"barcodePath":null,"createdAt":"2025-08-12T11:17:55.000Z","storage":"8/128GB","phoneType":"smartphones","updatedAt":"2025-08-12T11:19:54.000Z","itemType":"mobiles","paymentStatus":"paid","supplierId":1,"categories":{"itemName":"Samsung","itemModel":"A16S"},"Supplier":
-{"name":"timothy kinoti ANTONY"}}}}
-{"message":"Commission cannot exceed 50% of product cost"}
-
-
-we have this route for updating 
-/api/inventory/update-phone-product/16
-
-it takes payload,but it does not allow avaibleStock when updating
-
-this is an example of paylaod it accepts 
+we have the routes for creating the financers
+ /api/financer/create
 {
-    "stockStatus":"faulty",
-    "commission":1000,
-    "IMEI":"034512327892234",
-    "productCost":13000
+    "name":"Mkopa Simu",
+    "contactName":"Mkopa Simu",
+    "phone":"075743294857",
+    "email":"simu@gmail.com",
+    "address":"Mombasa road"
+}
+a respnse code of 201 on successfull creation
+here it what it returns incase of an error 
+
+{"message":"A financer with the same F already exists.","error":true}
+
+finding a  particular finacer 
+
+/api/financer/get/3
+
+{"data":{"id":3,"name":"Onfon Mobile","contactName":"Onfon Mobile","phone":"075743294854","email":"onfon@gmail.com","address":"Mombasa road","createdAt":"2025-09-03T13:09:22.856Z","updatedAt":"2025-09-03T13:09:23.000Z"}}
+
+and code 404 if not found
+
+for fetching all financer is 
+
+/api/financer/all
+
+{"data":[{"id":1,"name":"Mkopa Simu","contactName":"Mkopa Simu","phone":"075743294857","email":"simu@gmail.com","address":"Mombasa road","createdAt":"2025-08-11T13:10:58.356Z","updatedAt":"2025-08-11T13:10:58.000Z"},{"id":3,"name":"Onfon Mobile","contactName":"Onfon Mobile","phone":"075743294854","email":"onfon@gmail.com","address":"Mombasa road","createdAt":"2025-09-03T13:09:22.856Z","updatedAt":"2025-09-03T13:09:23.000Z"}]}
+
+
+/api/financer/financer/1 this is for update
+
+
+{
+    "name":"Mkopa Simu",
+    "contactName":"Mkopa Simu",
+    "phone":"075743294857",
+    "email":"simu@gmail.com",
+    "address":"Mombasa road"
 }
 
-for stockStatus we accept "faulty", "reserved", "available"
+deletion is not allowed for now 
 
-for accesssories update we have the routes of fetching the product profile 
+then we he have finance sale 
 
-/api/inventory/profile/accessory/10
+/api/sales/report/financer/1
+
+the data is as follows 
 
 {
-    "status": 200,
+    "success": true,
+    "message": "Sales data retrieved successfully",
     "data": {
-        "id": 10,
-        "batchNumber": "23-339-17",
-        "productType": "type-C",
-        "CategoryId": 1,
-        "faultyItems": 0,
-        "barcodePath": null,
-        "createdAt": "2025-08-12T14:43:15.000Z",
-        "availableStock": 11,
-        "stockStatus": "faulty",
-        "color": "white",
-        "productCost": 1200,
-        "commission": 50,
-        "discount": 0,
-        "updatedAt": "2025-08-31T14:03:08.000Z",
-        "paymentStatus": "PAID",
-        "supplierId": 1,
-        "categories": {
-            "itemName": "Samsung",
-            "itemModel": "A16S",
-            "brand": "Samsung",
-            "minPrice": 15000,
-            "maxPrice": 25000,
-            "itemType": "mobiles"
+        "analytics": {
+            "totalSales": 1700,
+            "totalProfit": -1200,
+            "totalCommission": 0,
+            "totalFinanceAmount": 0
         },
-        "Supplier": {
-            "name": "timothy kinoti ANTONY"
-        }
+        "sales": [
+            {
+                "saleId": 2,
+                "soldprice": 1700,
+                "netprofit": 2200,
+                "commission": 0,
+                "commissionpaid": 0,
+                "commissionstatus": "N/A",
+                "IMEI": 0,
+                "paymentstatus": "PAID",
+                "color": "white",
+                "storage": "N/A",
+                "productcost": 1200,
+                "supplier": 1,
+                "status": "PARTIALLY_RETURNED",
+                "productmodel": "XOS",
+                "productname": "Oraimo earphones",
+                "totalnetprice": 1700,
+                "totalsoldunits": 1,
+                "totaltransaction": 1,
+                "_id": {
+                    "productId": 10,
+                    "sellerId": 2,
+                    "shopId": 1
+                },
+                "financeDetails": {
+                    "financeStatus": "paid",
+                    "financeAmount": 0,
+                    "financer": "Mkopa Simu"
+                },
+                "CategoryId": 2,
+                "createdAt": "2025-08-15T11:55:52.000Z",
+                "batchNumber": "23-339-17",
+                "category": "accessories",
+                "sellername": "Tony Trace Antony",
+                "shopname": "Pokot Resin outlet",
+                "paymentDetails": {
+                    "id": 9,
+                    "amount": "6800",
+                    "paymentMethod": "cash",
+                    "status": "completed",
+                    "transactionId": "23234323423",
+                    "createdAt": "2025-08-15T11:55:51.533Z",
+                    "updatedAt": "2025-08-15T11:55:52.000Z"
+                }
+            },
+            {
+                "saleId": 1,
+                "soldprice": 125000,
+                "netprofit": 5000,
+                "commission": 500,
+                "commissionpaid": 195,
+                "commissionstatus": "pending",
+                "IMEI": "455434404572392",
+                "paymentstatus": "paid",
+                "color": "black",
+                "storage": "8/128GB",
+                "productcost": 120000,
+                "supplier": 1,
+                "status": "RETURNED",
+                "productmodel": "smartphones",
+                "productname": "Samsung",
+                "totalnetprice": 125000,
+                "totalsoldunits": 1,
+                "totaltransaction": 1,
+                "_id": {
+                    "productId": 21,
+                    "sellerId": 2,
+                    "shopId": 1
+                },
+                "financeDetails": {
+                    "financeStatus": "paid",
+                    "financeAmount": 0,
+                    "financer": "Mkopa Simu"
+                },
+                "CategoryId": 1,
+                "createdAt": "2025-08-12T13:10:00.000Z",
+                "batchNumber": "234-234-6",
+                "category": "mobiles",
+                "sellername": "Tony Trace Antony",
+                "shopname": "Pokot Resin outlet",
+                "paymentDetails": {
+                    "id": 2,
+                    "amount": "125000",
+                    "paymentMethod": "cash",
+                    "status": "completed",
+                    "transactionId": "23234323423",
+                    "createdAt": "2025-08-12T13:10:00.010Z",
+                    "updatedAt": "2025-08-12T13:10:00.000Z"
+                }
+            }
+        ],
+        "salesPerMonth": [],
+        "totalSales": 1700,
+        "totalProfit": -1200,
+        "totalCommission": 0,
+        "totalfinancePending": 0,
+        "totalPages": 1,
+        "currentPage": 1,
+        "itemsPerPage": 10
     }
 }
-
-for updating accessory /api/inventory/update-accessory-product/10
-it accepts all updates except availableStock
-
-for stockStatus we accept  "available", "suspended", "faulty"
-
-{"status":200,"data":{"id":10,"batchNumber":"23-339-17","productType":"type-C","CategoryId":2,"faultyItems":0,"barcodePath":null,"createdAt":"2025-08-12T14:43:15.000Z","availableStock":11,"stockStatus":"available","color":"white","productCost":1200,"commission":50,"discount":0,"updatedAt":"2025-08-31T12:11:29.000Z","paymentStatus":"PAID","supplierId":1,"categories":{"itemName":"Oraimo earphones","itemModel":"XOS","brand":"Oraimo x","minPrice":1500,"maxPrice":1700,"itemType":"accessories"},"Supplier":{"name":"timothy kinoti ANTONY"}}}
-
-
-
-
-when updating categories and supplier id we are passing their id ,so we have routes that we will utilize to fetch them as shown
-
-/api/category/all
-
-{
-    "message": "all categories retrieved successfully",
-    "data": [
-        {
-            "id": 1,
-            "itemName": "Samsung",
-            "itemModel": "A16S",
-            "minPrice": 15000,
-            "maxPrice": 25000,
-            "brand": "Samsung",
-            "category": "mobiles",
-            "availableStock": 21
-        },
-        {
-            "id": 2,
-            "itemName": "Oraimo earphones",
-            "itemModel": "XOS",
-            "minPrice": 1500,
-            "maxPrice": 1700,
-            "brand": "Oraimo x",
-            "category": "accessories",
-            "availableStock": 2
-        },
-        {
-            "id": 16,
-            "itemName": "samsung 4/256 GB",
-            "itemModel": "a16s series",
-            "minPrice": 15000,
-            "maxPrice": 16000,
-            "brand": "Samsung ",
-            "category": "mobiles",
-            "availableStock": 0
-        },
-        {
-            "id": 18,
-            "itemName": "Samsung_4/128GB",
-            "itemModel": "A05s",
-            "minPrice": 15500,
-            "maxPrice": 16000,
-            "brand": "Samsung",
-            "category": "mobiles",
-            "availableStock": 0
-        }
-    ]
-}
-
-
-
-
-
-/api/supplier/supplier
-
-{"data":[{"id":1,"name":"timothy kinoti ANTONY","contactName":"timo muchori","phone":null,"email":"KINOTI@gmail.com","address":"Nairobi CBD","createdAt":"2025-08-11T13:11:39.373Z","updatedAt":"2025-08-11T13:11:39.373Z"}]}

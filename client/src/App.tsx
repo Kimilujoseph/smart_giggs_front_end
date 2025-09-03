@@ -35,6 +35,9 @@ import UserSales from './pages/UserSales';
 import ShopSales from './pages/ShopSales';
 import OutletSalesBackup from './components/outlet/OutletSalesBackup';
 
+import FinancerManager from './components/financers/FinancerManager';
+import FinancerSalesReport from './pages/FinancerSalesReport';
+
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
@@ -288,6 +291,26 @@ function App() {
                   <>
                     <PageTitle title="Shop Sales | Captech" />
                     <ShopSales />
+                  </>
+                }
+              />
+
+              <Route
+                path="/financers"
+                element={
+                  <>
+                    <PageTitle title="Financers | Captech" />
+                    <FinancerManager />
+                  </>
+                }
+              />
+
+              <Route
+                path="/financer/report/:financerId"
+                element={
+                  <>
+                    <PageTitle title="Financer Sales Report | Captech" />
+                    <FinancerSalesReport />
                   </>
                 }
               />
