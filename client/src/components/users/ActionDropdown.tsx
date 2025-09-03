@@ -154,6 +154,21 @@ const ActionDropdown: React.FC<ActionDropdownProps> = ({
               Suspend
             </button>
           )}
+          {selectedUser.workingstatus === 'active' && (
+            <button
+              onClick={() => {
+                setDropdownOpen(false);
+                handleAction({
+                  action: 'pay-salary',
+                  user_id: selectedUser.id,
+                  email: selectedUser.email,
+                });
+              }}
+              className="w-full flex items-center justify-center gap-3.5 px-6 py-2 text-sm font-medium duration-300 ease-in-out hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 lg:text-base"
+            >
+              Pay Salary
+            </button>
+          )}
           {(selectedUser.workingstatus === 'inactive' ||
             selectedUser.workingstatus === 'suspended') && (
             <button

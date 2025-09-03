@@ -11,7 +11,9 @@ import { Search } from 'lucide-react';
 import { DecodedToken } from '@/types/decodedToken';
 import jwt_decode from 'jwt-decode';
 
-interface UserTableProps {}
+interface UserTableProps {
+  onPaySalary: (user: Package) => void;
+}
 interface ActionPayload {
   action: string;
   user_id: string;
@@ -23,7 +25,7 @@ interface StatusPayload {
   user_id: string;
 }
 
-const UserTable: React.FC<UserTableProps> = () => {
+const UserTable: React.FC<UserTableProps> = ({ onPaySalary }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [resMessage, setResMessage] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: string } | null>(
@@ -148,6 +150,12 @@ const UserTable: React.FC<UserTableProps> = () => {
               'selectedUserData',
               JSON.stringify(selectedUser),
             );
+          }
+          break;
+        case 'pay-salary':
+          const userToPay = packageData.find((user) => user.id === user_id);
+          if (userToPay) {
+            onPaySalary(userToPay);
           }
           break;
         default:

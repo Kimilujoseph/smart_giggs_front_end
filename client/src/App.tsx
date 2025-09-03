@@ -38,6 +38,10 @@ import OutletSalesBackup from './components/outlet/OutletSalesBackup';
 import FinancerManager from './components/financers/FinancerManager';
 import FinancerSalesReport from './pages/FinancerSalesReport';
 
+import CommissionManager from './components/commissions/CommissionManager';
+
+import SalaryManager from './components/salaries/SalaryManager';
+
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
@@ -311,6 +315,26 @@ function App() {
                   <>
                     <PageTitle title="Financer Sales Report | Captech" />
                     <FinancerSalesReport />
+                  </>
+                }
+              />
+
+              <Route
+                path="/commissions"
+                element={
+                  <>
+                    <PageTitle title="Commissions | Captech" />
+                    <CommissionManager />
+                  </>
+                }
+              />
+
+              <Route
+                path="/salaries"
+                element={
+                  <>
+                    <PageTitle title="Salaries | Captech" />
+                    <SalaryManager />
                   </>
                 }
               />

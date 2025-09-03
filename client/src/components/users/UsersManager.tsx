@@ -7,6 +7,9 @@ import { getUsers } from '../../api/user_manager';
 import axios from 'axios';
 import Message from '../alerts/Message';
 
+import { paySalary } from '../../api/salary_manager';
+import SalaryPaymentModal from './SalaryPaymentModal';
+
 const UsersManager = () => {
   const [toggleAddUser, setToggleAddUser] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string>('');
@@ -23,6 +26,20 @@ const UsersManager = () => {
     null,
   );
   const [submitting, setSubmitting] = useState(false);
+  const [isSalaryModalOpen, setIsSalaryModalOpen] = useState<boolean>(false);
+  const [selectedUser, setSelectedUser] = useState<Package | null>(null);
+
+
+  const handlePaySalary = async (salaryData: any) => {
+    try {
+      await paySalary(salaryData);
+      setMessage({ text: 'Salary paid successfully', type: 'success' });
+      setIsSalaryModalOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      setMessage({ text: 'Error paying salary', type: 'error' });
+    }
+  };
 
   const changeTextColor = () => {
     setIsOptionSelected(true);
@@ -319,7 +336,17 @@ const UsersManager = () => {
       )}
 
       {/* user table */}
-      {!toggleAddUser && <UserTable />}
+      {!toggleAddUser && <UserTable onPaySalary={(user) => { setSelectedUser(user); setIsSalaryModalOpen(true); }} />}
+
+      <SalaryPaymentModal
+        open={isSalaryModalOpen}
+        onClose={() => {
+          setIsSalaryModalOpen(false);
+          setSelectedUser(null);
+        }}
+        onSave={handlePaySalary}
+        user={selectedUser}
+      />
     </>
   );
 };
