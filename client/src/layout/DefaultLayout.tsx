@@ -72,10 +72,8 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
               {/* <!-- ===== Main Content End ===== --> */}
 
               {/* <!-- ===== Footer Start ===== --> */}
-              <div className='lg:hidden'>
-                <Footer />
-              </div>
-              {/* <!-- ===== Footer End ===== --> */}
+              <Footer />
+              {/* <!-- ===== Footer End ===== */}
             </div>
             {/* <!-- ===== Content Area End ===== --> */}
           </div>

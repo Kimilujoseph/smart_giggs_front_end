@@ -42,6 +42,8 @@ import CommissionManager from './components/commissions/CommissionManager';
 
 import SalaryManager from './components/salaries/SalaryManager';
 
+import SupplierManager from './components/suppliers/SupplierManager';
+
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
@@ -335,6 +337,16 @@ function App() {
                   <>
                     <PageTitle title="Salaries | Captech" />
                     <SalaryManager />
+                  </>
+                }
+              />
+
+              <Route
+                path="/suppliers"
+                element={
+                  <>
+                    <PageTitle title="Suppliers | Captech" />
+                    <SupplierManager />
                   </>
                 }
               />

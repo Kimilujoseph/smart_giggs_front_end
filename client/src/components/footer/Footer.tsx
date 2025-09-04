@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Extend the Window interface to include Tawk_API
 declare global {
@@ -9,6 +9,7 @@ declare global {
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const [isMinimized, setIsMinimized] = useState(false); // Start expanded by default
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,25 +39,35 @@ const Footer: React.FC = () => {
   return (
     <footer
       style={{ zIndex: 999999 }}
-      className="fixed lg:relative bottom-0 left-0 right-0 w-full py-1 px-6 bg-white dark:bg-boxdark border-t border-gray-200 dark:border-gray-700 shadow-sm"
+      className={`fixed lg:relative bottom-0 left-0 right-0 w-full py-1 px-6 bg-white dark:bg-boxdark border-t border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 ${
+        isMinimized ? 'h-8 lg:h-auto' : 'h-auto'
+      }`}
     >
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
-        <div className="text-center md:text-left">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            &copy; {currentYear} CapTech. All rights reserved.
-          </p>
-          <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-            Built by{' '}
-            <a
-              className="text-primary hover:underline transition-colors"
-              href="https://kiruiallan.me"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Gamitch Technologies
-            </a>
+        {!isMinimized && (
+          <div className="text-center md:text-left">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              &copy; {currentYear} CapTech. All rights reserved.
+            </p>
+            <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              Built by{' '}
+              <a
+                className="text-primary hover:underline transition-colors"
+                href="https://kiruiallan.me"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Gamitch Technologies
+              </a>
+            </div>
           </div>
-        </div>
+        )}
+        <button
+          onClick={() => setIsMinimized(!isMinimized)}
+          className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors"
+        >
+          {isMinimized ? 'Expand Footer' : 'Minimize Footer'}
+        </button>
       </div>
     </footer>
   );
