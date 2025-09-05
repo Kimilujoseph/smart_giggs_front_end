@@ -123,7 +123,7 @@ const ProductDetail = ({
     const fetchSuppliers = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_SERVER_HEAD}/api/supplier/supplier`,
+          `${import.meta.env.VITE_SERVER_HEAD}/api/supplier/all`,
           { withCredentials: true },
         );
         setSuppliers(response.data.data);

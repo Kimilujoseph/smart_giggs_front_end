@@ -43,18 +43,30 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
     setFilter(filterType);
   };
 
-  const handleApprove = async ({ productID, transferId, quantity }: any) => {
+  const handleApprove = async (item: any) => {
     try {
       const token = localStorage.getItem('tk');
       if (!token) return;
 
-      const endpoint = filter === 'phone'
-        ? `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/confirm/phone`
-        : `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/accessory/confirm-distribution`;
+      const endpoint =
+        filter === 'phone'
+          ? `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/confirm/phone`
+          : `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/confirm/accessory/`;
 
-      const payload = filter === 'phone'
-        ? { productId: productID, transferId, shopname: shopData.name }
-        : { productId: productID, transferId, shopname: shopData.name, quantity };
+      const payload =
+        filter === 'phone'
+          ? {
+              productId: item.stock?.id,
+              transferId: item.transferId,
+              shopname: shopData.name,
+            }
+          : {
+              id: item.accessory,
+              productId: item.stock?.id,
+              transferId: item.transferId,
+              shopname: shopData.name,
+              quantity: String(item.quantity),
+            };
 
       const res = await axios.post(endpoint, payload, { withCredentials: true });
 
@@ -65,7 +77,7 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
     } catch (error: any) {
       setMessage({
         text: error.response?.data?.message || 'Failed to approve product',
-        type: error.response?.status === 404 ? 'warning' : 'error'
+        type: error.response?.status === 404 ? 'warning' : 'error',
       });
     }
   };
@@ -100,13 +112,7 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
         <td>
           <button
             className="px-2 text-sm tracking-wide text-black text-center dark:text-white flex items-center justify-center"
-            onClick={() =>
-              handleApprove({
-                transferId: item.transferId,
-                productID: item.stock?.id,
-                quantity: item.quantity
-              })
-            }
+            onClick={() => handleApprove(item)}
           >
             <span className="bg-success px-2 rounded">Approve</span>
           </button>
@@ -172,11 +178,7 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
                     : shopData.newAccessory;
                   
                   items.forEach((item: any) => {
-                    handleApprove({
-                      transferId: item.transferId,
-                      productID: item.stock?.id,
-                      quantity: item.quantity
-                    });
+                    handleApprove(item);
                   });
                 }}
                 className="bg-primary/70 text-bold p-1 px-2 rounded-md text-boxdark-2 m-2"

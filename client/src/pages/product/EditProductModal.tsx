@@ -87,7 +87,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             withCredentials: true,
           }),
           axios.get(
-            `${import.meta.env.VITE_SERVER_HEAD}/api/supplier/supplier`,
+            `${import.meta.env.VITE_SERVER_HEAD}/api/supplier/all`,
             { withCredentials: true },
           ),
         ]);
