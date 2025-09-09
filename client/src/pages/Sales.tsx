@@ -23,6 +23,7 @@ import axios from 'axios';
 import { CircularProgress } from '@mui/material';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import PointOfSale from '../components/pointOfSale/PointOfSale';
 
 interface Report {
   id: {
@@ -398,6 +399,9 @@ const Sales = () => {
           </TabButton>
           <TabButton selected={activeTab === 2} onClick={() => setActiveTab(2)}>
             Shops
+          </TabButton>
+          <TabButton selected={activeTab === 3} onClick={() => setActiveTab(3)}>
+            Point of Sale
           </TabButton>
         </div>
       </div>

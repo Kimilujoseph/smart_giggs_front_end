@@ -68,6 +68,15 @@ const OutletView: React.FC = () => {
   const [inventoryPage, setInventoryPage] = useState(1);
   const [lowStockPage, setLowStockPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [overviewData, setOverviewData] = useState<any | null>(null);
+  const [mobileItems, setMobileItems] = useState<any | null>(null);
+  const [accessoryItems, setAccessoryItems] = useState<any | null>(null);
+  const [mobilePage, setMobilePage] = useState(1);
+  const [accessoryPage, setAccessoryPage] = useState(1);
+  const [inventoryTab, setInventoryTab] = useState('mobiles');
+  const [pendingStock, setPendingStock] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<any | null>(null);
   const token: string | null = localStorage.getItem('tk') || null;
   const decoded: DecodedToken | null = jwt_decode(token!) || null;
   const sections = [
@@ -366,14 +375,87 @@ const OutletView: React.FC = () => {
     } catch (error) {}
   };
 
+  const fetchOverview = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}/overview`,
+        { withCredentials: true },
+      );
+      setOverviewData(response.data.overview);
+    } catch (error) {
+      console.error("Failed to fetch overview data", error);
+    }
+  };
+
+  const fetchMobileItems = async (page = 1) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?page=${page}&limit=${itemsPerPage}&itemType=mobile&status=confirmed`,
+        { withCredentials: true },
+      );
+      setMobileItems(response.data.shop.filteredShop.mobileItems);
+    } catch (error) {
+      console.error("Failed to fetch mobile items", error);
+    }
+  };
+
+  const fetchAccessoryItems = async (page = 1) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?page=${page}&limit=${itemsPerPage}&itemType=accessory&status=confirmed`,
+        { withCredentials: true },
+      );
+      setAccessoryItems(response.data.shop.filteredShop.accessoryItems);
+    } catch (error) {
+      console.error("Failed to fetch accessory items", error);
+    }
+  };
+
+  const fetchPendingStock = async () => {
+    try {
+      const mobileResponse = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?itemType=mobile&status=pending`,
+        { withCredentials: true },
+      );
+      const accessoryResponse = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?itemType=accessory&status=pending`,
+        { withCredentials: true },
+      );
+      const mobiles = mobileResponse.data.shop.filteredShop.mobileItems.items;
+      const accessories = accessoryResponse.data.shop.filteredShop.accessoryItems.items;
+      setPendingStock([...mobiles, ...accessories]);
+    } catch (error) {
+      console.error("Failed to fetch pending stock", error);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchTerm) {
+      setSearchResults(null);
+      return;
+    }
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/searchproducts/${shopname}?productName=${searchTerm}`,
+        { withCredentials: true },
+      );
+      setSearchResults(response.data.products);
+    } catch (error) {
+      console.error("Failed to search products", error);
+    }
+  };
+
   useEffect(() => {
     if (userPermissions && userPermissions === 'seller' && !urlShopname) {
       fetchUserData();
     }
     if (shopname) {
       fetchShop();
+      fetchOverview();
+      fetchMobileItems(mobilePage);
+      fetchAccessoryItems(accessoryPage);
     }
-  }, [userPermissions, shopname]);
+  }, [userPermissions, shopname, mobilePage, accessoryPage]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setOutletFormData({ ...outletFormData, [e.target.name]: e.target.value });
@@ -412,19 +494,7 @@ const OutletView: React.FC = () => {
     }
   };
 
-  const paginatedInventory = useMemo(() => {
-    const confirmedInventory = [...(shop?.phoneItems || []), ...(shop?.stockItems || [])];
-    const startIndex = (inventoryPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return confirmedInventory.slice(startIndex, endIndex);
-  }, [shop, inventoryPage, itemsPerPage]);
-
-  const paginatedLowStock = useMemo(() => {
-    const lowStockItems = shop?.lowStockItems || [];
-    const startIndex = (lowStockPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return lowStockItems.slice(startIndex, endIndex);
-  }, [shop, lowStockPage, itemsPerPage]);
+  
 
   
 
@@ -432,8 +502,7 @@ const OutletView: React.FC = () => {
     switch (activeSection) {
       case 'Overview': {
         if (!currentUser && userPermissions !== 'manager') return null;
-        const stats = calculateInventoryStats();
-        if (!stats) return null;
+        if (!overviewData) return <CircularProgress />;
 
         const pendingStock = [...(shop?.newPhoneItem || []), ...(shop?.newAccessory || [])];
 
@@ -443,45 +512,39 @@ const OutletView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-2 flex flex-col justify-center space-y-4">
                 <div className="flex flex-row items-center justify-between text-bodydark2">
-                  <div className="text-lg font-medium">Total Inventory</div>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="dark:text-bodydark">
-                  <div className="text-2xl font-bold">{stats.totalItems}</div>
-                  <div className="text-xs text-muted-foreground">
-                    items in stock
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-2 flex flex-col justify-center space-y-4">
-                <div className="flex flex-row items-center justify-between text-bodydark2">
-                  <div className="text-lg font-medium">Inventory Value</div>
+                  <div className="text-lg font-medium">Total Stock Value</div>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="dark:text-bodydark">
                   <span className="text-xs">KES</span>
                   <div className="pl-4 text-2xl font-bold">
-                    {Number(stats.totalValue.toFixed(2)).toLocaleString() ||
-                      (0.0).toFixed(2)}
+                    {Number(overviewData.totalStockValue).toLocaleString() || (0.0).toFixed(2)}
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    total value
-                  </span>
                 </div>
               </div>
 
               <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-2 flex flex-col justify-center space-y-4">
                 <div className="flex flex-row items-center justify-between text-bodydark2">
-                  <div className="text-lg font-medium">Products</div>
-                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <div className="text-lg font-medium">Confirmed Stock Value</div>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="dark:text-bodydark">
-                  <div className="text-2xl font-bold">
-                    {stats.phoneModels + stats.accessoryModels}
+                  <span className="text-xs">KES</span>
+                  <div className="pl-4 text-2xl font-bold">
+                    {Number(overviewData.confirmedStockValue).toLocaleString() || (0.0).toFixed(2)}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    unique models
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-2 flex flex-col justify-center space-y-4">
+                <div className="flex flex-row items-center justify-between text-bodydark2">
+                  <div className="text-lg font-medium">Pending Stock Value</div>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="dark:text-bodydark">
+                  <span className="text-xs">KES</span>
+                  <div className="pl-4 text-2xl font-bold">
+                    {Number(overviewData.pendingStockValue).toLocaleString() || (0.0).toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -493,7 +556,7 @@ const OutletView: React.FC = () => {
                 </div>
                 <div className="dark:text-bodydark">
                   <div className="text-2xl font-bold">
-                    {stats.lowStockItems}
+                    {overviewData.lowStockItems.mobiles.length + overviewData.lowStockItems.accessories.length}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     items need restock
@@ -508,7 +571,7 @@ const OutletView: React.FC = () => {
                     <TrendingUp className="w-4 h-4 mr-2" />
                     View Sales Report
                 </button>
-                <button onClick={() => setShowPendingStockModal(true)} className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                <button onClick={() => {fetchPendingStock(); setShowPendingStockModal(true);}} className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
                     <Package className="w-4 h-4 mr-2" />
                     View Pending Stock
                     {pendingStock.length > 0 && <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">{pendingStock.length}</span>}
@@ -538,18 +601,18 @@ const OutletView: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="text-xs md:text-sm lg:text-base text-center">
-                                        {pendingStock.map((item: any, index: number) => (
+                                        {pendingStock && pendingStock.map((item: any, index: number) => (
                                             <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
                                                 index % 2 === 1
                                                 ? 'bg-bodydark3 dark:bg-meta-4'
                                                 : 'bg-white dark:bg-boxdark'
                                             }`}>
                                                 <td className="p-3">{index + 1}</td>
-                                                <td className="p-3 font-medium">{item.categoryId.itemName}</td>
-                                                <td className="p-3">{item.categoryId.itemModel}</td>
-                                                <td className="p-3">{item.categoryId.brand}</td>
+                                                <td className="p-3 font-medium">{item.mobiles?.categories.itemName || item.accessories?.categories.itemName}</td>
+                                                <td className="p-3">{item.mobiles?.categories.itemModel || item.accessories?.categories.itemModel}</td>
+                                                <td className="p-3">{item.mobiles?.categories.brand || item.accessories?.categories.brand}</td>
                                                 <td className="p-3">{item.quantity}</td>
-                                                <td className="p-3">{item.stock.IMEI}</td>
+                                                <td className="p-3">{item.mobiles?.IMEI || item.accessories?.batchNumber}</td>
                                                 <td className="p-3">
                                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                                         item.status.toLowerCase() === 'pending'
@@ -574,61 +637,127 @@ const OutletView: React.FC = () => {
       case 'Inventory': {
         return (
             <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
-                <div className="p-4 bg-gray-50 dark:bg-meta-4">
+                <div className="p-4 bg-gray-50 dark:bg-meta-4 flex justify-between items-center">
                     <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">Confirmed Inventory</h2>
+                    <div className="flex items-center space-x-4">
+                        <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by IMEI or name" className="p-2 border rounded-lg dark:bg-boxdark" />
+                        <button onClick={handleSearch} className="px-4 py-2 rounded-lg bg-primary text-white">Search</button>
+                    </div>
+                    <div className="flex space-x-4">
+                        <button onClick={() => setInventoryTab('mobiles')} className={`px-4 py-2 rounded-lg ${inventoryTab === 'mobiles' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Mobiles</button>
+                        <button onClick={() => setInventoryTab('accessories')} className={`px-4 py-2 rounded-lg ${inventoryTab === 'accessories' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Accessories</button>
+                    </div>
                 </div>
-                <div className="max-w-full overflow-x-auto">
-                    <table className="w-full table-auto mx-auto">
-                        <thead className="text-xs">
-                            <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
-                                <th className="p-3">#</th>
-                                <th className="p-3">Name</th>
-                                <th className="p-3">Model</th>
-                                <th className="p-3">Brand</th>
-                                <th className="p-3">Quantity</th>
-                                <th className="p-3">Cost</th>
-                                <th className="p-3">IMEI/Batch</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-xs md:text-sm lg:text-base text-center">
-                            {paginatedInventory.map((item: any, index: number) => (
-                                <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
-                                    index % 2 === 1
-                                    ? 'bg-bodydark3 dark:bg-meta-4'
-                                    : 'bg-white dark:bg-boxdark'
-                                }`}>
-                                    <td className="p-3">{index + 1}</td>
-                                    <td className="p-3 font-medium">{item.categoryId.itemName}</td>
-                                    <td className="p-3">{item.categoryId.itemModel}</td>
-                                    <td className="p-3">{item.categoryId.brand}</td>
-                                    <td className="p-3">{item.quantity}</td>
-                                    <td className="p-3">{item.stock.productcost}</td>
-                                    <td className="p-3">{item.stock.IMEI || item.stock.batchNumber}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <div className="flex justify-end mt-4 p-4">
-                    <button
-                        onClick={() => setInventoryPage(prev => Math.max(prev - 1, 1))}
-                        disabled={inventoryPage === 1}
-                        className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                    >
-                        Previous
-                    </button>
-                    <button
-                        onClick={() => setInventoryPage(prev => prev + 1)}
-                        disabled={paginatedInventory.length < itemsPerPage}
-                        className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                    >
-                        Next
-                    </button>
-                </div>
+                {inventoryTab === 'mobiles' && (searchResults ? searchResults.phoneItems : mobileItems) && (
+                    <>
+                        <div className="max-w-full overflow-x-auto">
+                            <table className="w-full table-auto mx-auto">
+                                <thead className="text-xs">
+                                    <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                                        <th className="p-3">#</th>
+                                        <th className="p-3">Name</th>
+                                        <th className="p-3">Model</th>
+                                        <th className="p-3">Brand</th>
+                                        <th className="p-3">Quantity</th>
+                                        <th className="p-3">Cost</th>
+                                        <th className="p-3">IMEI/Batch</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-xs md:text-sm lg:text-base text-center">
+                                    {(searchResults ? searchResults.phoneItems.items : mobileItems.items).map((item: any, index: number) => (
+                                        <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
+                                            index % 2 === 1
+                                            ? 'bg-bodydark3 dark:bg-meta-4'
+                                            : 'bg-white dark:bg-boxdark'
+                                        }`}>
+                                            <td className="p-3">{index + 1}</td>
+                                            <td className="p-3 font-medium">{item.mobiles.categories.itemName}</td>
+                                            <td className="p-3">{item.mobiles.categories.itemModel}</td>
+                                            <td className="p-3">{item.mobiles.categories.brand}</td>
+                                            <td className="p-3">{item.quantity}</td>
+                                            <td className="p-3">{item.mobiles.productCost}</td>
+                                            <td className="p-3">{item.mobiles.IMEI}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {!searchResults && <div className="flex justify-end mt-4 p-4">
+                            <button
+                                onClick={() => setMobilePage(prev => Math.max(prev - 1, 1))}
+                                disabled={mobilePage === 1}
+                                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setMobilePage(prev => prev + 1)}
+                                disabled={mobilePage === mobileItems.totalPages}
+                                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>}
+                    </>
+                )}
+                {inventoryTab === 'accessories' && (searchResults ? searchResults.stockItems : accessoryItems) && (
+                    <>
+                        <div className="max-w-full overflow-x-auto">
+                            <table className="w-full table-auto mx-auto">
+                                <thead className="text-xs">
+                                    <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                                        <th className="p-3">#</th>
+                                        <th className="p-3">Name</th>
+                                        <th className="p-3">Model</th>
+                                        <th className="p-3">Brand</th>
+                                        <th className="p-3">Quantity</th>
+                                        <th className="p-3">Cost</th>
+                                        <th className="p-3">Batch</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-xs md:text-sm lg:text-base text-center">
+                                    {(searchResults ? searchResults.stockItems.items : accessoryItems.items).map((item: any, index: number) => (
+                                        <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
+                                            index % 2 === 1
+                                            ? 'bg-bodydark3 dark:bg-meta-4'
+                                            : 'bg-white dark:bg-boxdark'
+                                        }`}>
+                                            <td className="p-3">{index + 1}</td>
+                                            <td className="p-3 font-medium">{item.accessories.categories.itemName}</td>
+                                            <td className="p-3">{item.accessories.categories.itemModel}</td>
+                                            <td className="p-3">{item.accessories.categories.brand}</td>
+                                            <td className="p-3">{item.quantity}</td>
+                                            <td className="p-3">{item.accessories.productCost}</td>
+                                            <td className="p-3">{item.accessories.batchNumber}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {!searchResults && <div className="flex justify-end mt-4 p-4">
+                            <button
+                                onClick={() => setAccessoryPage(prev => Math.max(prev - 1, 1))}
+                                disabled={accessoryPage === 1}
+                                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setAccessoryPage(prev => prev + 1)}
+                                disabled={accessoryPage === accessoryItems.totalPages}
+                                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>}
+                    </>
+                )}
             </div>
         )
       }
       case 'Low Stock': {
+        if (!overviewData) return <CircularProgress />;
+        const lowStockItems = [...overviewData.lowStockItems.mobiles, ...overviewData.lowStockItems.accessories];
         return (
             <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
                 <div className="p-4 bg-gray-50 dark:bg-meta-4">
@@ -646,37 +775,21 @@ const OutletView: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="text-xs md:text-sm lg:text-base text-center">
-                            {paginatedLowStock.map((item: any, index: number) => (
+                            {lowStockItems.map((item: any, index: number) => (
                                 <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
                                     index % 2 === 1
                                     ? 'bg-bodydark3 dark:bg-meta-4'
                                     : 'bg-white dark:bg-boxdark'
                                 }`}>
                                     <td className="p-3">{index + 1}</td>
-                                    <td className="p-3 font-medium">{item.categoryId.itemName}</td>
-                                    <td className="p-3">{item.categoryId.itemModel}</td>
-                                    <td className="p-3">{item.categoryId.brand}</td>
+                                    <td className="p-3 font-medium">{item.name}</td>
+                                    <td className="p-3">{item.model}</td>
+                                    <td className="p-3">{item.brand}</td>
                                     <td className="p-3">{item.quantity}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                </div>
-                <div className="flex justify-end mt-4 p-4">
-                    <button
-                        onClick={() => setLowStockPage(prev => Math.max(prev - 1, 1))}
-                        disabled={lowStockPage === 1}
-                        className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                    >
-                        Previous
-                    </button>
-                    <button
-                        onClick={() => setLowStockPage(prev => prev + 1)}
-                        disabled={paginatedLowStock.length < itemsPerPage}
-                        className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                    >
-                        Next
-                    </button>
                 </div>
             </div>
         )

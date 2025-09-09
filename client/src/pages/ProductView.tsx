@@ -630,18 +630,20 @@ const ProductView = () => {
                             </button>
                           </div>
                         )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleHistory(item.id);
-                          }}
-                          className="p-1 text-gray-500 hover:text-primary"
-                        >
-                          <List className="w-4 h-4" />
-                        </button>
+                        {user.role !== 'seller' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleHistory(item.id);
+                            }}
+                            className="p-1 text-gray-500 hover:text-primary"
+                          >
+                            <List className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
-                    {openHistories[item.id] && (
+                    {user.role !== 'seller' && openHistories[item.id] && (
                       <div className="px-3 pb-3 mt-2 border-t border-gray-200 dark:border-strokedark">
                         <h4 className="text-sm font-semibold my-2 text-gray-800 dark:text-white">
                           Distribution History

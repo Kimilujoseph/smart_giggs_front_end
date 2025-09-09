@@ -25,6 +25,8 @@ import { ConsolidatedData } from './types/ConsolidatedData';
 import { GroupedCartItem } from './types/GroupedCartItem';
 import { Product } from './types/Product';
 import { transformDataForPOS } from './helpers/consolidateData';
+import Receipt from './components/Receipt';
+import { SaleResponse, Financer } from './types/types';
 
 const PointOfSales: React.FC = () => {
   const [message, setMessage] = React.useState<{
@@ -53,11 +55,16 @@ const PointOfSales: React.FC = () => {
   const [soldprice, setSoldPrice] = React.useState<{ [key: string]: number }>(
     {},
   );
+  const [financeDetails, setFinanceDetails] = React.useState<{ [key: string]: { amount: number, status: string, financerId: string } }>(
+    {},
+  );
   const [paymentMethod, setPaymentMethod] = React.useState<
     'cash' | 'mpesa' | 'creditcard'
   >('cash');
   const [showCustomerDetails, setShowCustomerDetails] =
     React.useState<boolean>(false);
+  const [saleResponse, setSaleResponse] = React.useState<SaleResponse[] | null>(null);
+  const [financers, setFinancers] = React.useState<Financer[]>([]);
   const [formData, setFormData] = React.useState<{
     email: string;
     name: string;
@@ -214,6 +221,14 @@ const PointOfSales: React.FC = () => {
         // Transform the data to match our consolidated structure
         const transformedData = transformDataForPOS(shopResponse.data);
         setConsolidatedData(transformedData);
+
+        // Fetch financers
+        const financersResponse = await axios.get(
+          `${import.meta.env.VITE_SERVER_HEAD}/api/financer/all`,
+          { withCredentials: true },
+        );
+        setFinancers(financersResponse.data.data);
+
       } catch (error: any) {
         setMessage({
           text:
@@ -244,6 +259,9 @@ const PointOfSales: React.FC = () => {
           transferId: item.stock.transferId,
           soldUnits:
             product.categoryId.itemType === 'accessories' ? item.quantity : 1,
+          financeAmount: financeDetails[product.categoryId.id]?.amount?.toString() || '0',
+          financeStatus: financeDetails[product.categoryId.id]?.status || 'paid',
+          financeId: Number(financeDetails[product.categoryId.id]?.financerId) || 1,
         }));
         bulkSales.push({
           CategoryId: product.categoryId.id.split('-')[1],
@@ -255,6 +273,8 @@ const PointOfSales: React.FC = () => {
 
       const token = localStorage.getItem('tk');
       if (!token) throw new Error('Token not found. User not authenticated.');
+
+      console.log('Checkout data being sent:', { customerdetails: formData, shopName: consolidatedData?.shopInfo.name, bulksales: [...bulkSales] });
 
       const response = await axios.post(
         `${import.meta.env.VITE_SERVER_HEAD}/api/sales/items/sale`,
@@ -271,6 +291,7 @@ const PointOfSales: React.FC = () => {
           text: response.data?.message || 'Sale processed successfully',
           type: 'success',
         });
+        setSaleResponse(response.data.data);
         setCart([]);
         setFormData({ name: '', email: '', phonenumber: '' });
       }
@@ -426,6 +447,7 @@ const PointOfSales: React.FC = () => {
           onClose={() => setMessage(null)}
         />
       )}
+      {saleResponse && <Receipt saleResponse={saleResponse} onClose={() => setSaleResponse(null)} />}
       <div className="dark:bg-boxdark-2 min-h-screen mx-auto py-4">
         <Breadcrumb pageName="Point of Sale" />
 
@@ -875,6 +897,57 @@ const PointOfSales: React.FC = () => {
                             {'per Item'}
                           </div>
                         </div>
+                        {product.categoryId.itemType === 'mobiles' && (
+                          <div className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-4">
+                              <input
+                                type="number"
+                                placeholder="Finance Amount"
+                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
+                                value={financeDetails[product.categoryId.id]?.amount || ''}
+                                onChange={(e) => setFinanceDetails({
+                                  ...financeDetails,
+                                  [product.categoryId.id]: {
+                                    ...financeDetails[product.categoryId.id],
+                                    amount: Number(e.target.value)
+                                  }
+                                })}
+                              />
+                              <select
+                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
+                                value={financeDetails[product.categoryId.id]?.status || 'paid'}
+                                onChange={(e) => setFinanceDetails({
+                                  ...financeDetails,
+                                  [product.categoryId.id]: {
+                                    ...financeDetails[product.categoryId.id],
+                                    status: e.target.value
+                                  }
+                                })}
+                              >
+                                <option value="paid">Paid</option>
+                                <option value="pending">Pending</option>
+                              </select>
+                              <select
+                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
+                                value={financeDetails[product.categoryId.id]?.financerId || ''}
+                                onChange={(e) => setFinanceDetails({
+                                  ...financeDetails,
+                                  [product.categoryId.id]: {
+                                    ...financeDetails[product.categoryId.id],
+                                    financerId: e.target.value
+                                  }
+                                })}
+                              >
+                                <option value="">Select Financer</option>
+                                {financers.map((financer) => (
+                                  <option key={financer.id} value={financer.id}>
+                                    {financer.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        )}
                         {(soldprice?.[product.categoryId.id] ?? 0) >
                           product.categoryId.maxPrice && (
                           <>

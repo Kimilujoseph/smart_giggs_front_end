@@ -344,6 +344,7 @@ const ProductDetail = ({
                 </label>
                 <input
                   type="text"
+                  disabled={user.role === 'seller'}
                   defaultValue={product?.itemName}
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
                 />
@@ -355,6 +356,7 @@ const ProductDetail = ({
                 </label>
                 <input
                   type="text"
+                  disabled={user.role === 'seller'}
                   defaultValue={product?.itemModel}
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
                 />
@@ -366,6 +368,7 @@ const ProductDetail = ({
                 </label>
                 <input
                   defaultValue={product?.brand}
+                  disabled={user.role === 'seller'}
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
                 />
               </div>
@@ -374,10 +377,12 @@ const ProductDetail = ({
                 <div>
                   <label className="flex justify-between block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 px-4">
                     <span>Min Price</span>
-                    <Edit
-                      onClick={() => handleDisabled('minPrice', false)}
-                      className="h-4 w-4 text-primary"
-                    />
+                    {user.role !== 'seller' && (
+                      <Edit
+                        onClick={() => handleDisabled('minPrice', false)}
+                        className="h-4 w-4 text-primary"
+                      />
+                    )}
                   </label>
                   <input
                     type="number"
@@ -394,10 +399,12 @@ const ProductDetail = ({
                 <div>
                   <label className="flex justify-between block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300 px-4">
                     <span>Max Price</span>
-                    <Edit
-                      onClick={() => handleDisabled('maxPrice', false)}
-                      className="h-4 w-4 text-primary"
-                    />
+                    {user.role !== 'seller' && (
+                      <Edit
+                        onClick={() => handleDisabled('maxPrice', false)}
+                        className="h-4 w-4 text-primary"
+                      />
+                    )}
                   </label>
                   <input
                     type="number"
@@ -863,41 +870,45 @@ const ProductDetail = ({
                                   : 'N/A'}
                               </td>
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                                <button
-                                  onClick={() =>
-                                    handleOpenEditModal({
-                                      ...item,
-                                      itemType: product.itemType,
-                                    })
-                                  }
-                                  className="text-primary hover:underline"
-                                >
-                                  Edit
-                                </button>
-                                {product.itemType === 'accessories' && (
-                                  <button
-                                    onClick={() => toggleHistory(item.id)}
-                                    className="p-1 ml-2 text-gray-500 hover:text-primary"
-                                  >
-                                    <ChevronDownIcon
-                                      className={`w-4 h-4 transition-transform ${
-                                        openHistories[item.id]
-                                          ? 'rotate-180'
-                                          : ''
-                                      }`}
-                                    />
-                                  </button>
-                                )}
-                                {product.itemType === 'mobiles' && (
+                                {user.role !== 'seller' && (
                                   <button
                                     onClick={() =>
-                                      handleOpenHistoryModal(item.id)
+                                      handleOpenEditModal({
+                                        ...item,
+                                        itemType: product.itemType,
+                                      })
                                     }
-                                    className="p-1 ml-2 text-primary hover:underline"
+                                    className="text-primary hover:underline"
                                   >
-                                    History
+                                    Edit
                                   </button>
                                 )}
+                                {user.role !== 'seller' &&
+                                  product.itemType === 'accessories' && (
+                                    <button
+                                      onClick={() => toggleHistory(item.id)}
+                                      className="p-1 ml-2 text-gray-500 hover:text-primary"
+                                    >
+                                      <ChevronDownIcon
+                                        className={`w-4 h-4 transition-transform ${
+                                          openHistories[item.id]
+                                            ? 'rotate-180'
+                                            : ''
+                                        }`}
+                                      />
+                                    </button>
+                                  )}
+                                {user.role !== 'seller' &&
+                                  product.itemType === 'mobiles' && (
+                                    <button
+                                      onClick={() =>
+                                        handleOpenHistoryModal(item.id)
+                                      }
+                                      className="p-1 ml-2 text-primary hover:underline"
+                                    >
+                                      History
+                                    </button>
+                                  )}
                               </td>
                             </tr>
                             {product.itemType === 'accessories' &&
