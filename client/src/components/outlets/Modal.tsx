@@ -56,17 +56,17 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
       const payload =
         filter === 'phone'
           ? {
-              productId: item.stock?.id,
-              transferId: item.transferId,
-              shopname: shopData.name,
-            }
+            productId: item.mobileID,
+            transferId: item.transferId,
+            shopname: shopData.name,
+          }
           : {
-              id: item.accessory,
-              productId: item.stock?.id,
-              transferId: item.transferId,
-              shopname: shopData.name,
-              quantity: String(item.quantity),
-            };
+            id: item.id,
+            productId: item.accessoryID,
+            transferId: item.transferId,
+            shopname: shopData.name,
+            quantity: String(item.quantity),
+          };
 
       const res = await axios.post(endpoint, payload, { withCredentials: true });
 
@@ -84,41 +84,46 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
 
   const renderItems = () => {
     const items = filter === 'phone'
-      ? shopData.newPhoneItem.filter((item: any) => item.status === 'pending')
-      : shopData.newAccessory.filter((item: any) => item.status === 'pending');
+      ? shopData.pendingMobiles || []
+      : shopData.pendingAccessories || [];
+    console.log("@@#@3434", items)
+    return items.map((item: ProductItem | any, index: number) => {
+      const details = filter === 'phone' ? item.mobiles : item.accessories;
+      const category = details.categories;
+      const imeiOrBatch = filter === 'phone' ? details.IMEI : details.batchNumber;
 
-    return items.map((item: ProductItem | any, index: number) => (
-      <tr
-        key={index}
-        className="border-b border-[#eee] dark:border-strokedark w-full text-center *:p-2"
-      >
-        <td>{item.categoryId.itemModel}</td>
-        <td>{item.categoryId.itemName}</td>
-        <td>{filter === 'phone' ? item.stock?.IMEI : item.stock.batchNumber}</td>
-        <td>{filter === 'accessory' ? item.quantity : '-'}</td>
-        <td>
-          <span
-            className={`${
-              item.status === 'confirmed' ? 'bg-success/60' : 'bg-warning/60'
-            } px-2 rounded-full text-center`}
-          >
-            {item.status}
-          </span>
-        </td>
-        <td>
-          <span className="text-danger">{item.categoryId.minPrice}</span> /{' '}
-          <span className="text-primary">{item.categoryId.maxPrice}</span>
-        </td>
-        <td>
-          <button
-            className="px-2 text-sm tracking-wide text-black text-center dark:text-white flex items-center justify-center"
-            onClick={() => handleApprove(item)}
-          >
-            <span className="bg-success px-2 rounded">Approve</span>
-          </button>
-        </td>
-      </tr>
-    ));
+      return (
+        <tr
+          key={index}
+          className="border-b border-[#eee] dark:border-strokedark w-full text-center *:p-2"
+        >
+          <td>{category.itemModel}</td>
+          <td>{category.itemName}</td>
+          <td>{imeiOrBatch}</td>
+          <td>{filter === 'accessory' ? item.quantity : '-'}</td>
+          <td>
+            <span
+              className={`${item.status === 'confirmed' ? 'bg-success/60' : 'bg-warning/60'
+                } px-2 rounded-full text-center`}
+            >
+              {item.status}
+            </span>
+          </td>
+          <td>
+            <span className="text-danger">{category.minPrice}</span> /{' '}
+            <span className="text-primary">{category.maxPrice}</span>
+          </td>
+          <td>
+            <button
+              className="px-2 text-sm tracking-wide text-black text-center dark:text-white flex items-center justify-center"
+              onClick={() => handleApprove(item)}
+            >
+              <span className="bg-success px-2 rounded">Approve</span>
+            </button>
+          </td>
+        </tr>
+      )
+    });
   };
 
   return (
@@ -146,26 +151,24 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
           </div>
           <div className="flex items-center justify-between md:justify-start gap-2 mb-4 w-full">
             <button
-              className={`w-full md:w-1/4 px-4 py-2 rounded outline-none ${
-                filter === 'phone' ? 'bg-primary text-white' : 'bg-gray-300'
-              }`}
+              className={`w-full md:w-1/4 px-4 py-2 rounded outline-none ${filter === 'phone' ? 'bg-primary text-white' : 'bg-gray-300'
+                }`}
               onClick={() => handleFilterChange('phone')}
             >
               Phones
             </button>
             <button
-              className={`w-full md:w-1/4 px-4 py-2 rounded outline-none ${
-                filter === 'accessory'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-300 dark:text-boxdark-2'
-              }`}
+              className={`w-full md:w-1/4 px-4 py-2 rounded outline-none ${filter === 'accessory'
+                ? 'bg-primary text-white'
+                : 'bg-gray-300 dark:text-boxdark-2'
+                }`}
               onClick={() => handleFilterChange('accessory')}
             >
               Accessories
             </button>
           </div>
-          {!shopData?.newPhoneItem?.length &&
-          !shopData?.newAccessory?.length ? (
+          {!shopData?.pendingMobiles?.length &&
+            !shopData?.pendingAccessories?.length ? (
             <div className="text-center text-base text-gray-500 dark:text-gray-400 flex items-center justify-center h-32">
               No new items yet.
             </div>
@@ -174,9 +177,9 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
               <button
                 onClick={() => {
                   const items = filter === 'phone'
-                    ? shopData.newPhoneItem
-                    : shopData.newAccessory;
-                  
+                    ? shopData.pendingMobiles
+                    : shopData.pendingAccessories;
+
                   items.forEach((item: any) => {
                     handleApprove(item);
                   });

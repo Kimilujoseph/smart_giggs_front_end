@@ -61,6 +61,15 @@ const OutletInventoryView: React.FC = () => {
     text: string;
     type: string;
   } | null>(null);
+  const [mobileItems, setMobileItems] = useState<any | null>(null);
+  const [accessoryItems, setAccessoryItems] = useState<any | null>(null);
+  const [mobilePage, setMobilePage] = useState(1);
+  const [accessoryPage, setAccessoryPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<any | null>(null);
+  const [pendingMobiles, setPendingMobiles] = useState<any[]>([]);
+  const [pendingAccessories, setPendingAccessories] = useState<any[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('tk');
@@ -101,10 +110,10 @@ const OutletInventoryView: React.FC = () => {
     },
     userPermissions === 'manager' || userPermissions === 'superuser'
       ? {
-          name: 'Outlet Sellers',
-          key: 'Sellers',
-          icon: UserIcon,
-        }
+        name: 'Outlet Sellers',
+        key: 'Sellers',
+        icon: UserIcon,
+      }
       : null,
     {
       name: 'Outlet Settings',
@@ -185,7 +194,7 @@ const OutletInventoryView: React.FC = () => {
   const calculateInventoryStats = () => {
     if (!shop) return null;
 
-    
+
 
     const phoneItems = shop.phoneItems || [];
     const accessories = shop.stockItems || [];
@@ -197,7 +206,7 @@ const OutletInventoryView: React.FC = () => {
       (sum, item) => sum + item.quantity,
       0,
     );
-    
+
 
     const soldPhones = phoneItems.filter(
       (item: any) => item.stock.stockStatus.toLowerCase() === 'sold',
@@ -228,21 +237,21 @@ const OutletInventoryView: React.FC = () => {
         sum + item.quantity * (Number(item.stock.productcost) || 0),
       0,
     );
-    
+
 
     const accessoryValue = accessories.reduce(
       (sum, item) =>
         sum + item.quantity * (Number(item.stock.productcost) || 0),
       0,
     );
-  
+
     return {
       totalPhones,
       totalAccessories,
       totalItems: totalPhones + totalAccessories,
       totalSoldItems: soldPhones + soldAccessories,
       totalItemsInStock: phonesInStock + accessoriesInStock,
-      lowStockItems: shop.lowStockItems.length,
+      lowStockItems: shop.lowStockItems?.length || 0,
       phoneModels: phoneItems.length,
       accessoryModels: accessories.length,
       totalValue: phoneValue + accessoryValue,
@@ -267,15 +276,14 @@ const OutletInventoryView: React.FC = () => {
           return;
         }
         const response = await axios.get(
-          `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${
-            decoded.email
+          `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${decoded.email
           }`,
           { withCredentials: true },
         );
         const { assignedShop } = response.data.user;
-        
 
-        
+
+
 
         if (!assignedShop && userPermissions === 'seller') {
           setModalAlert({
@@ -321,26 +329,7 @@ const OutletInventoryView: React.FC = () => {
 
       if (response.data) {
         let outlet = { ...response.data.shop.filteredShop };
-        
-
         setShop(response.data.shop.filteredShop);
-
-        const { newPhoneItem, newAccessory } = response.data.shop.filteredShop;
-
-        const phoneItems = Array.isArray(newPhoneItem) ? newPhoneItem : [];
-        const accessoryItems = Array.isArray(newAccessory) ? newAccessory : [];
-
-        // Count the items with status "pending"
-        const pendingPhoneItemsCount = phoneItems.filter(
-          (item) => item.status === 'pending',
-        ).length;
-        const pendingAccessoryItemsCount = accessoryItems.filter(
-          (item) => item.status === 'pending',
-        ).length;
-
-        // Update the state with the total count of pending items
-        setNewStockTally(pendingPhoneItemsCount + pendingAccessoryItemsCount);
-
         setOutletFormData({
           name: outlet.name,
           address: outlet.address,
@@ -358,9 +347,72 @@ const OutletInventoryView: React.FC = () => {
     }
   };
 
+  const fetchMobileItems = async (page = 1) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?page=${page}&limit=${itemsPerPage}&itemType=mobile&status=confirmed`,
+        { withCredentials: true },
+      );
+      setMobileItems(response.data.shop.filteredShop.mobileItems);
+    } catch (error) {
+      console.error("Failed to fetch mobile items", error);
+    }
+  };
+
+  const fetchAccessoryItems = async (page = 1) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?page=${page}&limit=${itemsPerPage}&itemType=accessory&status=confirmed`,
+        { withCredentials: true },
+      );
+      setAccessoryItems(response.data.shop.filteredShop.accessoryItems);
+    } catch (error) {
+      console.error("Failed to fetch accessory items", error);
+    }
+  };
+
+  const fetchPendingStock = async () => {
+    try {
+      const mobileResponse = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?itemType=mobile&status=pending`,
+        { withCredentials: true },
+      );
+      const accessoryResponse = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?itemType=accessory&status=pending`,
+        { withCredentials: true },
+      );
+
+      const mobiles = mobileResponse.data.shop.filteredShop.mobileItems?.items || [];
+      console.log("@@@@@@@@", mobiles)
+      const accessories = accessoryResponse.data.shop.filteredShop.accessoryItems?.items || [];
+      console.log("!@!@!@accessories", accessories)
+      setPendingMobiles(mobiles);
+      setPendingAccessories(accessories);
+      setNewStockTally(mobiles.length + accessories.length);
+    } catch (error) {
+      console.error("Failed to fetch pending stock", error);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchTerm) {
+      setSearchResults(null);
+      return;
+    }
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/searchproducts/${shopname}?productName=${searchTerm}`,
+        { withCredentials: true },
+      );
+      setSearchResults(response.data.products);
+    } catch (error) {
+      console.error("Failed to search products", error);
+    }
+  };
+
   useEffect(() => {
     if (userPermissions === 'seller' && !urlShopname) {
-      
+
       fetchUserData();
     }
   }, [userPermissions]);
@@ -368,8 +420,11 @@ const OutletInventoryView: React.FC = () => {
   useEffect(() => {
     if (shopname) {
       fetchShop();
+      fetchMobileItems(mobilePage);
+      fetchAccessoryItems(accessoryPage);
+      fetchPendingStock();
     }
-  }, [shopname]);
+  }, [shopname, mobilePage, accessoryPage]);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setOutletFormData({ ...outletFormData, [e.target.name]: e.target.value });
   };
@@ -379,8 +434,7 @@ const OutletInventoryView: React.FC = () => {
 
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/update/${
-          outletFormData.id
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/update/${outletFormData.id
         }`,
         outletFormData,
         { withCredentials: true },
@@ -402,35 +456,9 @@ const OutletInventoryView: React.FC = () => {
     }
   };
 
-  const items =
-    activeSection === 'Phones' ? shop?.phoneItems : shop?.stockItems;
 
-  const groupedItems = useMemo(() => {
-    
-    
-    if (!items) return [];
 
-    const grouped = items.reduce((acc: any, item: any) => {
-      const categoryId = item.categoryId.id;
 
-      if (!acc[categoryId]) {
-        acc[categoryId] = {
-          categoryId: item.categoryId,
-          items: [],
-          quantity: 0,
-        };
-      }
-
-      acc[categoryId].items.push(item.stock);
-      acc[categoryId].quantity += item.quantity;
-
-      return acc;
-    }, {});
-
-    return Object.values(grouped);
-  }, [items]);
-
-  
 
   const renderContent = () => {
     switch (activeSection) {
@@ -441,12 +469,12 @@ const OutletInventoryView: React.FC = () => {
 
         const phonesProgress =
           (stats.totalPhones / stats.phoneModels) * 100 || 0;
-        
+
 
         const accessoriesProgress =
           (stats.totalAccessories /
             (stats.totalPhones + stats.totalAccessories)) *
-            100 || 0;
+          100 || 0;
 
         return (
           <div className="space-y-6">
@@ -543,13 +571,12 @@ const OutletInventoryView: React.FC = () => {
                     </div>
                     <div
                       className={`h-2 rounded-md
-                      ${
-                        phonesProgress < 20
+                      ${phonesProgress < 20
                           ? 'border border-red-500 bg-red-500'
                           : phonesProgress >= 20 && phonesProgress < 50
-                          ? 'bg-yellow-500 border-yellow-500'
-                          : 'bg-primary border-primary'
-                      }
+                            ? 'bg-yellow-500 border-yellow-500'
+                            : 'bg-primary border-primary'
+                        }
                         `}
                       style={{
                         width: `${phonesProgress}%`,
@@ -587,11 +614,10 @@ const OutletInventoryView: React.FC = () => {
                     </div>
                     <div
                       className={`h-2 rounded-md
-                        ${
-                          accessoriesProgress < 20
-                            ? 'border border-red-500 bg-red-500'
-                            : accessoriesProgress >= 20 &&
-                              accessoriesProgress < 50
+                        ${accessoriesProgress < 20
+                          ? 'border border-red-500 bg-red-500'
+                          : accessoriesProgress >= 20 &&
+                            accessoriesProgress < 50
                             ? 'bg-yellow-500 border-yellow-500'
                             : 'bg-primary border-primary'
                         }
@@ -600,7 +626,7 @@ const OutletInventoryView: React.FC = () => {
                         width: `${accessoriesProgress}%`,
                       }}
                     >
-                      {}
+                      { }
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -627,13 +653,24 @@ const OutletInventoryView: React.FC = () => {
       }
       case 'Phones':
       case 'Accessories': {
+        const isPhones = activeSection === 'Phones';
+        const items = isPhones ? mobileItems : accessoryItems;
+        const page = isPhones ? mobilePage : accessoryPage;
+        const setPage = isPhones ? setMobilePage : setAccessoryPage;
+        const searchItems = isPhones ? searchResults?.phoneItems : searchResults?.stockItems;
+
+        const displayItems = searchResults ? searchItems?.items : items?.items;
+
         return (
-          <div className="bg-bodydark3 dark:bg-boxdark rounded-lg shadow-md">
-            <div className="p-4 bg-gray-50 dark:bg-meta-4">
+          <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
+            <div className="p-4 bg-gray-50 dark:bg-meta-4 flex justify-between items-center">
               <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">
-                Inventory /{' '}
-                <span className="text-sm text-primary">{activeSection}</span>
+                Inventory / <span className="text-sm text-primary">{activeSection}</span>
               </h2>
+              <div className="flex items-center space-x-4">
+                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by IMEI or name" className="p-2 border rounded-lg dark:bg-boxdark" />
+                <button onClick={handleSearch} className="px-4 py-2 rounded-lg bg-primary text-white">Search</button>
+              </div>
             </div>
             <div className="max-w-full overflow-x-auto">
               <table className="w-full table-auto mx-auto">
@@ -643,81 +680,48 @@ const OutletInventoryView: React.FC = () => {
                     <th className="p-3">Name</th>
                     <th className="p-3">Model</th>
                     <th className="p-3">Brand</th>
-                    <th className="p-3">Total Units</th>
-                    <th className="p-3">Price Range (KES)</th>
-                    <th className="p-3">Actions</th>
+                    <th className="p-3">Quantity</th>
+                    <th className="p-3">Cost</th>
+                    <th className="p-3">{isPhones ? 'IMEI' : 'Batch'}</th>
                   </tr>
                 </thead>
                 <tbody className="text-xs md:text-sm lg:text-base text-center">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={7} className="h-20 w-full text-center">
-                        <div className="flex justify-center items-center h-full">
-                          <CircularProgress />
-                        </div>
-                      </td>
-                    </tr>
-                  ) : !groupedItems || groupedItems.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="py-4 text-center text-black dark:text-white h-24"
-                      >
-                        No {activeSection} found
-                      </td>
-                    </tr>
-                  ) : (
-                    groupedItems.map((group: any, index: number) => (
-                      <tr
-                        key={group.categoryId.id}
-                        className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors
-                        ${
-                          index % 2 === 1
-                            ? 'bg-bodydark3 dark:bg-meta-4'
-                            : 'bg-white dark:bg-boxdark'
-                        }`}
-                      >
+                  {displayItems?.map((item: any, index: number) => {
+                    const details = isPhones ? item.mobiles : item.accessories;
+                    return (
+                      <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
+                        ? 'bg-bodydark3 dark:bg-meta-4'
+                        : 'bg-white dark:bg-boxdark'
+                        }`}>
                         <td className="p-3">{index + 1}</td>
-                        <td className="p-3 font-medium">
-                          {group.categoryId.itemName}
-                        </td>
-                        <td className="p-3">{group.categoryId.itemModel}</td>
-                        <td className="p-3">{group.categoryId.brand}</td>
-                        <td className="p-3">
-                          <span className="px-3 py-1 rounded-full bg-primary/10 text-primary">
-                            {group.quantity}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <span className="text-red-500">
-                            {group.categoryId.minPrice}
-                          </span>
-                          {' - '}
-                          <span className="text-blue-500">
-                            {group.categoryId.maxPrice}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <button
-                            className="block px-4 py-2 flex justify-center text-gray-800 dark:text-white w-full"
-                            onClick={() =>
-                              navigate(
-                                `/outlet/inventory/${group.categoryId.id}`,
-                                {
-                                  state: group,
-                                },
-                              )
-                            }
-                          >
-                            <Eye className='h-4 w-4' />
-                          </button>
-                        </td>
+                        <td className="p-3 font-medium">{details.categories.itemName}</td>
+                        <td className="p-3">{details.categories.itemModel}</td>
+                        <td className="p-3">{details.categories.brand}</td>
+                        <td className="p-3">{item.quantity}</td>
+                        <td className="p-3">{details.productCost}</td>
+                        <td className="p-3">{isPhones ? details.IMEI : details.batchNumber}</td>
                       </tr>
-                    ))
-                  )}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
+            {!searchResults && items && <div className="flex justify-end mt-4 p-4">
+              <button
+                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage(prev => prev + 1)}
+                disabled={page === items.totalPages}
+                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>}
           </div>
         );
       }
@@ -761,10 +765,10 @@ const OutletInventoryView: React.FC = () => {
                 <div className="mt-4 space-y-4">
                   {users.filter((user: any) => user.role === 'seller')
                     .length === 0 && (
-                    <div className="dark:text-red-500 text-sm">
-                      No sellers to be assigned
-                    </div>
-                  )}
+                      <div className="dark:text-red-500 text-sm">
+                        No sellers to be assigned
+                      </div>
+                    )}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-black dark:text-white">
                       Select Seller
@@ -892,29 +896,29 @@ const OutletInventoryView: React.FC = () => {
                           <td className="p-4 text-sm">
                             {/* {format(new Date(seller.fromDate), 'yyyy-MM-dd')} */}
                             {seller.assignmentHistory &&
-                            seller.assignmentHistory.length > 0
+                              seller.assignmentHistory.length > 0
                               ? format(
-                                  new Date(
-                                    seller.assignmentHistory[
-                                      seller.assignmentHistory.length - 1
-                                    ].fromDate,
-                                  ),
-                                  'dd MMM, yyyy',
-                                )
+                                new Date(
+                                  seller.assignmentHistory[
+                                    seller.assignmentHistory.length - 1
+                                  ].fromDate,
+                                ),
+                                'dd MMM, yyyy',
+                              )
                               : 'N/A'}
                           </td>
                           <td className="p-4 text-sm">
                             {/* {format(new Date(seller.toDate), 'yyyy-MM-dd')} */}
                             {seller.assignmentHistory &&
-                            seller.assignmentHistory.length > 0
+                              seller.assignmentHistory.length > 0
                               ? format(
-                                  new Date(
-                                    seller.assignmentHistory[
-                                      seller.assignmentHistory.length - 1
-                                    ].toDate,
-                                  ),
-                                  'dd MMM, yyyy',
-                                )
+                                new Date(
+                                  seller.assignmentHistory[
+                                    seller.assignmentHistory.length - 1
+                                  ].toDate,
+                                ),
+                                'dd MMM, yyyy',
+                              )
                               : 'N/A'}
                           </td>
                           <td className="p-4 text-sm">
@@ -930,19 +934,18 @@ const OutletInventoryView: React.FC = () => {
                                       : 'Expired'}
                                   </span> */}
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                seller.assignmentHistory[
-                                  seller.assignmentHistory.length - 1
-                                ].type === 'assigned'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${seller.assignmentHistory[
+                                seller.assignmentHistory.length - 1
+                              ].type === 'assigned'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                                }`}
                             >
                               {seller.assignmentHistory &&
-                              seller.assignmentHistory.length > 0
+                                seller.assignmentHistory.length > 0
                                 ? seller.assignmentHistory[
-                                    seller.assignmentHistory.length - 1
-                                  ].type
+                                  seller.assignmentHistory.length - 1
+                                ].type
                                 : 'N/A'}
                             </span>
                           </td>
@@ -1053,9 +1056,8 @@ const OutletInventoryView: React.FC = () => {
               disabled={!shop}
             >
               <div
-                className={`relative mr-3 ${
-                  newStockTally > 0 && 'animate-bounce'
-                }`}
+                className={`relative mr-3 ${newStockTally > 0 && 'animate-bounce'
+                  }`}
               >
                 <ShoppingCart className="text-primary group-hover:scale-110 transition-transform" />
                 {newStockTally > 0 && (
@@ -1099,10 +1101,9 @@ const OutletInventoryView: React.FC = () => {
                   className={`
                     w-full md:w-auto flex items-center justify-center md:justify-start 
                     p-4 border-b md:border-b-0 last:border-b-0 outline-none
-                    ${
-                      activeSection === section.key
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-meta-4'
+                    ${activeSection === section.key
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-meta-4'
                     }
                   `}
                 >
@@ -1132,9 +1133,14 @@ const OutletInventoryView: React.FC = () => {
         <div className="flex justify-center fixed inset-0 z-9999 p-4">
           <Modal
             message=""
-            shopData={shop!}
+            shopData={{ ...shop, pendingMobiles, pendingAccessories }}
             onClose={() => setShowNewStock(false)}
-            refreshShopData={fetchShop}
+            refreshShopData={() => {
+              fetchShop();
+              fetchMobileItems(mobilePage);
+              fetchAccessoryItems(accessoryPage);
+              fetchPendingStock();
+            }}
           />
         </div>
       )}

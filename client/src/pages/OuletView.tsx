@@ -74,20 +74,22 @@ const OutletView: React.FC = () => {
   const [mobilePage, setMobilePage] = useState(1);
   const [accessoryPage, setAccessoryPage] = useState(1);
   const [inventoryTab, setInventoryTab] = useState('mobiles');
-  const [pendingStock, setPendingStock] = useState<any | null>(null);
+  const [pendingStockTab, setPendingStockTab] = useState('mobiles');
+  const [pendingMobiles, setPendingMobiles] = useState<any[]>([]);
+  const [pendingAccessories, setPendingAccessories] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any | null>(null);
   const token: string | null = localStorage.getItem('tk') || null;
   const decoded: DecodedToken | null = jwt_decode(token!) || null;
   const sections = [
     currentUser ||
-    userPermissions === 'manager' ||
-    userPermissions === 'superuser'
+      userPermissions === 'manager' ||
+      userPermissions === 'superuser'
       ? {
-          name: 'Overview',
-          key: 'Overview',
-          icon: LayoutDashboard,
-        }
+        name: 'Overview',
+        key: 'Overview',
+        icon: LayoutDashboard,
+      }
       : null,
     {
       name: 'Inventory',
@@ -95,26 +97,26 @@ const OutletView: React.FC = () => {
       icon: Package,
     },
     {
-        name: 'Low Stock',
-        key: 'Low Stock',
-        icon: AlertTriangle,
+      name: 'Low Stock',
+      key: 'Low Stock',
+      icon: AlertTriangle,
     },
-    
+
     userPermissions === 'manager' || userPermissions === 'superuser'
       ? {
-          name: 'Outlet Sellers',
-          key: 'Sellers',
-          icon: UserIcon,
-        }
+        name: 'Outlet Sellers',
+        key: 'Sellers',
+        icon: UserIcon,
+      }
       : null,
     currentUser ||
-    userPermissions === 'manager' ||
-    userPermissions === 'superuser'
+      userPermissions === 'manager' ||
+      userPermissions === 'superuser'
       ? {
-          name: 'Outlet Settings',
-          key: 'Outlet Settings',
-          icon: SettingsIcon,
-        }
+        name: 'Outlet Settings',
+        key: 'Outlet Settings',
+        icon: SettingsIcon,
+      }
       : null,
   ];
   const [activeSection, setActiveSection] = useState<string | undefined>(
@@ -195,7 +197,7 @@ const OutletView: React.FC = () => {
         if (user_res?.data) {
           setUsers(user_res?.data);
         }
-      } catch (error) {}
+      } catch (error) { }
     };
     fetchUsers();
   }, [shop]);
@@ -263,7 +265,7 @@ const OutletView: React.FC = () => {
     const accessoryValue = accessories.reduce(
       (sum, item) => sum + item.quantity * (Number(item.stock.minprice) || 0),
       0,
-    );    
+    );
 
     return {
       totalPhones,
@@ -294,8 +296,7 @@ const OutletView: React.FC = () => {
           return;
         }
         const response = await axios.get(
-          `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${
-            decoded.email
+          `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${decoded.email
           }`,
           { withCredentials: true },
         );
@@ -364,7 +365,7 @@ const OutletView: React.FC = () => {
 
         // Update the state with the total count of pending items
         setNewStockTally(pendingPhoneItemsCount + pendingAccessoryItemsCount);
-        
+
 
         setOutletFormData({
           name: outlet.name,
@@ -372,7 +373,7 @@ const OutletView: React.FC = () => {
           _id: outlet._id,
         });
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const fetchOverview = async () => {
@@ -421,9 +422,11 @@ const OutletView: React.FC = () => {
         `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?itemType=accessory&status=pending`,
         { withCredentials: true },
       );
-      const mobiles = mobileResponse.data.shop.filteredShop.mobileItems.items;
-      const accessories = accessoryResponse.data.shop.filteredShop.accessoryItems.items;
-      setPendingStock([...mobiles, ...accessories]);
+
+      const mobiles = mobileResponse.data.shop.filteredShop.mobileItems?.items || [];
+      const accessories = accessoryResponse.data.shop.filteredShop.accessoryItems?.items || [];
+      setPendingMobiles(mobiles);
+      setPendingAccessories(accessories);
     } catch (error) {
       console.error("Failed to fetch pending stock", error);
     }
@@ -465,14 +468,13 @@ const OutletView: React.FC = () => {
     e.preventDefault();
 
     const payload = {
-        shopName: outletFormData.name,
-        address: outletFormData.address,
+      shopName: outletFormData.name,
+      address: outletFormData.address,
     };
 
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/update/${
-          outletFormData._id
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/update/${outletFormData._id
         }`,
         payload,
         { withCredentials: true },
@@ -494,17 +496,15 @@ const OutletView: React.FC = () => {
     }
   };
 
-  
 
-  
+
+
 
   const renderContent = () => {
     switch (activeSection) {
       case 'Overview': {
         if (!currentUser && userPermissions !== 'manager') return null;
         if (!overviewData) return <CircularProgress />;
-
-        const pendingStock = [...(shop?.newPhoneItem || []), ...(shop?.newAccessory || [])];
 
         return (
           <div className="space-y-6">
@@ -567,234 +567,277 @@ const OutletView: React.FC = () => {
 
             {/* Pending Stock Button */}
             <div className="flex justify-end gap-4">
-                <button onClick={() => navigate(`/shop/sales?shopId=${shop?._id}`)} className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    View Sales Report
-                </button>
-                <button onClick={() => {fetchPendingStock(); setShowPendingStockModal(true);}} className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                    <Package className="w-4 h-4 mr-2" />
-                    View Pending Stock
-                    {pendingStock.length > 0 && <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">{pendingStock.length}</span>}
-                </button>
+              <button onClick={() => navigate(`/shop/sales?shopId=${shop?._id}`)} className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                View Sales Report
+              </button>
+              <button onClick={async () => { await fetchPendingStock(); setShowPendingStockModal(true); }} className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                <Package className="w-4 h-4 mr-2" />
+                View Pending Stock
+                {(pendingMobiles.length + pendingAccessories.length) > 0 && <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">{pendingMobiles.length + pendingAccessories.length}</span>}
+              </button>
             </div>
 
             {/* Pending Stock Modal */}
             {showPendingStockModal && (
-                <div className="fixed inset-0 w-full h-full z-999 bg-black bg-opacity-50 flex justify-center items-center px-4">
-                    <div className="bg-white dark:bg-boxdark rounded-lg w-full max-w-4xl max-h-full overflow-y-auto">
-                        <div className="p-4 border-b border-gray-200 dark:border-strokedark flex justify-between items-center">
-                            <h2 className="text-lg font-semibold text-black dark:text-white">Pending Stock</h2>
-                            <XIcon className="hover:scale-125 transition-all duration-300 cursor-pointer" onClick={() => setShowPendingStockModal(false)} />
-                        </div>
-                        <div className="p-4">
-                            <div className="max-w-full overflow-x-auto">
-                                <table className="w-full table-auto mx-auto">
-                                    <thead className="text-xs">
-                                        <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
-                                            <th className="p-3">#</th>
-                                            <th className="p-3">Name</th>
-                                            <th className="p-3">Model</th>
-                                            <th className="p-3">Brand</th>
-                                            <th className="p-3">Quantity</th>
-                                            <th className="p-3">IMEI</th>
-                                            <th className="p-3">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="text-xs md:text-sm lg:text-base text-center">
-                                        {pendingStock && pendingStock.map((item: any, index: number) => (
-                                            <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
-                                                index % 2 === 1
-                                                ? 'bg-bodydark3 dark:bg-meta-4'
-                                                : 'bg-white dark:bg-boxdark'
-                                            }`}>
-                                                <td className="p-3">{index + 1}</td>
-                                                <td className="p-3 font-medium">{item.mobiles?.categories.itemName || item.accessories?.categories.itemName}</td>
-                                                <td className="p-3">{item.mobiles?.categories.itemModel || item.accessories?.categories.itemModel}</td>
-                                                <td className="p-3">{item.mobiles?.categories.brand || item.accessories?.categories.brand}</td>
-                                                <td className="p-3">{item.quantity}</td>
-                                                <td className="p-3">{item.mobiles?.IMEI || item.accessories?.batchNumber}</td>
-                                                <td className="p-3">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                        item.status.toLowerCase() === 'pending'
-                                                        ? 'bg-yellow-100 text-yellow-800'
-                                                        : 'bg-gray-100 text-gray-800'
-                                                    }`}>
-                                                        {item.status}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+              <div className="fixed inset-0 w-full h-full z-999 bg-black bg-opacity-50 flex justify-center items-center px-4">
+                <div className="bg-white dark:bg-boxdark rounded-lg w-full max-w-4xl max-h-full overflow-y-auto">
+                  <div className="p-4 border-b border-gray-200 dark:border-strokedark flex justify-between items-center">
+                    <h2 className="text-lg font-semibold text-black dark:text-white">Pending Stock</h2>
+                    <XIcon className="hover:scale-125 transition-all duration-300 cursor-pointer" onClick={() => setShowPendingStockModal(false)} />
+                  </div>
+                  <div className="p-4">
+                    <div className="flex space-x-4 border-b mb-4">
+                        <button onClick={() => setPendingStockTab('mobiles')} className={`px-4 py-2 rounded-t-lg ${pendingStockTab === 'mobiles' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Mobiles</button>
+                        <button onClick={() => setPendingStockTab('accessories')} className={`px-4 py-2 rounded-t-lg ${pendingStockTab === 'accessories' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Accessories</button>
                     </div>
+
+                    {pendingStockTab === 'mobiles' && (
+                      <div className="max-w-full overflow-x-auto">
+                        <table className="w-full table-auto mx-auto">
+                          <thead className="text-xs">
+                            <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                              <th className="p-3">#</th>
+                              <th className="p-3">Name</th>
+                              <th className="p-3">Model</th>
+                              <th className="p-3">Brand</th>
+                              <th className="p-3">Quantity</th>
+                              <th className="p-3">IMEI</th>
+                              <th className="p-3">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-xs md:text-sm lg:text-base text-center">
+                            {pendingMobiles && pendingMobiles.map((item: any, index: number) => (
+                              <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
+                                ? 'bg-bodydark3 dark:bg-meta-4'
+                                : 'bg-white dark:bg-boxdark'
+                                }`}>
+                                <td className="p-3">{index + 1}</td>
+                                <td className="p-3 font-medium">{item.mobiles.categories.itemName}</td>
+                                <td className="p-3">{item.mobiles.categories.itemModel}</td>
+                                <td className="p-3">{item.mobiles.categories.brand}</td>
+                                <td className="p-3">{item.quantity}</td>
+                                <td className="p-3">{item.mobiles.IMEI}</td>
+                                <td className="p-3">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.status.toLowerCase() === 'pending'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {pendingStockTab === 'accessories' && (
+                      <div className="max-w-full overflow-x-auto">
+                        <table className="w-full table-auto mx-auto">
+                          <thead className="text-xs">
+                            <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                              <th className="p-3">#</th>
+                              <th className="p-3">Name</th>
+                              <th className="p-3">Model</th>
+                              <th className="p-3">Brand</th>
+                              <th className="p-3">Quantity</th>
+                              <th className="p-3">Batch</th>
+                              <th className="p-3">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-xs md:text-sm lg:text-base text-center">
+                            {pendingAccessories && pendingAccessories.map((item: any, index: number) => (
+                              <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
+                                ? 'bg-bodydark3 dark:bg-meta-4'
+                                : 'bg-white dark:bg-boxdark'
+                                }`}>
+                                <td className="p-3">{index + 1}</td>
+                                <td className="p-3 font-medium">{item.accessories.categories.itemName}</td>
+                                <td className="p-3">{item.accessories.categories.itemModel}</td>
+                                <td className="p-3">{item.accessories.categories.brand}</td>
+                                <td className="p-3">{item.quantity}</td>
+                                <td className="p-3">{item.accessories.batchNumber || 'N/A'}</td>
+                                <td className="p-3">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.status.toLowerCase() === 'pending'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                    {item.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              </div>
             )}
           </div>
         );
       }
       case 'Inventory': {
         return (
-            <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
-                <div className="p-4 bg-gray-50 dark:bg-meta-4 flex justify-between items-center">
-                    <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">Confirmed Inventory</h2>
-                    <div className="flex items-center space-x-4">
-                        <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by IMEI or name" className="p-2 border rounded-lg dark:bg-boxdark" />
-                        <button onClick={handleSearch} className="px-4 py-2 rounded-lg bg-primary text-white">Search</button>
-                    </div>
-                    <div className="flex space-x-4">
-                        <button onClick={() => setInventoryTab('mobiles')} className={`px-4 py-2 rounded-lg ${inventoryTab === 'mobiles' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Mobiles</button>
-                        <button onClick={() => setInventoryTab('accessories')} className={`px-4 py-2 rounded-lg ${inventoryTab === 'accessories' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Accessories</button>
-                    </div>
-                </div>
-                {inventoryTab === 'mobiles' && (searchResults ? searchResults.phoneItems : mobileItems) && (
-                    <>
-                        <div className="max-w-full overflow-x-auto">
-                            <table className="w-full table-auto mx-auto">
-                                <thead className="text-xs">
-                                    <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
-                                        <th className="p-3">#</th>
-                                        <th className="p-3">Name</th>
-                                        <th className="p-3">Model</th>
-                                        <th className="p-3">Brand</th>
-                                        <th className="p-3">Quantity</th>
-                                        <th className="p-3">Cost</th>
-                                        <th className="p-3">IMEI/Batch</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-xs md:text-sm lg:text-base text-center">
-                                    {(searchResults ? searchResults.phoneItems.items : mobileItems.items).map((item: any, index: number) => (
-                                        <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
-                                            index % 2 === 1
-                                            ? 'bg-bodydark3 dark:bg-meta-4'
-                                            : 'bg-white dark:bg-boxdark'
-                                        }`}>
-                                            <td className="p-3">{index + 1}</td>
-                                            <td className="p-3 font-medium">{item.mobiles.categories.itemName}</td>
-                                            <td className="p-3">{item.mobiles.categories.itemModel}</td>
-                                            <td className="p-3">{item.mobiles.categories.brand}</td>
-                                            <td className="p-3">{item.quantity}</td>
-                                            <td className="p-3">{item.mobiles.productCost}</td>
-                                            <td className="p-3">{item.mobiles.IMEI}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        {!searchResults && <div className="flex justify-end mt-4 p-4">
-                            <button
-                                onClick={() => setMobilePage(prev => Math.max(prev - 1, 1))}
-                                disabled={mobilePage === 1}
-                                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                            >
-                                Previous
-                            </button>
-                            <button
-                                onClick={() => setMobilePage(prev => prev + 1)}
-                                disabled={mobilePage === mobileItems.totalPages}
-                                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                            >
-                                Next
-                            </button>
-                        </div>}
-                    </>
-                )}
-                {inventoryTab === 'accessories' && (searchResults ? searchResults.stockItems : accessoryItems) && (
-                    <>
-                        <div className="max-w-full overflow-x-auto">
-                            <table className="w-full table-auto mx-auto">
-                                <thead className="text-xs">
-                                    <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
-                                        <th className="p-3">#</th>
-                                        <th className="p-3">Name</th>
-                                        <th className="p-3">Model</th>
-                                        <th className="p-3">Brand</th>
-                                        <th className="p-3">Quantity</th>
-                                        <th className="p-3">Cost</th>
-                                        <th className="p-3">Batch</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-xs md:text-sm lg:text-base text-center">
-                                    {(searchResults ? searchResults.stockItems.items : accessoryItems.items).map((item: any, index: number) => (
-                                        <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
-                                            index % 2 === 1
-                                            ? 'bg-bodydark3 dark:bg-meta-4'
-                                            : 'bg-white dark:bg-boxdark'
-                                        }`}>
-                                            <td className="p-3">{index + 1}</td>
-                                            <td className="p-3 font-medium">{item.accessories.categories.itemName}</td>
-                                            <td className="p-3">{item.accessories.categories.itemModel}</td>
-                                            <td className="p-3">{item.accessories.categories.brand}</td>
-                                            <td className="p-3">{item.quantity}</td>
-                                            <td className="p-3">{item.accessories.productCost}</td>
-                                            <td className="p-3">{item.accessories.batchNumber}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        {!searchResults && <div className="flex justify-end mt-4 p-4">
-                            <button
-                                onClick={() => setAccessoryPage(prev => Math.max(prev - 1, 1))}
-                                disabled={accessoryPage === 1}
-                                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                            >
-                                Previous
-                            </button>
-                            <button
-                                onClick={() => setAccessoryPage(prev => prev + 1)}
-                                disabled={accessoryPage === accessoryItems.totalPages}
-                                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                            >
-                                Next
-                            </button>
-                        </div>}
-                    </>
-                )}
+          <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
+            <div className="p-4 bg-gray-50 dark:bg-meta-4 flex justify-between items-center">
+              <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">Confirmed Inventory</h2>
+              <div className="flex items-center space-x-4">
+                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by IMEI or name" className="p-2 border rounded-lg dark:bg-boxdark" />
+                <button onClick={handleSearch} className="px-4 py-2 rounded-lg bg-primary text-white">Search</button>
+              </div>
+              <div className="flex space-x-4">
+                <button onClick={() => setInventoryTab('mobiles')} className={`px-4 py-2 rounded-lg ${inventoryTab === 'mobiles' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Mobiles</button>
+                <button onClick={() => setInventoryTab('accessories')} className={`px-4 py-2 rounded-lg ${inventoryTab === 'accessories' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Accessories</button>
+              </div>
             </div>
+            {inventoryTab === 'mobiles' && (searchResults ? searchResults.phoneItems : mobileItems) && (
+              <>
+                <div className="max-w-full overflow-x-auto">
+                  <table className="w-full table-auto mx-auto">
+                    <thead className="text-xs">
+                      <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                        <th className="p-3">#</th>
+                        <th className="p-3">Name</th>
+                        <th className="p-3">Model</th>
+                        <th className="p-3">Brand</th>
+                        <th className="p-3">Quantity</th>
+                        <th className="p-3">Cost</th>
+                        <th className="p-3">IMEI/Batch</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-xs md:text-sm lg:text-base text-center">
+                      {(searchResults ? searchResults.phoneItems.items : mobileItems.items).map((item: any, index: number) => (
+                        <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
+                          ? 'bg-bodydark3 dark:bg-meta-4'
+                          : 'bg-white dark:bg-boxdark'
+                          }`}>
+                          <td className="p-3">{index + 1}</td>
+                          <td className="p-3 font-medium">{item.mobiles.categories.itemName}</td>
+                          <td className="p-3">{item.mobiles.categories.itemModel}</td>
+                          <td className="p-3">{item.mobiles.categories.brand}</td>
+                          <td className="p-3">{item.quantity}</td>
+                          <td className="p-3">{item.mobiles.productCost}</td>
+                          <td className="p-3">{item.mobiles.IMEI}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {!searchResults && <div className="flex justify-end mt-4 p-4">
+                  <button
+                    onClick={() => setMobilePage(prev => Math.max(prev - 1, 1))}
+                    disabled={mobilePage === 1}
+                    className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setMobilePage(prev => prev + 1)}
+                    disabled={mobilePage === mobileItems.totalPages}
+                    className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>}
+              </>
+            )}
+            {inventoryTab === 'accessories' && (searchResults ? searchResults.stockItems : accessoryItems) && (
+              <>
+                <div className="max-w-full overflow-x-auto">
+                  <table className="w-full table-auto mx-auto">
+                    <thead className="text-xs">
+                      <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                        <th className="p-3">#</th>
+                        <th className="p-3">Name</th>
+                        <th className="p-3">Model</th>
+                        <th className="p-3">Brand</th>
+                        <th className="p-3">Quantity</th>
+                        <th className="p-3">Cost</th>
+                        <th className="p-3">Batch</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-xs md:text-sm lg:text-base text-center">
+                      {(searchResults ? searchResults.stockItems.items : accessoryItems.items).map((item: any, index: number) => (
+                        <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
+                          ? 'bg-bodydark3 dark:bg-meta-4'
+                          : 'bg-white dark:bg-boxdark'
+                          }`}>
+                          <td className="p-3">{index + 1}</td>
+                          <td className="p-3 font-medium">{item.accessories.categories.itemName}</td>
+                          <td className="p-3">{item.accessories.categories.itemModel}</td>
+                          <td className="p-3">{item.accessories.categories.brand}</td>
+                          <td className="p-3">{item.quantity}</td>
+                          <td className="p-3">{item.accessories.productCost}</td>
+                          <td className="p-3">{item.accessories.batchNumber}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {!searchResults && <div className="flex justify-end mt-4 p-4">
+                  <button
+                    onClick={() => setAccessoryPage(prev => Math.max(prev - 1, 1))}
+                    disabled={accessoryPage === 1}
+                    className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setAccessoryPage(prev => prev + 1)}
+                    disabled={accessoryPage === accessoryItems.totalPages}
+                    className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>}
+              </>
+            )}
+          </div>
         )
       }
       case 'Low Stock': {
         if (!overviewData) return <CircularProgress />;
         const lowStockItems = [...overviewData.lowStockItems.mobiles, ...overviewData.lowStockItems.accessories];
         return (
-            <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
-                <div className="p-4 bg-gray-50 dark:bg-meta-4">
-                    <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">Low Stock Items</h2>
-                </div>
-                <div className="max-w-full overflow-x-auto">
-                    <table className="w-full table-auto mx-auto">
-                        <thead className="text-xs">
-                            <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
-                                <th className="p-3">#</th>
-                                <th className="p-3">Name</th>
-                                <th className="p-3">Model</th>
-                                <th className="p-3">Brand</th>
-                                <th className="p-3">Quantity</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-xs md:text-sm lg:text-base text-center">
-                            {lowStockItems.map((item: any, index: number) => (
-                                <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
-                                    index % 2 === 1
-                                    ? 'bg-bodydark3 dark:bg-meta-4'
-                                    : 'bg-white dark:bg-boxdark'
-                                }`}>
-                                    <td className="p-3">{index + 1}</td>
-                                    <td className="p-3 font-medium">{item.name}</td>
-                                    <td className="p-3">{item.model}</td>
-                                    <td className="p-3">{item.brand}</td>
-                                    <td className="p-3">{item.quantity}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+          <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
+            <div className="p-4 bg-gray-50 dark:bg-meta-4">
+              <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">Low Stock Items</h2>
             </div>
+            <div className="max-w-full overflow-x-auto">
+              <table className="w-full table-auto mx-auto">
+                <thead className="text-xs">
+                  <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                    <th className="p-3">#</th>
+                    <th className="p-3">Name</th>
+                    <th className="p-3">Model</th>
+                    <th className="p-3">Brand</th>
+                    <th className="p-3">Quantity</th>
+                  </tr>
+                </thead>
+                <tbody className="text-xs md:text-sm lg:text-base text-center">
+                  {lowStockItems.map((item: any, index: number) => (
+                    <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
+                      ? 'bg-bodydark3 dark:bg-meta-4'
+                      : 'bg-white dark:bg-boxdark'
+                      }`}>
+                      <td className="p-3">{index + 1}</td>
+                      <td className="p-3 font-medium">{item.name}</td>
+                      <td className="p-3">{item.model}</td>
+                      <td className="p-3">{item.brand}</td>
+                      <td className="p-3">{item.quantity}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )
       }
-      
+
 
       case 'Sellers':
         return (
@@ -835,10 +878,10 @@ const OutletView: React.FC = () => {
                 <div className="mt-4 space-y-4">
                   {users.filter((user: any) => user.role === 'seller')
                     .length === 0 && (
-                    <div className="dark:text-red-500 text-sm">
-                      No sellers to be assigned
-                    </div>
-                  )}
+                      <div className="dark:text-red-500 text-sm">
+                        No sellers to be assigned
+                      </div>
+                    )}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-black dark:text-white">
                       Select Seller
@@ -993,11 +1036,10 @@ const OutletView: React.FC = () => {
                           </td>
                           <td className="p-4 text-sm">
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                seller.status.toLowerCase() === 'assigned'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${seller.status.toLowerCase() === 'assigned'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                                }`}
                             >
                               {capitalize(seller.status)}
                             </span>
@@ -1168,9 +1210,8 @@ const OutletView: React.FC = () => {
               disabled={!shop}
             >
               <div
-                className={`relative mr-3 ${
-                  newStockTally > 0 && 'animate-bounce'
-                }`}
+                className={`relative mr-3 ${newStockTally > 0 && 'animate-bounce'
+                  }`}
               >
                 <ShoppingCart className="text-primary group-hover:scale-110 transition-transform" />
                 {newStockTally > 0 && (
@@ -1220,10 +1261,9 @@ const OutletView: React.FC = () => {
                   className={`
                     w-full md:w-auto flex items-center justify-center md:justify-start 
                     p-4 border-b md:border-b-0 last:border-b-0 outline-none
-                    ${
-                      activeSection === section.key
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-meta-4'
+                    ${activeSection === section.key
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-meta-4'
                     }
                   `}
                 >
