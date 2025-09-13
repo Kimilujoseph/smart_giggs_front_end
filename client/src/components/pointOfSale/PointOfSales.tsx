@@ -24,7 +24,6 @@ import { ITEMS_PER_PAGE, PRODUCTS_PER_PAGE } from './constants';
 import { ConsolidatedData } from './types/ConsolidatedData';
 import { GroupedCartItem } from './types/GroupedCartItem';
 import { Product } from './types/Product';
-import { transformDataForPOS } from './helpers/consolidateData';
 import Receipt from './components/Receipt';
 import { SaleResponse, Financer } from './types/types';
 
@@ -61,6 +60,7 @@ const PointOfSales: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = React.useState<
     'cash' | 'mpesa' | 'creditcard'
   >('cash');
+  const [transactionId, setTransactionId] = React.useState<string>('');
   const [showCustomerDetails, setShowCustomerDetails] =
     React.useState<boolean>(false);
   const [saleResponse, setSaleResponse] = React.useState<SaleResponse[] | null>(null);
@@ -188,8 +188,10 @@ const PointOfSales: React.FC = () => {
     });
   };
 
+  const [shopName, setShopName] = React.useState<string>('');
+
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchInitialData = async () => {
       try {
         const tokenObj = localStorage.getItem('tk');
         if (!tokenObj) {
@@ -200,8 +202,7 @@ const PointOfSales: React.FC = () => {
           throw new Error('User email not found in token');
         }
         const response = await axios.get(
-          `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${
-            decoded.email
+          `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${decoded.email
           }`,
           { withCredentials: true },
         );
@@ -209,18 +210,23 @@ const PointOfSales: React.FC = () => {
         if (!assignedShop) {
           throw new Error('Shop data not found in user profile');
         }
+        setShopName(assignedShop.shopName);
 
-        // Fetch consolidated shop data
-        const shopResponse = await axios.get(
-          `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${
-            assignedShop.shopName
-          }`,
+        const shopInfoResponse = await axios.get(
+          `${import.meta.env.VITE_SERVER_HEAD
+          }/api/shop/${assignedShop.shopName}?itemType=mobile&status=confirmed&limit=1`,
           { withCredentials: true },
         );
-
-        // Transform the data to match our consolidated structure
-        const transformedData = transformDataForPOS(shopResponse.data);
-        setConsolidatedData(transformedData);
+        const shopInfoData = shopInfoResponse.data.shop.filteredShop;
+        setConsolidatedData({
+          shopInfo: {
+            name: shopInfoData.name,
+            address: shopInfoData.address,
+            seller:
+              shopInfoData.sellers.length > 0 ? shopInfoData.sellers[0] : null,
+          },
+          products: { mobiles: [], accessories: [] },
+        });
 
         // Fetch financers
         const financersResponse = await axios.get(
@@ -228,7 +234,95 @@ const PointOfSales: React.FC = () => {
           { withCredentials: true },
         );
         setFinancers(financersResponse.data.data);
+      } catch (error: any) {
+        setMessage({
+          text:
+            error.response?.data.message ||
+            error.message ||
+            'Failed to load initial data',
+          type: 'error',
+        });
+      }
+    };
 
+    fetchInitialData();
+  }, []);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!shopName) return;
+
+      try {
+        let mobileItems: any[] = [];
+        let accessoryItems: any[] = [];
+
+        if (searchTerm.trim() !== '') {
+          const searchResponse = await axios.get(
+            `${import.meta.env.VITE_SERVER_HEAD
+            }/api/shop/searchproducts/${shopName}?productName=${searchTerm}`,
+            { withCredentials: true },
+          );
+          mobileItems = searchResponse.data.products.phoneItems.items;
+          accessoryItems = searchResponse.data.products.stockItems.items;
+        } else {
+          const mobileResponse = await axios.get(
+            `${import.meta.env.VITE_SERVER_HEAD
+            }/api/shop/${shopName}?itemType=mobile&status=confirmed`,
+            { withCredentials: true },
+          );
+          const accessoryResponse = await axios.get(
+            `${import.meta.env.VITE_SERVER_HEAD
+            }/api/shop/${shopName}?itemType=accessory&status=confirmed`,
+            { withCredentials: true },
+          );
+          mobileItems = mobileResponse.data.shop.filteredShop.mobileItems.items;
+          //console.log("transforimg item", mobileItems)
+          accessoryItems =
+            accessoryResponse.data.shop.filteredShop.accessoryItems.items;
+        }
+
+        const transformedMobiles = mobileItems.map((item: any) => ({
+          id: item.id,
+          productId: item.mobileID,
+          categoryId: item.mobiles.categories.id,
+          type: 'mobiles',
+          name: item.mobiles.categories.itemName,
+          brand: item.mobiles.categories.brand,
+          model: item.mobiles.categories.itemModel,
+          priceRange: {
+            min: item.mobiles.categories.minPrice,
+            max: item.mobiles.categories.maxPrice,
+          },
+          quantity: item.quantity,
+          IMEI: item.mobiles.IMEI,
+          transferId: item.transferId,
+          ...item,
+        }));
+
+        const transformedAccessories = accessoryItems.map((item: any) => ({
+          id: item.id,
+          productId: item.accessoryID,
+          categoryId: item.accessories.categories.id,
+          type: 'accessories',
+          name: item.accessories.categories.itemName,
+          brand: item.accessories.categories.brand,
+          model: item.accessories.categories.itemModel,
+          priceRange: {
+            min: item.accessories.categories.minPrice,
+            max: item.accessories.categories.maxPrice,
+          },
+          quantity: item.quantity,
+          transferId: item.transferId,
+          ...item,
+        }));
+
+        setConsolidatedData((prevData) => ({
+          ...prevData,
+          products: {
+            mobiles: transformedMobiles,
+            accessories: transformedAccessories,
+          },
+        } as ConsolidatedData));
       } catch (error: any) {
         setMessage({
           text:
@@ -240,8 +334,12 @@ const PointOfSales: React.FC = () => {
       }
     };
 
-    fetchUserData();
-  }, []);
+    const debounceTimer = setTimeout(() => {
+      fetchProducts();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [shopName, searchTerm]);
 
   const handleCheckout = async () => {
     try {
@@ -252,29 +350,45 @@ const PointOfSales: React.FC = () => {
         return;
       }
 
-      groupedCart.forEach((product: any) => {        
+      groupedCart.forEach((product: any) => {
+        //console.log("products received", product)
         const items = product.items.map((item: any) => ({
-          productId: item.stock.id,
+          productId: item.stock.productId,
+          itemId: item.stock.id,
           soldprice: soldprice[product.categoryId.id],
-          transferId: item.stock.transferId,
           soldUnits:
             product.categoryId.itemType === 'accessories' ? item.quantity : 1,
-          financeAmount: financeDetails[product.categoryId.id]?.amount?.toString() || '0',
-          financeStatus: financeDetails[product.categoryId.id]?.status || 'paid',
-          financeId: Number(financeDetails[product.categoryId.id]?.financerId) || 1,
+          financeAmount:
+            financeDetails[product.categoryId.id]?.amount?.toString() || '0',
+          financeStatus:
+            financeDetails[product.categoryId.id]?.status || 'paid',
+          financeId:
+            Number(financeDetails[product.categoryId.id]?.financerId) || 1,
         }));
+
+        // console.log(
+        //   'Items structure for category:',
+        //   product.categoryId.itemName,
+        //   JSON.stringify(items, null, 2),
+        // );
+
         bulkSales.push({
           CategoryId: product.categoryId.id.split('-')[1],
           itemType: product.categoryId.itemType,
           items: [...items],
           paymentmethod: paymentMethod,
+          transactionId: transactionId,
         });
       });
 
       const token = localStorage.getItem('tk');
       if (!token) throw new Error('Token not found. User not authenticated.');
 
-      console.log('Checkout data being sent:', { customerdetails: formData, shopName: consolidatedData?.shopInfo.name, bulksales: [...bulkSales] });
+      // console.log('Checkout data being sent:', {
+      //   customerdetails: formData,
+      //   shopName: consolidatedData?.shopInfo.name,
+      //   bulksales: [...bulkSales],
+      // });
 
       const response = await axios.post(
         `${import.meta.env.VITE_SERVER_HEAD}/api/sales/items/sale`,
@@ -294,6 +408,7 @@ const PointOfSales: React.FC = () => {
         setSaleResponse(response.data.data);
         setCart([]);
         setFormData({ name: '', email: '', phonenumber: '' });
+        setTransactionId('');
       }
     } catch (error: any) {
       setMessage({
@@ -357,18 +472,27 @@ const PointOfSales: React.FC = () => {
   const groupedProducts = React.useMemo(() => {
     if (!allProducts) return [];
 
-    const grouped = allProducts.reduce((acc: any, product: Product) => {
+    const grouped = allProducts.reduce((acc: any, product: Product & { mobiles?: any; accessories?: any }) => {
       const itemType = product.type;
+
+      // FIX: Get the correct category ID from the nested structure
+      const realCategoryId =
+        itemType === 'mobiles'
+          ? product.mobiles.categories.id
+          : product.accessories.categories.id;
+
+      // Create the unique internal ID using the REAL category ID
       const categoryId =
-        itemType === 'mobiles' ? `m-${product.productId}` : `a-${product.productId}-${product.id}`;
+        itemType === 'mobiles'
+          ? `m-${realCategoryId}`
+          : `a-${realCategoryId}`;
 
       if (!categoryId) return acc;
-      
 
       if (!acc[categoryId]) {
         acc[categoryId] = {
           categoryId: {
-            id: categoryId,
+            id: categoryId, // The internal, prefixed ID ('m-1')
             itemName: product.name,
             itemType: product.type,
             brand: product.brand,
@@ -378,14 +502,15 @@ const PointOfSales: React.FC = () => {
           },
           stock: product,
           items: [],
+          quantity: 0,
         };
       }
       acc[categoryId].items.push(product);
-      const quantity =
-        itemType === 'accessories'
-          ? product.quantity
-          : acc[categoryId] && acc[categoryId].items.length;
-      acc[categoryId].quantity = quantity;
+      if (itemType === 'accessories') {
+        acc[categoryId].quantity += product.quantity;
+      } else {
+        acc[categoryId].quantity = acc[categoryId].items.length;
+      }
       return acc;
     }, {});
 
@@ -472,21 +597,19 @@ const PointOfSales: React.FC = () => {
         {/* Navigation Tab */}
         <div className="sticky flex justify-center mb-8 border-b dark:border-boxdark border-slate-300">
           <button
-            className={`px-4 py-2 w-1/2 text-center outline-none ${
-              activeTab === 'products'
-                ? 'text-lg font-bold border-b-2 border-primary/60'
-                : 'text-sm text-gray-500'
-            }`}
+            className={`px-4 py-2 w-1/2 text-center outline-none ${activeTab === 'products'
+              ? 'text-lg font-bold border-b-2 border-primary/60'
+              : 'text-sm text-gray-500'
+              }`}
             onClick={() => setActiveTab('products')}
           >
             Products
           </button>
           <button
-            className={`px-4 py-2 w-1/2 text-center outline-none ${
-              activeTab === 'cart'
-                ? 'text-lg font-bold border-b-2 border-primary/60'
-                : 'text-sm text-gray-500'
-            }`}
+            className={`px-4 py-2 w-1/2 text-center outline-none ${activeTab === 'cart'
+              ? 'text-lg font-bold border-b-2 border-primary/60'
+              : 'text-sm text-gray-500'
+              }`}
             onClick={() => setActiveTab('cart')}
           >
             Cart
@@ -557,23 +680,9 @@ const PointOfSales: React.FC = () => {
                         className="overflow-hidden rounded-md"
                       >
                         <div
-                          className={`cursor-pointer bg-bodydark/50 p-3 dark:bg-boxdark text-black transition-all duration-500 rounded-lg shadow-sm
-							${
-                isInCart(product.categoryId.id, product.stock.id) &&
-                product.categoryId.itemType === 'accessories'
-                  ? 'border border-primary/70'
-                  : 'border dark:border-slate-700'
-              }
-							`}
+                          className={`cursor-pointer bg-bodydark/50 p-3 dark:bg-boxdark text-black transition-all duration-500 rounded-lg shadow-sm border dark:border-slate-700`}
                           onClick={() =>
-                            product.categoryId.itemType === 'mobiles'
-                              ? toggleExpand(product.categoryId.id.toString())
-                              : isInCart(
-                                  product.categoryId.id,
-                                  product.stock.id,
-                                )
-                              ? removeFromCart(product.categoryId.id)
-                              : addToCart(product.categoryId, product.stock)
+                            toggleExpand(product.categoryId.id.toString())
                           }
                         >
                           <div className="flex flex-col justify-start">
@@ -595,19 +704,10 @@ const PointOfSales: React.FC = () => {
                                   </p>
                                 </div>
                               </div>
-                              {product.categoryId.itemType === 'mobiles' ? (
-                                expandedProducts[product.categoryId.id] ? (
-                                  <ChevronUp className="w-5 h-5 text-boxdark-2 dark:text-gray-400" />
-                                ) : (
-                                  <ChevronDown className="w-5 h-5 text-boxdark-2 dark:text-gray-400" />
-                                )
+                              {expandedProducts[product.categoryId.id] ? (
+                                <ChevronUp className="w-5 h-5 text-boxdark-2 dark:text-gray-400" />
                               ) : (
-                                isInCart(
-                                  product.stock.id,
-                                  product.stock.id,
-                                ) && (
-                                  <CheckCircle className="text-primary absolute top-2 right-2 h-4 w-4" />
-                                )
+                                <ChevronDown className="w-5 h-5 text-boxdark-2 dark:text-gray-400" />
                               )}
                             </div>
                             <div className="w-full flex justify-between items-center mt-4">
@@ -637,118 +737,125 @@ const PointOfSales: React.FC = () => {
                           </div>
                         </div>
 
-                        {product.categoryId.itemType === 'mobiles' && (
-                          <div
-                            className={`bg-bodydark1 dark:bg-boxdark/60 p-2 transition-all duration-500 ${
-                              expandedProducts[product.categoryId.id]
-                                ? 'max-h-screen opacity-100'
-                                : 'max-h-0 opacity-0 overflow-hidden'
+                        <div
+                          className={`bg-bodydark1 dark:bg-boxdark/60 p-2 transition-all duration-500 ${expandedProducts[product.categoryId.id]
+                            ? 'max-h-screen opacity-100'
+                            : 'max-h-0 opacity-0 overflow-hidden'
                             }`}
-                          >
-                            {/* Items Pagination */}
-                            <div className="flex justify-between items-center mb-4 text-gray-600 dark:text-slate-400">
-                              <p className="text-sm">
-                                Showing items{' '}
-                                {(itemPages[product.categoryId.id] - 1) *
-                                  ITEMS_PER_PAGE +
-                                  1}{' '}
-                                -
-                                {Math.min(
+                        >
+                          {/* Items Pagination */}
+                          <div className="flex justify-between items-center mb-4 text-gray-600 dark:text-slate-400">
+                            <p className="text-sm">
+                              Showing items{' '}
+                              {(itemPages[product.categoryId.id] - 1) *
+                                ITEMS_PER_PAGE +
+                                1}{' '}
+                              -
+                              {Math.min(
+                                itemPages[product.categoryId.id] *
+                                ITEMS_PER_PAGE,
+                                product.items.length,
+                              )}{' '}
+                              of {product.items.length}
+                            </p>
+                            <div className="flex gap-2 dark:text-slate-400">
+                              <button
+                                className="px-3 py-1 text-xs md:text-base border border-primary/40 rounded hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-500"
+                                disabled={
+                                  itemPages[product.categoryId.id] === 1
+                                }
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleItemPageChange(
+                                    product.categoryId.id.toString(),
+                                    itemPages[product.categoryId.id] - 1,
+                                  );
+                                }}
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </button>
+                              <button
+                                className="px-3 py-1 text-xs md:text-base border border-primary/40 rounded hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-500"
+                                disabled={
                                   itemPages[product.categoryId.id] *
-                                    ITEMS_PER_PAGE,
-                                  product.items.length,
-                                )}{' '}
-                                of {product.items.length}
-                              </p>
-                              <div className="flex gap-2 dark:text-slate-400">
-                                <button
-                                  className="px-3 py-1 text-xs md:text-base border border-primary/40 rounded hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-500"
-                                  disabled={
-                                    itemPages[product.categoryId.id] === 1
-                                  }
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleItemPageChange(
-                                      product.categoryId.id.toString(),
-                                      itemPages[product.categoryId.id] - 1,
-                                    );
-                                  }}
-                                >
-                                  <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <button
-                                  className="px-3 py-1 text-xs md:text-base border border-primary/40 rounded hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-500"
-                                  disabled={
-                                    itemPages[product.categoryId.id] *
-                                      ITEMS_PER_PAGE >=
-                                    product.items.length
-                                  }
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleItemPageChange(
-                                      product.categoryId.id.toString(),
-                                      itemPages[product.categoryId.id] + 1,
-                                    );
-                                  }}
-                                >
-                                  <ChevronRight className="w-4 h-4" />
-                                </button>
-                              </div>
+                                  ITEMS_PER_PAGE >=
+                                  product.items.length
+                                }
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleItemPageChange(
+                                    product.categoryId.id.toString(),
+                                    itemPages[product.categoryId.id] + 1,
+                                  );
+                                }}
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
                             </div>
+                          </div>
 
-                            {/* Items List */}
-                            {product.items.length === 0 ? (
-                              <div className="w-full h-12 flex justify-center items-center gap-4 text-yellow-500">
-                                <TriangleAlert />
-                                <span>This product is out of stock</span>
-                              </div>
-                            ) : (
-                              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-3">
-                                {product.items
-                                  .slice(
-                                    (itemPages[product.categoryId.id] - 1) *
-                                      ITEMS_PER_PAGE,
-                                    itemPages[product.categoryId.id] *
-                                      ITEMS_PER_PAGE,
-                                  )
-                                  .map((item: any) => (
-                                    <div
-                                      key={item.id}
-                                      onClick={() =>
-                                        addToCart(product.categoryId, item)
-                                      }
-                                      className={`relative cursor-pointer bg-bodydark/50 dark:bg-boxdark p-4 rounded-lg shadow-sm flex justify-between items-center border hover:scale-110 transition-transform duration-300
-									  ${
-                      isInCart(product.categoryId.id, item.id)
-                        ? 'border-primary/70'
-                        : 'dark:border-slate-700'
-                    }`}
-                                    >
-                                      {isInCart(
-                                        product.categoryId.id,
-                                        item.id,
-                                      ) && (
+                          {/* Items List */}
+                          {product.items.length === 0 ? (
+                            <div className="w-full h-12 flex justify-center items-center gap-4 text-yellow-500">
+                              <TriangleAlert />
+                              <span>This product is out of stock</span>
+                            </div>
+                          ) : (
+                            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-3">
+                              {product.items
+                                .slice(
+                                  (itemPages[product.categoryId.id] - 1) *
+                                  ITEMS_PER_PAGE,
+                                  itemPages[product.categoryId.id] *
+                                  ITEMS_PER_PAGE,
+                                )
+                                .map((item: any) => (
+                                  <div
+                                    key={item.id}
+                                    onClick={() =>
+                                      addToCart(product.categoryId, item)
+                                    }
+                                    className={`relative cursor-pointer bg-bodydark/50 dark:bg-boxdark p-4 rounded-lg shadow-sm flex justify-between items-center border hover:scale-110 transition-transform duration-300
+                                    ${isInCart(
+                                      product.categoryId.id,
+                                      item.id,
+                                    )
+                                        ? 'border-primary/70'
+                                        : 'dark:border-slate-700'
+                                      }`}
+                                  >
+                                    {isInCart(
+                                      product.categoryId.id,
+                                      item.id,
+                                    ) && (
                                         <CheckCircle className="text-primary absolute top-2 right-2 h-4 w-4" />
                                       )}
-                                      <div className="text-xs">
+                                    <div className="text-xs">
+                                      {product.categoryId.itemType ===
+                                        'mobiles' ? (
                                         <p className="font-medium text-black dark:text-slate-300">
                                           IMEI: {item.IMEI}
                                         </p>
-                                        <div className="text-sm dark:text-slate-400 mt-1">
-                                          {item.discount > 0 && (
-                                            <p className="text-green-600">
-                                              Discount:{' '}
-                                              {formatPrice(item.discount)}
-                                            </p>
-                                          )}
+                                      ) : (
+                                        <div className="font-medium text-black dark:text-slate-300">
+                                          <p>Batch: {item.batchNumber}</p>
+                                          <p>Stock: {item.quantity}</p>
                                         </div>
+                                      )}
+                                      <div className="text-sm dark:text-slate-400 mt-1">
+                                        {item.discount > 0 && (
+                                          <p className="text-green-600">
+                                            Discount:{' '}
+                                            {formatPrice(item.discount)}
+                                          </p>
+                                        )}
                                       </div>
                                     </div>
-                                  ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -897,73 +1004,71 @@ const PointOfSales: React.FC = () => {
                             {'per Item'}
                           </div>
                         </div>
-                        {product.categoryId.itemType === 'mobiles' && (
-                          <div className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between mt-2">
-                            <div className="flex items-center gap-4">
-                              <input
-                                type="number"
-                                placeholder="Finance Amount"
-                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                                value={financeDetails[product.categoryId.id]?.amount || ''}
-                                onChange={(e) => setFinanceDetails({
-                                  ...financeDetails,
-                                  [product.categoryId.id]: {
-                                    ...financeDetails[product.categoryId.id],
-                                    amount: Number(e.target.value)
-                                  }
-                                })}
-                              />
-                              <select
-                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                                value={financeDetails[product.categoryId.id]?.status || 'paid'}
-                                onChange={(e) => setFinanceDetails({
-                                  ...financeDetails,
-                                  [product.categoryId.id]: {
-                                    ...financeDetails[product.categoryId.id],
-                                    status: e.target.value
-                                  }
-                                })}
-                              >
-                                <option value="paid">Paid</option>
-                                <option value="pending">Pending</option>
-                              </select>
-                              <select
-                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                                value={financeDetails[product.categoryId.id]?.financerId || ''}
-                                onChange={(e) => setFinanceDetails({
-                                  ...financeDetails,
-                                  [product.categoryId.id]: {
-                                    ...financeDetails[product.categoryId.id],
-                                    financerId: e.target.value
-                                  }
-                                })}
-                              >
-                                <option value="">Select Financer</option>
-                                {financers.map((financer) => (
-                                  <option key={financer.id} value={financer.id}>
-                                    {financer.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
+                        <div className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-4">
+                            <input
+                              type="number"
+                              placeholder="Finance Amount"
+                              className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
+                              value={financeDetails[product.categoryId.id]?.amount || ''}
+                              onChange={(e) => setFinanceDetails({
+                                ...financeDetails,
+                                [product.categoryId.id]: {
+                                  ...financeDetails[product.categoryId.id],
+                                  amount: Number(e.target.value)
+                                }
+                              })}
+                            />
+                            <select
+                              className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
+                              value={financeDetails[product.categoryId.id]?.status || 'paid'}
+                              onChange={(e) => setFinanceDetails({
+                                ...financeDetails,
+                                [product.categoryId.id]: {
+                                  ...financeDetails[product.categoryId.id],
+                                  status: e.target.value
+                                }
+                              })}
+                            >
+                              <option value="paid">Paid</option>
+                              <option value="pending">Pending</option>
+                            </select>
+                            <select
+                              className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
+                              value={financeDetails[product.categoryId.id]?.financerId || ''}
+                              onChange={(e) => setFinanceDetails({
+                                ...financeDetails,
+                                [product.categoryId.id]: {
+                                  ...financeDetails[product.categoryId.id],
+                                  financerId: e.target.value
+                                }
+                              })}
+                            >
+                              <option value="">Select Financer</option>
+                              {financers.map((financer) => (
+                                <option key={financer.id} value={financer.id}>
+                                  {financer.name}
+                                </option>
+                              ))}
+                            </select>
                           </div>
-                        )}
+                        </div>
                         {(soldprice?.[product.categoryId.id] ?? 0) >
                           product.categoryId.maxPrice && (
-                          <>
-                            <span className="text-xs text-red-400 font-bold animate-pulse">{`Max Price should be ${formatPrice(
-                              product.categoryId.maxPrice,
-                            )}`}</span>
-                          </>
-                        )}
+                            <>
+                              <span className="text-xs text-red-400 font-bold animate-pulse">{`Max Price should be ${formatPrice(
+                                product.categoryId.maxPrice,
+                              )}`}</span>
+                            </>
+                          )}
                         {(soldprice?.[product.categoryId.id] ?? 0) <
                           product.categoryId.minPrice && (
-                          <>
-                            <span className="text-xs text-red-400 font-bold animate-pulse">{`Min Price should be ${formatPrice(
-                              product.categoryId.minPrice,
-                            )}`}</span>
-                          </>
-                        )}
+                            <>
+                              <span className="text-xs text-red-400 font-bold animate-pulse">{`Min Price should be ${formatPrice(
+                                product.categoryId.minPrice,
+                              )}`}</span>
+                            </>
+                          )}
                       </>
                     ))}
                   </div>
@@ -1039,12 +1144,27 @@ const PointOfSales: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Transaction ID */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                      Transaction ID (optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., RKT... for M-Pesa"
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value)}
+                      className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
+                    />
+                  </div>
+
                   {/* Action Buttons */}
                   <div className="grid grid-cols-2 gap-4 mt-6">
                     <button
                       onClick={() => {
                         setCart([]);
                         setFormData({ name: '', email: '', phonenumber: '' });
+                        setTransactionId('');
                       }}
                       className={`flex justify-center rounded-lg border border-slate-300 dark:border-slate-600 py-2 px-6 font-medium text-black dark:text-white hover:bg-opacity-90`}
                     >
