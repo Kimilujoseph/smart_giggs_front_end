@@ -190,6 +190,10 @@ const OutletSalesBackup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [financeFilter, setFinanceFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [date, setDate] = useState('');
+  const [totalPages, setTotalPages] = useState(1);
 
   // Get token from local storage
   const token = localStorage.getItem('tk');
@@ -200,17 +204,27 @@ const OutletSalesBackup = () => {
     const fetchSalesData = async () => {
       setLoading(true);
       try {
-        // Use shopId 1 as in the sample data
-        const shopId = 1;
+        const params = new URLSearchParams({
+          page: currentPage.toString(),
+          limit: itemsPerPage.toString(),
+        });
+
+        if (date) {
+          params.append('date', date);
+        } else if (timeFrame) {
+          params.append('period', timeFrame);
+        }
+
         const response = await axios.get<ApiResponse>(
           `${
             import.meta.env.VITE_SERVER_HEAD
-          }/api/sales/user/${user?.id}?period=${timeFrame}`,
+          }/api/sales/report/user/${user?.id}?${params.toString()}`,
           { withCredentials: true },
         );
 
-        if (response.data.success) {			
+        if (response.data.success) {
           setSalesData(response.data.data);
+          setTotalPages(response.data.data.totalPages);
           setMessage({
             text: 'Sales data fetched successfully',
             type: 'success',
@@ -240,7 +254,7 @@ const OutletSalesBackup = () => {
     };
 
     fetchSalesData();
-  }, [timeFrame]);
+  }, [timeFrame, currentPage, itemsPerPage, date]);
 
   // Calculate metrics from sales data
   const calculateMetrics = () => {
@@ -434,14 +448,32 @@ const OutletSalesBackup = () => {
               <Calendar className="w-4 h-4 text-bodydark" />
               <select
                 value={timeFrame}
-                onChange={(e) => setTimeFrame(e.target.value)}
+                onChange={(e) => {
+                  setTimeFrame(e.target.value);
+                  setDate(''); // Clear date when a timeframe is chosen
+                }}
                 className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
               >
+                <option value="">Select Period</option>
                 <option value="day">Today</option>
                 <option value="week">Past Week</option>
                 <option value="month">Past Month</option>
                 <option value="year">Past Year</option>
               </select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Calendar className="w-4 h-4 text-bodydark" />
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => {
+                  setDate(e.target.value);
+                  setTimeFrame(''); // Clear timeframe when a specific date is chosen
+                }}
+                className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none"
+                placeholder="Select a date"
+              />
             </div>
 
             <div className="flex items-center space-x-2">
@@ -937,6 +969,29 @@ const OutletSalesBackup = () => {
           </div>
         </div>
       )}
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center items-center space-x-4 mt-8">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-4 py-2 font-medium bg-primary text-white rounded-md disabled:bg-gray-300 dark:disabled:bg-gray-500 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+        <span className="text-black dark:text-white">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          disabled={currentPage === totalPages || totalPages === 0}
+          className="px-4 py-2 font-medium bg-primary text-white rounded-md disabled:bg-gray-300 dark:disabled:bg-gray-500 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };

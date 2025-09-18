@@ -133,7 +133,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             }`}
                             onClick={() => setSidebarOpen(false)}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" stroke-linecap="round" stroke-linejoin="round">
                               <rect x="3" y="3" width="7" height="7"></rect>
                               <rect x="14" y="3" width="7" height="7"></rect>
                               <rect x="14" y="14" width="7" height="7"></rect>
@@ -296,7 +296,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             }`}
                             onClick={() => setSidebarOpen(false)}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-percentage" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-percentage" width="18" height="18" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                               <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                               <path d="M17 4l-10 16" />
                               <path d="M7 4m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />

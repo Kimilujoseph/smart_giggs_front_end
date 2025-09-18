@@ -3,7 +3,8 @@ import { API_URL } from '../constants';
 
 export interface SalesReportParams {
   period?: 'day' | 'week' | 'month' | 'year';
-  date?: string; // YYYY-MM-DD
+  date?: string;
+  startDate?: string; // YYYY-MM-DD
   financer?: string;
   shop?: string;
   category?: string;
