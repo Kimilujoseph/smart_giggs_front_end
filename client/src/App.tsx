@@ -93,7 +93,7 @@ function App() {
         if (response.status !== 200) {
           throw new Error(
             response.data.message ||
-              'Our servers are unreachable at the moment',
+            'Our servers are unreachable at the moment',
           );
         }
       } catch (error: any) {
@@ -156,7 +156,7 @@ function App() {
                 path="/"
                 element={
                   <>
-                    <PageTitle title="Dashboard | Captech" />
+                    <PageTitle title="Dashboard | smartGiggs" />
                     <Dashboard />
                   </>
                 }
@@ -166,7 +166,7 @@ function App() {
                 path="/users"
                 element={
                   <>
-                    <PageTitle title="Users | Captech" />
+                    <PageTitle title="Users | smartGiggs" />
                     <UsersManager />
                   </>
                 }
@@ -175,7 +175,7 @@ function App() {
                 path="/outlets"
                 element={
                   <>
-                    <PageTitle title="Outlets | Captech" />
+                    <PageTitle title="Outlets | smartGiggs" />
                     <OutletManager />
                   </>
                 }
@@ -185,7 +185,7 @@ function App() {
                 path="/outlets/:shopname"
                 element={
                   <>
-                    <PageTitle title="Outlet View | Captech" />
+                    <PageTitle title="Outlet View | smartGiggs" />
                     <OutletView />
                   </>
                 }
@@ -195,7 +195,7 @@ function App() {
                 path="/inventory"
                 element={
                   <>
-                    <PageTitle title="Inventory | Captech" />
+                    <PageTitle title="Inventory | smartGiggs" />
                     <InventoryManager />
                   </>
                 }
@@ -205,7 +205,7 @@ function App() {
                 path="/sales"
                 element={
                   <>
-                    <PageTitle title="Sales | Captech" />
+                    <PageTitle title="Sales | smartGiggs" />
                     <SalesDashboard />
                   </>
                 }
@@ -214,7 +214,7 @@ function App() {
                 path="/outlet/inventory"
                 element={
                   <>
-                    <PageTitle title="Outlet Inventory | Captech" />
+                    <PageTitle title="Outlet Inventory | smartGiggs" />
                     <OutletInventoryView />
                   </>
                 }
@@ -223,7 +223,7 @@ function App() {
                 path="/outlet/inventory/:productId"
                 element={
                   <>
-                    <PageTitle title="Outlet Product | Captech" />
+                    <PageTitle title="Outlet Product | smartGiggs" />
                     <ProductView />
                   </>
                 }
@@ -232,7 +232,7 @@ function App() {
                 path="/outlet/sales"
                 element={
                   <>
-                    <PageTitle title="Outlet Outlet | Captech" />
+                    <PageTitle title="Outlet Outlet | smartGiggs" />
                     <OutletSalesBackup />
                   </>
                 }
@@ -241,7 +241,7 @@ function App() {
                 path="/inventory/:productId/:isMobile"
                 element={
                   <>
-                    <PageTitle title="Product View | Captech" />
+                    <PageTitle title="Product View | smartGiggs" />
                     <ProductView />
                   </>
                 }
@@ -250,7 +250,7 @@ function App() {
                 path="/settings"
                 element={
                   <>
-                    <PageTitle title="Account Settings | Captech" />
+                    <PageTitle title="Account Settings | smartGiggs" />
                     <Settings2 />
                   </>
                 }
@@ -259,7 +259,7 @@ function App() {
                 path="/assignmentHistory"
                 element={
                   <>
-                    <PageTitle title="Assignment History | Captech" />
+                    <PageTitle title="Assignment History | smartGiggs" />
                     <AssignmentHistory />
                   </>
                 }
@@ -268,7 +268,7 @@ function App() {
                 path="/userprofile"
                 element={
                   <>
-                    <PageTitle title="User View | Captech" />
+                    <PageTitle title="User View | smartGiggs" />
                     <UserView />
                   </>
                 }
@@ -277,7 +277,7 @@ function App() {
                 path="/pointOfSale"
                 element={
                   <>
-                    <PageTitle title="Point of sale | Captech" />
+                    <PageTitle title="Point of sale | smartGiggs" />
                     <PointOfSales />
                   </>
                 }
@@ -286,7 +286,7 @@ function App() {
                 path="/user/sales"
                 element={
                   <>
-                    <PageTitle title="User Sales | Captech" />
+                    <PageTitle title="User Sales | smartGiggs" />
                     <UserSales />
                   </>
                 }
@@ -295,7 +295,7 @@ function App() {
                 path="/shop/sales"
                 element={
                   <>
-                    <PageTitle title="Shop Sales | Captech" />
+                    <PageTitle title="Shop Sales | smartGiggs" />
                     <ShopSales />
                   </>
                 }
@@ -305,7 +305,7 @@ function App() {
                 path="/financers"
                 element={
                   <>
-                    <PageTitle title="Financers | Captech" />
+                    <PageTitle title="Financers | smartGiggs" />
                     <FinancerManager />
                   </>
                 }
@@ -315,7 +315,7 @@ function App() {
                 path="/financer/report/:financerId"
                 element={
                   <>
-                    <PageTitle title="Financer Sales Report | Captech" />
+                    <PageTitle title="Financer Sales Report | smartGiggs" />
                     <FinancerSalesReport />
                   </>
                 }
@@ -325,7 +325,7 @@ function App() {
                 path="/commissions"
                 element={
                   <>
-                    <PageTitle title="Commissions | Captech" />
+                    <PageTitle title="Commissions | smartGiggs" />
                     <CommissionManager />
                   </>
                 }
@@ -335,7 +335,7 @@ function App() {
                 path="/salaries"
                 element={
                   <>
-                    <PageTitle title="Salaries | Captech" />
+                    <PageTitle title="Salaries | smartGiggs" />
                     <SalaryManager />
                   </>
                 }
@@ -345,7 +345,7 @@ function App() {
                 path="/suppliers"
                 element={
                   <>
-                    <PageTitle title="Suppliers | Captech" />
+                    <PageTitle title="Suppliers | smartGiggs" />
                     <SupplierManager />
                   </>
                 }
@@ -355,7 +355,7 @@ function App() {
               path="/auth/signin"
               element={
                 <>
-                  <PageTitle title="Signin | Captech" />
+                  <PageTitle title="Signin | smartGiggs" />
                   <SignIn />
                 </>
               }
@@ -364,7 +364,7 @@ function App() {
               path="/auth/signup"
               element={
                 <>
-                  <PageTitle title="Signup | Captech" />
+                  <PageTitle title="Signup | smartGiggs" />
                   <SignUp />
                 </>
               }

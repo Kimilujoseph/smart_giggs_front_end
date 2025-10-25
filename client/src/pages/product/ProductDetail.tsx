@@ -98,7 +98,7 @@ const ProductDetail = ({
   const [discount, setDiscount] = useState('');
   const [supplierName, setSupplierName] = useState('');
   const [newserialNumber, setNewSerialNumber] = useState('');
-  const [financer, setFinancer] = useState('captech');
+  const [financer, setFinancer] = useState('smartGiggs');
   const [addingUnit, setAddingUnit] = useState<boolean>(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [supplierId, setSupplierId] = useState('');
@@ -195,8 +195,8 @@ const ProductDetail = ({
           },
           financeDetails: {
             financer: financer,
-            financeAmount: financer === 'captech' ? productcost : 0,
-            financeStatus: financer === 'captech' ? 'paid' : 'pending',
+            financeAmount: financer === 'smartGiggs' ? productcost : 0,
+            financeStatus: financer === 'smartGiggs' ? 'paid' : 'pending',
           },
         };
       } else {
@@ -210,9 +210,8 @@ const ProductDetail = ({
       const response = await axios.post(
         product?.itemType === 'mobiles'
           ? `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/add-phone-stock`
-          : `${
-              import.meta.env.VITE_SERVER_HEAD
-            }/api/inventory/add-accessory-stock`,
+          : `${import.meta.env.VITE_SERVER_HEAD
+          }/api/inventory/add-accessory-stock`,
         payload,
         { withCredentials: true },
       );
@@ -321,11 +320,10 @@ const ProductDetail = ({
                   setActiveTab(tab);
                   navigate(`?tab=product_details&subtab=${tab}`);
                 }}
-                className={`pb-2 px-3 sm:px-4 text-sm font-medium transition-colors min-w-fit ${
-                  activeTab === tab
+                className={`pb-2 px-3 sm:px-4 text-sm font-medium transition-colors min-w-fit ${activeTab === tab
                     ? 'border-b-2 border-primary text-primary'
                     : 'text-gray-600 dark:text-gray-300 hover:text-primary'
-                }`}
+                  }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
@@ -389,10 +387,9 @@ const ProductDetail = ({
                     defaultValue={product?.minPrice}
                     disabled={disabledFields.minPrice}
                     className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary  dark:border-form-strokedark dark:text-white
-                      ${
-                        disabledFields.minPrice
-                          ? 'bg-boxdark border-none'
-                          : 'dark:bg-form-input'
+                      ${disabledFields.minPrice
+                        ? 'bg-boxdark border-none'
+                        : 'dark:bg-form-input'
                       }`}
                   />
                 </div>
@@ -433,17 +430,15 @@ const ProductDetail = ({
                       Add New Item
                     </h3>
                     <ChevronDown
-                      className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform duration-200 ${
-                        isOpen ? 'rotate-180' : ''
-                      }`}
+                      className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
+                        }`}
                     />
                   </button>
 
                   {/* Collapsible Form Content */}
                   <div
-                    className={`transition-all duration-500 ease-in-out ${
-                      isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-                    } overflow-y-auto`}
+                    className={`transition-all duration-500 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                      } overflow-y-auto`}
                   >
                     <form
                       onSubmit={handleAddUnit}
@@ -641,7 +636,7 @@ const ProductDetail = ({
                               className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black text-sm outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                             >
                               <option value="">Select a Financier</option>
-                              <option value="captech">Captech</option>
+                              <option value="smartGiggs">smartGiggs</option>
                               <option value="watu">Watu Simu</option>
                               <option value="mkopa">M-Kopa</option>
                             </select>
@@ -707,9 +702,8 @@ const ProductDetail = ({
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder={`Search by Serial or ${
-                      product.itemType === 'mobiles' ? 'IMEI' : 'Batch Number'
-                    }...`}
+                    placeholder={`Search by Serial or ${product.itemType === 'mobiles' ? 'IMEI' : 'Batch Number'
+                      }...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
@@ -777,7 +771,7 @@ const ProductDetail = ({
                         </th>
                       </tr>
                     </thead>
-                                        <tbody className="divide-y divide-gray-200 dark:divide-strokedark">
+                    <tbody className="divide-y divide-gray-200 dark:divide-strokedark">
                       {!filteredUnits || filteredUnits.length === 0 ? (
                         <tr>
                           <td
@@ -826,14 +820,14 @@ const ProductDetail = ({
                                     : 'Warehouse'
                                   : item.accessoryItems &&
                                     item.accessoryItems.length > 0
-                                  ? [
+                                    ? [
                                       ...new Set(
                                         item.accessoryItems.map(
                                           (i: any) => i.shops.shopName,
                                         ),
                                       ),
                                     ].join(', ')
-                                  : 'Warehouse'}
+                                    : 'Warehouse'}
                               </td>
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
                                 {product.itemType === 'mobiles'
@@ -843,7 +837,7 @@ const ProductDetail = ({
                                     : 'N/A'
                                   : item.accessoryItems &&
                                     item.accessoryItems.length > 0
-                                  ? (() => {
+                                    ? (() => {
                                       const statuses = [
                                         ...new Set(
                                           item.accessoryItems.map(
@@ -854,19 +848,19 @@ const ProductDetail = ({
                                       return statuses.length === 1
                                         ? statuses[0]
                                         : statuses.length > 1
-                                        ? 'Mixed'
-                                        : 'N/A';
+                                          ? 'Mixed'
+                                          : 'N/A';
                                     })()
-                                  : 'N/A'}
+                                    : 'N/A'}
                               </td>
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
                                 {item.updatedAt || item.createdAt
                                   ? format(
-                                      new Date(
-                                        item.updatedAt || item.createdAt,
-                                      ),
-                                      'MMM dd, HH:mm',
-                                    )
+                                    new Date(
+                                      item.updatedAt || item.createdAt,
+                                    ),
+                                    'MMM dd, HH:mm',
+                                  )
                                   : 'N/A'}
                               </td>
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
@@ -890,11 +884,10 @@ const ProductDetail = ({
                                       className="p-1 ml-2 text-gray-500 hover:text-primary"
                                     >
                                       <ChevronDownIcon
-                                        className={`w-4 h-4 transition-transform ${
-                                          openHistories[item.id]
+                                        className={`w-4 h-4 transition-transform ${openHistories[item.id]
                                             ? 'rotate-180'
                                             : ''
-                                        }`}
+                                          }`}
                                       />
                                     </button>
                                   )}
@@ -920,7 +913,7 @@ const ProductDetail = ({
                                         Distribution History
                                       </h4>
                                       {item.accessoryItems &&
-                                      item.accessoryItems.length > 0 ? (
+                                        item.accessoryItems.length > 0 ? (
                                         <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                                           {item.accessoryItems.map(
                                             (

@@ -92,20 +92,20 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           >
             {sidebarExpanded ? (
               <img
-                src="/cap.png"
-                alt="Captech Logo"
-                className={`object-contain h-[80px] w-auto`}
+                src="/mutunga_dark_mode.png"
+                alt="smartGiggs Logo"
+                className={`object-contain h-[80px] w-auto mix-blend-difference`}
               />
             ) : (
               <svg width="20" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="3" y1="12" x2="21" y2="12"></line>
-                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
             )}
           </button>
 
-          
+
         </div>
         {/* <!-- SIDEBAR HEADER --> */}
 
@@ -127,10 +127,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('dashboard') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('dashboard') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" stroke-linecap="round" stroke-linejoin="round">
@@ -146,10 +145,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/users"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('users') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('users') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -179,10 +177,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/outlets"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('outlets') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('outlets') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -208,10 +205,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/inventory"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('/outlet/inventory') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('/outlet/inventory') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -241,10 +237,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/sales"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('/outlet/inventory') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('/outlet/inventory') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -269,20 +264,19 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/financers"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('financers') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('financers') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M2 22h20" />
-                                <path d="M2 10L12 2l10 8" />
-                                <path d="M5 10v12" />
-                                <path d="M19 10v12" />
-                                <path d="M12 22V10" />
-                                <path d="M12 7h.01" />
-                                <path d="M12 14h.01" />
+                              <path d="M2 22h20" />
+                              <path d="M2 10L12 2l10 8" />
+                              <path d="M5 10v12" />
+                              <path d="M19 10v12" />
+                              <path d="M12 22V10" />
+                              <path d="M12 7h.01" />
+                              <path d="M12 14h.01" />
                             </svg>
                             {sidebarExpanded && 'Financers'}
                           </NavLink>
@@ -290,14 +284,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/commissions"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('commissions') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('commissions') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-percentage" width="18" height="18" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                               <path d="M17 4l-10 16" />
                               <path d="M7 4m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
                               <path d="M17 16m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
@@ -308,17 +301,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/salaries"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('salaries') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('salaries') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                <path d="M12 7h.01" />
-                                <path d="M12 12h.01" />
-                                <path d="M12 17h.01" />
+                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                              <path d="M12 7h.01" />
+                              <path d="M12 12h.01" />
+                              <path d="M12 17h.01" />
                             </svg>
                             {sidebarExpanded && 'Salaries'}
                           </NavLink>
@@ -326,16 +318,15 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/suppliers"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('suppliers') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('suppliers') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 19V5" />
-                                <path d="M5 12l7-7 7 7" />
-                                <rect x="2" y="15" width="20" height="7" rx="2" ry="2" />
+                              <path d="M12 19V5" />
+                              <path d="M5 12l7-7 7 7" />
+                              <rect x="2" y="15" width="20" height="7" rx="2" ry="2" />
                             </svg>
                             {sidebarExpanded && 'Suppliers'}
                           </NavLink>
@@ -347,10 +338,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/users"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('users') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('users') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -380,10 +370,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/outlets"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('outlets') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('outlets') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -409,10 +398,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/inventory"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('inventory') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('inventory') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -447,10 +435,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/pointOfSale"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('pointOfSale') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('pointOfSale') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -476,10 +463,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/outlet/inventory"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('inventory') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('inventory') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -509,10 +495,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/outlet/sales"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('/outlet/sales') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('/outlet/sales') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -537,10 +522,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <li>
                           <NavLink
                             to="/assignmentHistory"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                              pathname.includes('/assignmentHistory') &&
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('/assignmentHistory') &&
                               'bg-meta-2 dark:bg-meta-4'
-                            }`}
+                              }`}
                             onClick={() => setSidebarOpen(false)}
                           >
                             <svg
@@ -586,10 +570,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                           <li>
                             <NavLink
                               to="/outlets"
-                              className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-                                pathname.includes('outlets') &&
+                              className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('outlets') &&
                                 'bg-meta-2 dark:bg-meta-4'
-                              }`}
+                                }`}
                               onClick={() => setSidebarOpen(false)}
                             >
                               <svg
@@ -625,9 +608,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       <div className="my-6 mx-6">
         <NavLink
           to="/settings"
-          className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${
-            pathname.includes('settings') && 'bg-meta-2 dark:bg-meta-4'
-          }`}
+          className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('settings') && 'bg-meta-2 dark:bg-meta-4'
+            }`}
           onClick={() => setSidebarOpen(false)}
         >
           <svg
@@ -662,7 +644,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           {sidebarExpanded && 'Account Settings'}
         </NavLink>
       </div>
-      
+
     </aside>
   );
 };

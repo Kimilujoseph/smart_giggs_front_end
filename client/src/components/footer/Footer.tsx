@@ -39,15 +39,14 @@ const Footer: React.FC = () => {
   return (
     <footer
       style={{ zIndex: 999999 }}
-      className={`fixed lg:relative bottom-0 left-0 right-0 w-full py-1 px-6 bg-white dark:bg-boxdark border-t border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 ${
-        isMinimized ? 'h-8 lg:h-auto' : 'h-auto'
-      }`}
+      className={`fixed lg:relative bottom-0 left-0 right-0 w-full py-1 px-6 bg-white dark:bg-boxdark border-t border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 ${isMinimized ? 'h-8 lg:h-auto' : 'h-auto'
+        }`}
     >
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
         {!isMinimized && (
           <div className="text-center md:text-left">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              &copy; {currentYear} CapTech. All rights reserved.
+              &copy; {currentYear} smartGiggs. All rights reserved.
             </p>
             <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
               Built by{' '}

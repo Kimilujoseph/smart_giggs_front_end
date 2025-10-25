@@ -68,21 +68,21 @@ const SignIn: React.FC = () => {
       <div className="flex flex-col items-center xl:hidden">
         {/* <CustomLogo /> */}
         <img
-          src="/cap.png"
-          alt="Captech Logo"
-          className="object-contain w-full h-[150px] "
+          src="/mutunga_dark_mode.png"
+          alt="smartGiggs Logo"
+          className="object-contain w-full h-[150px] mix-blend-difference"
         />
       </div>
-      {loggedIn !== '' && <Modal message="Login success" onClose={() => {}} />}
+      {loggedIn !== '' && <Modal message="Login success" onClose={() => { }} />}
       <div className="rounded-lg border border-stroke  shadow-default dark:border-strokedark dark:bg-boxdark">
         <div className="flex flex-wrap items-center">
           <div className="hidden w-full xl:block xl:w-1/2">
             <div className="py-17.5 px-26 text-center">
               {/* <CustomLogo /> */}
               <img
-                src="/cap.png"
-                alt="Captech Logo"
-                className="object-contain w-full h-full "
+                src="/mutunga_dark_mode.png"
+                alt="smartGiggs Logo"
+                className="object-contain w-full h-full mix-blend-difference"
               />
               {/* <span className="mt-15 inline-block">
                 <svg

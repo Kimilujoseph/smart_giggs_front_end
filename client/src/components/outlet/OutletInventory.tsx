@@ -19,7 +19,7 @@ import {
   HeadphonesIcon,
   UserIcon,
   SettingsIcon,
-  LayoutDashboard,
+  Share2,
   TrendingUp,
   Package,
   AlertTriangle,
@@ -33,6 +33,7 @@ import ModalAlert from '../alerts/Alert';
 import Breadcrumb from '../Breadcrumbs/Breadcrumb';
 import ClickOutside from '../ClickOutside';
 import { getUsers } from '../../api/user_manager';
+import ProductTransfer from '../inventory/ProductTransfer';
 
 // interface Notification {
 //   type: string;
@@ -41,7 +42,7 @@ import { getUsers } from '../../api/user_manager';
 
 const OutletInventoryView: React.FC = () => {
   const [shop, setShop] = useState<Shop | null>(null);
-  const [activeSection, setActiveSection] = useState<string>('Overview');
+  const [activeSection, setActiveSection] = useState<string>('Phones');
   const [showNewStock, setShowNewStock] = useState<boolean>(false);
   const [newStockTally, setNewStockTally] = useState<number>(0);
   // const [outletData, setOutletData] = useState<any | null>(null);
@@ -94,11 +95,6 @@ const OutletInventoryView: React.FC = () => {
 
   const sections = [
     {
-      name: 'Overview',
-      key: 'Overview',
-      icon: LayoutDashboard,
-    },
-    {
       name: 'Phones',
       key: 'Phones',
       icon: PhoneIcon,
@@ -107,6 +103,11 @@ const OutletInventoryView: React.FC = () => {
       name: 'Accessories',
       key: 'Accessories',
       icon: HeadphonesIcon,
+    },
+    {
+      name: 'Transfer',
+      key: 'Transfer',
+      icon: Share2,
     },
     userPermissions === 'manager' || userPermissions === 'superuser'
       ? {
@@ -462,195 +463,16 @@ const OutletInventoryView: React.FC = () => {
 
   const renderContent = () => {
     switch (activeSection) {
-      case 'Overview': {
-        if (!currentUser) return null;
-        const stats = calculateInventoryStats();
-        if (!stats) return null;
-
-        const phonesProgress =
-          (stats.totalPhones / stats.phoneModels) * 100 || 0;
-
-
-        const accessoriesProgress =
-          (stats.totalAccessories /
-            (stats.totalPhones + stats.totalAccessories)) *
-          100 || 0;
-
-        return (
-          <div className="space-y-6">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-2 flex flex-col justify-center space-y-4">
-                <div className="flex flex-row items-center justify-between text-bodydark2">
-                  <div className="text-lg font-medium">Total Inventory</div>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="dark:text-bodydark">
-                  <div className="text-2xl font-bold">{stats.totalItems}</div>
-                  <div className="text-xs text-muted-foreground">
-                    items in stock
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-2 flex flex-col justify-center space-y-4">
-                <div className="flex flex-row items-center justify-between text-bodydark2">
-                  <div className="text-lg font-medium">Inventory Value</div>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="dark:text-bodydark">
-                  <span className="text-xs">KES</span>
-                  <div className="pl-4 text-2xl font-bold">
-                    {Number(stats.totalValue.toFixed(2)).toLocaleString() ||
-                      (0.0).toFixed(2)}
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    total value
-                  </span>
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-2 flex flex-col justify-center space-y-4">
-                <div className="flex flex-row items-center justify-between text-bodydark2">
-                  <div className="text-lg font-medium">Products</div>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex justify-between items-center text-center">
-                  <div className="dark:text-bodydark">
-                    <div className="text-2xl font-bold">
-                      {stats.phoneModels + stats.accessoryModels}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      total items
-                    </div>
-                  </div>
-                  <div className="dark:text-bodydark">
-                    <div className="text-2xl font-bold">
-                      {stats.totalSoldItems}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      sold products
-                    </div>
-                  </div>
-                  <div className="dark:text-bodydark">
-                    <div className="text-2xl font-bold">
-                      {stats.totalItemsInStock}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      in stock
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-2 flex flex-col justify-center space-y-4">
-                <div className="flex flex-row items-center justify-between text-bodydark2">
-                  <div className="text-lg font-medium">Low Stock Alert</div>
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                </div>
-                <div className="dark:text-bodydark">
-                  <div className="text-2xl font-bold">
-                    {stats.lowStockItems}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    items need restock
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Detailed Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow">
-                <div className="p-2 text-xl font-bold">Phones Inventory</div>
-                <CardContent className="space-y-4 dark:text-bodydark">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Total Units</span>
-                      <span className="font-medium">{stats.totalPhones}</span>
-                    </div>
-                    <div
-                      className={`h-2 rounded-md
-                      ${phonesProgress < 20
-                          ? 'border border-red-500 bg-red-500'
-                          : phonesProgress >= 20 && phonesProgress < 50
-                            ? 'bg-yellow-500 border-yellow-500'
-                            : 'bg-primary border-primary'
-                        }
-                        `}
-                      style={{
-                        width: `${phonesProgress}%`,
-                      }}
-                    ></div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Models</span>
-                      <span className="font-medium">{stats.phoneModels}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Products</span>
-                      <span className="font-medium">
-                        {stats.phoneCategories}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </div>
-
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow">
-                <div className="p-2 text-xl font-bold">
-                  Accessories Inventory
-                </div>
-                <CardContent className="space-y-4 dark:text-bodydark">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Total Units</span>
-                      <span className="font-medium">
-                        {stats.totalAccessories}
-                      </span>
-                    </div>
-                    <div
-                      className={`h-2 rounded-md
-                        ${accessoriesProgress < 20
-                          ? 'border border-red-500 bg-red-500'
-                          : accessoriesProgress >= 20 &&
-                            accessoriesProgress < 50
-                            ? 'bg-yellow-500 border-yellow-500'
-                            : 'bg-primary border-primary'
-                        }
-                        `}
-                      style={{
-                        width: `${accessoriesProgress}%`,
-                      }}
-                    >
-                      { }
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Models</span>
-                      <span className="font-medium">
-                        {stats.accessoryModels}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Categories</span>
-                      <span className="font-medium">
-                        {stats.accessoryCategories}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </div>
-            </div>
-          </div>
-        );
-      }
+      case 'Transfer':
+        return <ProductTransfer 
+                  currentUser={currentUser} 
+                  mobileItems={mobileItems} 
+                  accessoryItems={accessoryItems}
+                  refreshData={() => {
+                    fetchMobileItems(mobilePage);
+                    fetchAccessoryItems(accessoryPage);
+                  }}
+                />;
       case 'Phones':
       case 'Accessories': {
         const isPhones = activeSection === 'Phones';

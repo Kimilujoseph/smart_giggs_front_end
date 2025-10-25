@@ -399,7 +399,7 @@ const PointOfSales: React.FC = () => {
         },
         { withCredentials: true },
       );
-
+      //console.log("@@@@@@@@@@@consoloditaed data",consolidatedData)
       if (response.status === 200) {
         setMessage({
           text: response.data?.message || 'Sale processed successfully',
@@ -909,9 +909,8 @@ const PointOfSales: React.FC = () => {
                 ) : (
                   <div className="space-y-4 max-h-[60vh] overflow-y-auto">
                     {groupedCart.map((product: any) => (
-                      <>
+                      <React.Fragment key={product.categoryId.id}>
                         <div
-                          key={product.categoryId.id}
                           className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between"
                         >
                           <div className="flex-grow">
@@ -989,7 +988,6 @@ const PointOfSales: React.FC = () => {
                               type="number"
                               min={product.categoryId.minPrice}
                               max={product.categoryId.maxPrice}
-                              defaultValue={product.categoryId.minPrice}
                               value={soldprice?.[product.categoryId.id] || 0}
                               onChange={(e) => {
                                 setSoldPrice({
@@ -1069,7 +1067,7 @@ const PointOfSales: React.FC = () => {
                               )}`}</span>
                             </>
                           )}
-                      </>
+                      </React.Fragment>
                     ))}
                   </div>
                 )}
