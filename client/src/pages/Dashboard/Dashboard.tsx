@@ -83,10 +83,10 @@ const Dashboard: React.FC = () => {
       ]);
 
       const salesReportData = salesReportRes.data.data;
-      setSalesReport(salesReportData);
-      setShopPerformance(shopPerformanceRes.data.data);
-      setSalesByStatus(salesByStatusRes.data.data);
-      setTopProducts(topProductsRes.data.data);
+      setSalesReport(salesReportData || {});
+      setShopPerformance(shopPerformanceRes.data.data || []);
+      setSalesByStatus(salesByStatusRes.data.data || []);
+      setTopProducts(topProductsRes.data.data || []);
 
       // Process data for charts
       // Top Sellers
@@ -387,7 +387,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="space-y-4">
-            {salesByStatus.map((status, index) => (
+            {(salesByStatus ?? []).map((status, index) => (
               <div key={index} className="flex justify-between text-sm">
                 <span className="text-gray-500">
                   {status.financeStatus.charAt(0).toUpperCase() +
@@ -403,7 +403,7 @@ const Dashboard: React.FC = () => {
               <span className="text-gray-500">Total Gross Profit</span>
               <span className="font-medium">
                 Ksh{' '}
-                {salesByStatus
+                {(salesByStatus ?? [])
                   .reduce(
                     (acc, status) => acc + parseFloat(status.grossProfit),
                     0,
