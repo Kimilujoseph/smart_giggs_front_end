@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../../types/product';
-import { Modal, Box, TextField, Button, Typography } from '@mui/material';
+import { Modal, Box, TextField, Button, Typography, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import useColorMode from '../../hooks/useColorMode';
 
 interface CategoryModalProps {
@@ -91,8 +91,70 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ open, onClose, onSave, ca
         <TextField fullWidth label="Brand" value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} error={!!errors.brand} helperText={errors.brand} sx={{ mb: 2, input: { color: colorMode === 'dark' ? 'white' : 'black' }, label: { color: colorMode === 'dark' ? 'white' : 'black' } }} />
         <TextField fullWidth label="Min Price" type="number" value={formData.minPrice} onChange={(e) => setFormData({ ...formData, minPrice: Number(e.target.value) })} error={!!errors.minPrice} helperText={errors.minPrice} sx={{ mb: 2, input: { color: colorMode === 'dark' ? 'white' : 'black' }, label: { color: colorMode === 'dark' ? 'white' : 'black' } }} />
         <TextField fullWidth label="Max Price" type="number" value={formData.maxPrice} onChange={(e) => setFormData({ ...formData, maxPrice: Number(e.target.value) })} error={!!errors.maxPrice} helperText={errors.maxPrice} sx={{ mb: 2, input: { color: colorMode === 'dark' ? 'white' : 'black' }, label: { color: colorMode === 'dark' ? 'white' : 'black' } }} />
-        <TextField fullWidth label="Item Type" value={formData.itemType} onChange={(e) => setFormData({ ...formData, itemType: e.target.value })} sx={{ mb: 2, input: { color: colorMode === 'dark' ? 'white' : 'black' }, label: { color: colorMode === 'dark' ? 'white' : 'black' } }} />
-        <TextField fullWidth label="Category" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} sx={{ mb: 2, input: { color: colorMode === 'dark' ? 'white' : 'black' }, label: { color: colorMode === 'dark' ? 'white' : 'black' } }} />
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel id="item-type-label" sx={{ color: colorMode === 'dark' ? 'white' : 'black' }}>Item Type</InputLabel>
+          <Select
+            labelId="item-type-label"
+            value={formData.itemType}
+            label="Item Type"
+            onChange={(e) => setFormData({ ...formData, itemType: e.target.value })}
+            sx={{
+              color: colorMode === 'dark' ? 'white' : 'black',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: colorMode === 'dark' ? 'white' : 'black',
+              },
+              '& .MuiSvgIcon-root': {
+                color: colorMode === 'dark' ? 'white' : 'inherit',
+              },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  bgcolor: colorMode === 'dark' ? '#1C2434' : 'background.paper',
+                  color: colorMode === 'dark' ? 'white' : 'black',
+                },
+              },
+            }}
+          >
+            <MenuItem value="mobiles">Mobiles</MenuItem>
+            <MenuItem value="accessories">Accessories</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel id="category-label" sx={{ color: colorMode === 'dark' ? 'white' : 'black' }}>Category</InputLabel>
+          <Select
+            labelId="category-label"
+            value={formData.category}
+            label="Category"
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            sx={{
+              color: colorMode === 'dark' ? 'white' : 'black',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: colorMode === 'dark' ? 'white' : 'black',
+              },
+              '& .MuiSvgIcon-root': {
+                color: colorMode === 'dark' ? 'white' : 'inherit',
+              },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  bgcolor: colorMode === 'dark' ? '#1C2434' : 'background.paper',
+                  color: colorMode === 'dark' ? 'white' : 'black',
+                },
+              },
+            }}
+          >
+            <MenuItem value="mobiles">Mobiles</MenuItem>
+            <MenuItem value="accessories">Accessories</MenuItem>
+          </Select>
+        </FormControl>
         <Button variant="contained" onClick={handleSave}>Save</Button>
         <Button variant="outlined" onClick={onClose} sx={{ ml: 2 }}>Cancel</Button>
       </Box>

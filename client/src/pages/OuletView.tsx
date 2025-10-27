@@ -683,15 +683,15 @@ const OutletView: React.FC = () => {
       case 'Inventory': {
         return (
           <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
-            <div className="p-4 bg-gray-50 dark:bg-meta-4 flex justify-between items-center">
-              <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">Confirmed Inventory</h2>
-              <div className="flex items-center space-x-4">
-                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by IMEI or name" className="p-2 border rounded-lg dark:bg-boxdark" />
+            <div className="p-4 bg-gray-50 dark:bg-meta-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white self-start">Confirmed Inventory</h2>
+              <div className="flex items-center space-x-4 w-full md:w-auto">
+                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by IMEI or name" className="p-2 border rounded-lg dark:bg-boxdark w-full" />
                 <button onClick={handleSearch} className="px-4 py-2 rounded-lg bg-primary text-white">Search</button>
               </div>
-              <div className="flex space-x-4">
-                <button onClick={() => setInventoryTab('mobiles')} className={`px-4 py-2 rounded-lg ${inventoryTab === 'mobiles' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Mobiles</button>
-                <button onClick={() => setInventoryTab('accessories')} className={`px-4 py-2 rounded-lg ${inventoryTab === 'accessories' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Accessories</button>
+              <div className="flex space-x-4 w-full md:w-auto">
+                <button onClick={() => setInventoryTab('mobiles')} className={`px-4 py-2 rounded-lg w-1/2 md:w-auto ${inventoryTab === 'mobiles' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Mobiles</button>
+                <button onClick={() => setInventoryTab('accessories')} className={`px-4 py-2 rounded-lg w-1/2 md:w-auto ${inventoryTab === 'accessories' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Accessories</button>
               </div>
             </div>
             {inventoryTab === 'mobiles' && (searchResults ? searchResults.phoneItems : mobileItems) && (

@@ -66,7 +66,7 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
               {/* <!-- ===== Modal End ===== --> */}
 
               {/* <!-- ===== Main Content Start ===== --> */}
-              <main className="p-2">
+              <main className="flex-grow p-2">
                 <Outlet />
               </main>
               {/* <!-- ===== Main Content End ===== --> */}

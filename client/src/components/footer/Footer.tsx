@@ -39,7 +39,7 @@ const Footer: React.FC = () => {
   return (
     <footer
       style={{ zIndex: 999999 }}
-      className={`fixed lg:relative bottom-0 left-0 right-0 w-full py-1 px-6 bg-white dark:bg-boxdark border-t border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 ${isMinimized ? 'h-8 lg:h-auto' : 'h-auto'
+      className={`bottom-0 left-0 right-0 w-full py-1 px-6 bg-white dark:bg-boxdark border-t border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 ${isMinimized ? 'h-8 lg:h-auto' : 'h-auto'
         }`}
     >
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
