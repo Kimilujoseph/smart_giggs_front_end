@@ -142,19 +142,19 @@ const Sales = () => {
           axios.get(
             `${
               import.meta.env.VITE_SERVER_HEAD
-            }/api/sales/all?period=${timeFrame}&page=1`,
+            }/api/sales/report?period=${timeFrame}&page=1`,
             { withCredentials: true },
           ),
           axios.get(
             `${
               import.meta.env.VITE_SERVER_HEAD
-            }/api/sales/all?period=${timeFrame}&page=2`,
+            }/api/sales/report?period=${timeFrame}&page=2`,
             { withCredentials: true },
           ),
           axios.get(
             `${
               import.meta.env.VITE_SERVER_HEAD
-            }/api/sales/all?period=${timeFrame}&page=3`,
+            }/api/sales/report?period=${timeFrame}&page=3`,
             { withCredentials: true },
           ),
         ];

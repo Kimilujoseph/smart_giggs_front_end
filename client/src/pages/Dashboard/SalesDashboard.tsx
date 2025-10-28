@@ -108,11 +108,10 @@ const TabButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`px-4 py-2 font-medium transition-colors duration-200 ${
-      selected
+    className={`px-4 py-2 font-medium transition-colors duration-200 ${selected
         ? 'text-primary border-b-2 border-primary'
         : 'text-bodydark hover:text-black dark:hover:text-white'
-    }`}
+      }`}
   >
     {children}
   </button>
@@ -195,11 +194,17 @@ const SalesDashboard = () => {
 
       try {
         const response = await getSalesReport(params);
-
+        console.log("@@@@@@@", response.data)
         // Per the original SalesDashboard, the response data is the payload.
-        if (response.data && response.data.sales) {
-          setSalesData(response.data);
-          setTotalPages(response.data.totalPages || 1);
+        if (response.data) {
+          // Handle cases where 'sales' might be missing in the response for a successful query with no results
+          const salesPayload = {
+            ...response.data,
+            sales: response.data.sales || [],
+            totalPages: response.data.totalPages || 1,
+          };
+          setSalesData(salesPayload);
+          setTotalPages(salesPayload.totalPages);
           setError(null);
         } else {
           setSalesData(null);
@@ -208,8 +213,8 @@ const SalesDashboard = () => {
       } catch (error: any) {
         setError(
           error.response?.data?.message ||
-            error.message ||
-            'Failed to fetch sales data',
+          error.message ||
+          'Failed to fetch sales data',
         );
         setMessage({
           text:
@@ -581,7 +586,7 @@ const SalesDashboard = () => {
               totalPages={totalPages}
               currentPage={currentPage}
               onPageChange={setCurrentPage}
-              onSort={() => {}} // Sorting to be implemented if needed
+              onSort={() => { }} // Sorting to be implemented if needed
               onPayCommission={handleOpenPayCommissionModal}
             />
           ) : (

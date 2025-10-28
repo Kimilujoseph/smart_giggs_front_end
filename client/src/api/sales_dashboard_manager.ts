@@ -22,7 +22,13 @@ export const getSalesReport = async (params: SalesReportParams) => {
   const response = await axios.get(`${API_URL}/sales/report`, {
     params,
     withCredentials: true,
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0',
+    },
   });
+  console.log('salesdata received @@@@@', response);
   if (response.status !== 200) {
     throw new Error('Failed to fetch sales report');
   }
@@ -47,11 +53,11 @@ export const getSalesReportByFinancer = async (
 };
 
 export const payCommission = async (commissionData: any) => {
-    const response = await axios.post(`${API_URL}/commissions/pay`, commissionData, {
-        withCredentials: true,
-    });
-    if (response.status !== 201) {
-        throw new Error('Failed to pay commission');
-    }
-    return response.data;
+  const response = await axios.post(`${API_URL}/commissions/pay`, commissionData, {
+    withCredentials: true,
+  });
+  if (response.status !== 201) {
+    throw new Error('Failed to pay commission');
+  }
+  return response.data;
 };
