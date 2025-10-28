@@ -27,7 +27,7 @@ export const getSalesReport = async (params: SalesReportParams) => {
       Expires: '0',
     },
   });
-  console.log('salesdata received @@@@@', response);
+  //console.log('salesdata received @@@@@', response);
   if (response.status !== 200) {
     throw new Error('Failed to fetch sales report');
   }
