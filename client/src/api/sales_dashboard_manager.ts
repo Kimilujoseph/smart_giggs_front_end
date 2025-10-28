@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { API_URL } from '../constants';
 
 export interface SalesReportParams {
   period?: 'day' | 'week' | 'month' | 'year';
@@ -19,7 +18,7 @@ export interface SalesReportParams {
 }
 
 export const getSalesReport = async (params: SalesReportParams) => {
-  const response = await axios.get(`${API_URL}/sales/report`, {
+  const response = await axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/sales/report`, {
     params,
     withCredentials: true,
     headers: {
@@ -40,7 +39,7 @@ export const getSalesReportByFinancer = async (
   params: SalesReportParams,
 ) => {
   const response = await axios.get(
-    `${API_URL}/sales/report/financer/${financerId}`,
+    `${import.meta.env.VITE_SERVER_HEAD}/api/sales/report/financer/${financerId}`,
     {
       params,
       withCredentials: true,
@@ -53,7 +52,7 @@ export const getSalesReportByFinancer = async (
 };
 
 export const payCommission = async (commissionData: any) => {
-  const response = await axios.post(`${API_URL}/commissions/pay`, commissionData, {
+  const response = await axios.post(`${import.meta.env.VITE_SERVER_HEAD}/api/commissions/pay`, commissionData, {
     withCredentials: true,
   });
   if (response.status !== 201) {

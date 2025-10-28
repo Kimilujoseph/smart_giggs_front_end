@@ -194,7 +194,6 @@ const SalesDashboard = () => {
 
       try {
         const response = await getSalesReport(params);
-        console.log("@@@@@@@", response.data)
         // Per the original SalesDashboard, the response data is the payload.
         if (response.data) {
           // Handle cases where 'sales' might be missing in the response for a successful query with no results
