@@ -4,8 +4,9 @@ import { Product } from '../../types/product';
 import axios from 'axios';
 import { CircularProgress } from '@mui/material';
 import { ChevronLeft, ChevronRight, Eye, X, Filter, Edit, Trash2, Plus } from 'lucide-react';
-import { createCategory, updateCategory, deleteCategory } from '../../api/category_manager';
+import { createCategory, updateCategory } from '../../api/category_manager';
 import CategoryModal from './CategoryModal';
+import { useAppContext } from '../../context/AppContext';
 
 interface ProductTableProps {
   getFreshUserData: () => void;
@@ -16,6 +17,7 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAppContext();
 
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
@@ -84,7 +86,7 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
   const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this category?')) {
       try {
-        await deleteCategory(id);
+        await updateCategory(id, { status: 'DELETED' });
         fetchInventory();
       } catch (error) {
         console.error('Error deleting category:', error);
@@ -310,13 +312,14 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
                 <th className="py-4 px-4 font-medium text-black dark:text-white">Max Price</th>
                 <th className="py-4 px-4 font-medium text-black dark:text-white">Category</th>
                 <th className="py-4 px-4 font-medium text-black dark:text-white">Brand</th>
+                <th className="py-4 px-4 font-medium text-black dark:text-white">Status</th>
                 <th className="py-4 px-4 font-medium text-black dark:text-white">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-4">
+                  <td colSpan={8} className="py-4">
                     <div className="flex justify-center">
                       <CircularProgress size={32} />
                     </div>
@@ -324,23 +327,23 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
                 </tr>
               ) : currentItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-4 text-center text-black dark:text-white">
+                  <td colSpan={8} className="py-4 text-center text-black dark:text-white">
                     No items found
                   </td>
                 </tr>
               ) : (
-                currentItems.map((product: any) => (
+                currentItems.map((product: Product) => (
                   <tr key={product.id} className="border-b border-[#eee] dark:border-strokedark hover:bg-gray-1 dark:hover:bg-meta-4">
                     <td className="py-3 px-4">
                       <h5 className="font-medium text-black dark:text-white">{product.itemName}</h5>
                     </td>
                     <td className="py-3 px-4">
                       <p className={`text-black dark:text-white ${
-                        (product.Items?.length || 0) === 0 ? 'text-red-500' :
-                        (product.Items?.length || 0) < 5 ? 'text-yellow-500' :
+                        (product.availableStock) === 0 ? 'text-red-500' :
+                        (product.availableStock) < 5 ? 'text-yellow-500' :
                         'text-green-500'
                       }`}>
-                        {product.Items?.length || 0}
+                        {product.availableStock}
                       </p>
                     </td>
                     <td className="py-3 px-4">
@@ -354,6 +357,21 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
                     </td>
                     <td className="py-3 px-4">
                       <p className="text-black dark:text-white">{product.brand}</p>
+                    </td>
+                    <td className="py-3 px-4">
+                      <p
+                        className={`inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium ${
+                          product.status === 'AVAILABLE'
+                            ? 'bg-success text-success'
+                            : product.status === 'DELETED'
+                            ? 'bg-danger text-danger'
+                            : product.status === 'SUSPENDED'
+                            ? 'bg-warning text-warning'
+                            : 'bg-primary text-primary'
+                        }`}
+                      >
+                        {product.status}
+                      </p>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-3.5">
@@ -371,13 +389,15 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
                         >
                           <Edit className="w-5 h-5 text-yellow-500" />
                         </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="p-2 rounded-lg hover:bg-gray-2 dark:hover:bg-meta-4"
-                          title="Delete Category"
-                        >
-                          <Trash2 className="w-5 h-5 text-red-500" />
-                        </button>
+                        {user?.role === 'superuser' && (
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            className="p-2 rounded-lg hover:bg-gray-2 dark:hover:bg-meta-4"
+                            title="Delete Category"
+                          >
+                            <Trash2 className="w-5 h-5 text-red-500" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

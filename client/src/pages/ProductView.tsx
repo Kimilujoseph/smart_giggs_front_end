@@ -113,7 +113,7 @@ const ProductView = () => {
         setOutletListings(mappedOutlets);
       }
     } catch (error: any) {
-      alert(error.response.message  || error.message || "An error occurred while fetching outlets")      
+      alert(error.response.message || error.message || "An error occurred while fetching outlets")
     }
   }, []);
 
@@ -123,21 +123,18 @@ const ProductView = () => {
     }
     try {
       setLoading(true);
-      
 
-      
-      
+
+
+
 
       const response = await axios.get(
         currentUser?.role === 'seller'
-          ? `${
-              import.meta.env.VITE_SERVER_HEAD
-            }/api/category/get-category/shop/${
-              currentUser.assignedShop.shopName
-            }/${productId}`
-          : `${
-              import.meta.env.VITE_SERVER_HEAD
-            }/api/category/get-category/${productId}`,
+          ? `${import.meta.env.VITE_SERVER_HEAD
+          }/api/category/get-category/shop/${currentUser.assignedShop.shopName
+          }/${productId}`
+          : `${import.meta.env.VITE_SERVER_HEAD
+          }/api/category/get-category/${productId}`,
         {
           withCredentials: true,
         },
@@ -167,7 +164,7 @@ const ProductView = () => {
       setOutlets(Array.from(uniqueOutlets).map((shop: any) => JSON.parse(shop)));
       setProduct(fetchedProduct);
     } catch (error: any) {
-      alert(error.response?.message || error.message || "An error occurred while fetching product details");      
+      alert(error.response?.message || error.message || "An error occurred while fetching product details");
     } finally {
       setLoading(false);
     }
@@ -181,7 +178,7 @@ const ProductView = () => {
           setCurrentUser(user_res?.data.user);
         }
       } catch (error: any) {
-        alert(error.response.message || error.message || "An error occurred user data");        
+        alert(error.response.message || error.message || "An error occurred user data");
       }
     };
     fetchUserData();
@@ -198,13 +195,13 @@ const ProductView = () => {
       prev.map((item) =>
         item.stockId === stockId
           ? {
-              ...item,
-              quantity: Math.min(
-                newQuantity,
-                product.Items.find((i) => i.id === stockId)?.availableStock ||
-                  0,
-              ),
-            }
+            ...item,
+            quantity: Math.min(
+              newQuantity,
+              product.Items.find((i) => i.id === stockId)?.availableStock ||
+              0,
+            ),
+          }
           : item,
       ),
     );
@@ -306,9 +303,8 @@ const ProductView = () => {
     try {
       const response = await axios.post(
         user?.role === 'manager' || user?.role === 'superuser'
-          ? `${
-              import.meta.env.VITE_SERVER_HEAD
-            }/api/distribution/bulk-distribution`
+          ? `${import.meta.env.VITE_SERVER_HEAD
+          }/api/distribution/bulk-distribution`
           : `${import.meta.env.VITE_SERVER_HEAD}/api/transfer/bulk-transfer`,
         {
           shopDetails: {
@@ -341,8 +337,8 @@ const ProductView = () => {
       alert(error.response.message || error.message || "An error occurred during distribution");
       setDistributeError(
         error.response?.data?.message ||
-          error.message ||
-          'Failed to distribute product',
+        error.message ||
+        'Failed to distribute product',
       );
     } finally {
       setDistributing(false);
@@ -404,11 +400,10 @@ const ProductView = () => {
           <button
             type="button"
             onClick={() => setSelectionMode('random')}
-            className={`flex items-center px-4 py-2 rounded-lg ${
-              selectionMode === 'random'
+            className={`flex items-center px-4 py-2 rounded-lg ${selectionMode === 'random'
                 ? 'bg-primary text-white'
                 : 'bg-gray-100 dark:bg-meta-4 text-gray-700 dark:text-gray-300'
-            }`}
+              }`}
           >
             <Shuffle className="w-4 h-4 mr-2" />
             Random Selection
@@ -416,11 +411,10 @@ const ProductView = () => {
           <button
             type="button"
             onClick={() => setSelectionMode('manual')}
-            className={`flex items-center px-4 py-2 rounded-lg ${
-              selectionMode === 'manual'
+            className={`flex items-center px-4 py-2 rounded-lg ${selectionMode === 'manual'
                 ? 'bg-primary text-white'
                 : 'bg-gray-100 dark:bg-meta-4 text-gray-700 dark:text-gray-300'
-            }`}
+              }`}
           >
             <List className="w-4 h-4 mr-2" />
             Manual Selection
@@ -433,9 +427,8 @@ const ProductView = () => {
               Selected Items ({selectedItems.length}/{quantity})
             </h3>
             <div className="max-h-60 overflow-y-auto">
-              <pre className="p-3">{`${
-                product?.itemType === 'mobiles' ? 'IMEI' : 's/No'
-              } - Batch Number\n`}</pre>
+              <pre className="p-3">{`${product?.itemType === 'mobiles' ? 'IMEI' : 's/No'
+                } - Batch Number\n`}</pre>
               {product?.Items?.filter(
                 (available: any) =>
                   available.stockStatus?.toLowerCase() === 'available' ||
@@ -451,22 +444,19 @@ const ProductView = () => {
                     onClick={() =>
                       selectionMode === 'manual' && toggleItemSelection(item)
                     }
-                    className={`p-3 border rounded-lg mb-2 cursor-pointer ${
-                      selectedItems.some((i) => i.stockId === item.id)
+                    className={`p-3 border rounded-lg mb-2 cursor-pointer ${selectedItems.some((i) => i.stockId === item.id)
                         ? 'border-primary bg-primary/10'
                         : 'border-gray-200 dark:border-strokedark'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{`${
-                        item.IMEI || item.serialNumber
-                      } - ${item.batchNumber} / ${item.id}`}</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{`${item.IMEI || item.serialNumber
+                        } - ${item.batchNumber} / ${item.id}`}</span>
                       <CheckCircle
-                        className={`w-5 h-5 ${
-                          selectedItems.some((i) => i.stockId === item.id)
+                        className={`w-5 h-5 ${selectedItems.some((i) => i.stockId === item.id)
                             ? 'text-primary'
                             : 'text-gray-300 dark:text-gray-600'
-                        }`}
+                          }`}
                       />
                     </div>
                   </div>
@@ -488,8 +478,8 @@ const ProductView = () => {
             {distributing
               ? 'Processing...'
               : user.role === 'manager'
-              ? 'Distribute'
-              : 'Transfer'}
+                ? 'Distribute'
+                : 'Transfer'}
           </button>
         </div>
       </form>
@@ -544,11 +534,10 @@ const ProductView = () => {
           <button
             type="button"
             onClick={() => setSelectionMode('random')}
-            className={`flex items-center px-4 py-2 rounded-lg ${
-              selectionMode === 'random'
+            className={`flex items-center px-4 py-2 rounded-lg ${selectionMode === 'random'
                 ? 'bg-primary text-white'
                 : 'bg-gray-100 dark:bg-meta-4 text-gray-700 dark:text-gray-300'
-            }`}
+              }`}
           >
             <Shuffle className="w-4 h-4 mr-2" />
             Random Selection
@@ -556,11 +545,10 @@ const ProductView = () => {
           <button
             type="button"
             onClick={() => setSelectionMode('manual')}
-            className={`flex items-center px-4 py-2 rounded-lg ${
-              selectionMode === 'manual'
+            className={`flex items-center px-4 py-2 rounded-lg ${selectionMode === 'manual'
                 ? 'bg-primary text-white'
                 : 'bg-gray-100 dark:bg-meta-4 text-gray-700 dark:text-gray-300'
-            }`}
+              }`}
           >
             <List className="w-4 h-4 mr-2" />
             Manual Selection
@@ -585,11 +573,10 @@ const ProductView = () => {
                 return (
                   <div
                     key={item.id}
-                    className={`border rounded-lg mb-2 transition-all duration-300 ${
-                      isSelected
+                    className={`border rounded-lg mb-2 transition-all duration-300 ${isSelected
                         ? 'border-primary bg-primary/10'
                         : 'border-gray-200 dark:border-strokedark'
-                    }`}
+                      }`}
                   >
                     <div
                       onClick={() =>
@@ -649,7 +636,7 @@ const ProductView = () => {
                           Distribution History
                         </h4>
                         {item.accessoryItems &&
-                        item.accessoryItems.length > 0 ? (
+                          item.accessoryItems.length > 0 ? (
                           <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                             {item.accessoryItems.map(
                               (dist: any, index: number) => (
@@ -695,15 +682,15 @@ const ProductView = () => {
             disabled={
               distributing ||
               selectedItems.reduce((sum, item) => sum + item.quantity, 0) !==
-                quantity
+              quantity
             }
             className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
           >
             {distributing
               ? 'Processing...'
               : user.role === 'manager'
-              ? 'Distribute'
-              : 'Transfer'}
+                ? 'Distribute'
+                : 'Transfer'}
           </button>
         </div>
       </form>
@@ -716,8 +703,8 @@ const ProductView = () => {
         return product?.itemType === 'mobiles'
           ? renderDistributeSection()
           : product?.itemType === 'accessories'
-          ? accessoriesDistributeSection()
-          : null;
+            ? accessoriesDistributeSection()
+            : null;
 
       case 'transfer_history':
         return (
@@ -825,7 +812,7 @@ const ProductView = () => {
   return (
     <div className="container mx-auto py-6">
       <div className="flex items-center space-x-4 w-full justify-end">
-        <div className="text-sm font-medium text-gray-600 dark:text-gray-300">
+        {/* <div className="text-sm font-medium text-gray-600 dark:text-gray-300">
           Available Stock:
         </div>
         <div className="bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
@@ -833,7 +820,7 @@ const ProductView = () => {
             (item) => item.stockStatus.toLowerCase() !== 'sold',
           ).length || 0}{' '}
           {`${product?.Items?.length !== 1 ? 'Units' : 'Unit'}`}
-        </div>
+        </div> */}
       </div>
       <Breadcrumb pageName="Product Details" header={product?.itemName} />
 
@@ -847,11 +834,10 @@ const ProductView = () => {
                   setActiveSection(section.key);
                   navigate(`?tab=${section.key}`);
                 }}
-                className={`w-full md:w-auto flex items-center justify-center md:justify-start p-4 border-b md:border-b-0 last:border-b-0 outline-none ${
-                  activeSection === section.key
+                className={`w-full md:w-auto flex items-center justify-center md:justify-start p-4 border-b md:border-b-0 last:border-b-0 outline-none ${activeSection === section.key
                     ? 'bg-primary/10 text-primary'
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-meta-4'
-                }`}
+                  }`}
               >
                 <section.icon className="mr-3 w-5 h-5 block" />
                 <div className="text-sm font-medium whitespace-nowrap">

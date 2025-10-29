@@ -30,18 +30,16 @@ import { Key, ReactNode } from "react";
 // };
 
 export type Product = {
-  id: string | null | undefined;
+  id: number;
   itemName: string;
   itemModel: string;
-  brand: string;
-  category: string;
   minPrice: number;
   maxPrice: number;
-  itemType: string;
-  Items: Array<any>;
-  sales: Array<any>;
-  createdAt: string;
-  updatedAt: string;
-  isMobile: boolean;
+  brand: string;
+  category: string;
   availableStock: number;
+  status: 'DELETED' | 'AVAILABLE' | 'SUSPENDED' | 'MODIFIED';
+  isMobile?: boolean;
+  itemType?: string;
+  Items?: any[];
 };

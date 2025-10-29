@@ -20,6 +20,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ open, onClose, onSave, ca
     maxPrice: 0,
     itemType: 'accessories',
     category: 'accessories',
+    status: 'AVAILABLE',
   });
   const [errors, setErrors] = useState<any>({});
 
@@ -33,6 +34,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ open, onClose, onSave, ca
         maxPrice: category.maxPrice,
         itemType: category.itemType,
         category: category.category,
+        status: category.status || 'AVAILABLE',
       });
     } else {
       setFormData({
@@ -43,6 +45,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ open, onClose, onSave, ca
         maxPrice: 0,
         itemType: 'accessories',
         category: 'accessories',
+        status: 'AVAILABLE',
       });
     }
     setErrors({});
@@ -153,6 +156,39 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ open, onClose, onSave, ca
           >
             <MenuItem value="mobiles">Mobiles</MenuItem>
             <MenuItem value="accessories">Accessories</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel id="status-label" sx={{ color: colorMode === 'dark' ? 'white' : 'black' }}>Status</InputLabel>
+          <Select
+            labelId="status-label"
+            value={formData.status}
+            label="Status"
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            sx={{
+              color: colorMode === 'dark' ? 'white' : 'black',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: colorMode === 'dark' ? 'white' : 'black',
+              },
+              '& .MuiSvgIcon-root': {
+                color: colorMode === 'dark' ? 'white' : 'inherit',
+              },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  bgcolor: colorMode === 'dark' ? '#1C2434' : 'background.paper',
+                  color: colorMode === 'dark' ? 'white' : 'black',
+                },
+              },
+            }}
+          >
+            <MenuItem value="AVAILABLE">Available</MenuItem>
+            <MenuItem value="SUSPENDED">Suspended</MenuItem>
+            <MenuItem value="MODIFIED">Modified</MenuItem>
           </Select>
         </FormControl>
         <Button variant="contained" onClick={handleSave}>Save</Button>
