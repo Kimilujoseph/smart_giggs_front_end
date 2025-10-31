@@ -1,33 +1,26 @@
-import { useEffect, useState, useCallback } from 'react';
-import {
-  BarChart,
-  XAxis,
-  YAxis,
-  Bar,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from 'recharts';
+import { useEffect, useState } from 'react';
 import {
   TrendingUp,
   DollarSign,
   Package,
   ArrowUp,
   ArrowDown,
-  Calendar,
   CreditCard,
 } from 'lucide-react';
 import { CircularProgress } from '@mui/material';
 import { getSalesReport, SalesReportParams } from '../../api/sales_dashboard_manager';
 import Message from '../../components/alerts/Message';
-import ModalAlert from '../../components/alerts/Alert';
 import SalesTable from '../../components/SalesDashboard/SalesTable';
 import PayCommissionModal from '../../components/SalesDashboard/PayCommissionModal';
+import DateFilter from '../../components/filters/DateFilter';
+import { getCategories } from '../../api/category_manager';
+import { getAllFinancers } from '../../api/financer_manager';
+import { getAllUsers } from '../../api/user_manager';
+import { User } from '../../types/user';
+import { Category } from '../../types/category';
+import { Financer } from '../../types/financer';
 
-// Interface definitions from OutletSalesBackup
+// Interface definitions
 interface FinanceDetails {
   financeStatus: string;
   financeAmount: number;
@@ -61,7 +54,7 @@ interface Sale {
 
 interface SalesData {
   sales: Sale[];
-  analytics: any; // Using 'any' for flexibility with API response
+  analytics: any;
   salesPerMonth: any[];
   totalSales: number;
   totalProfit: number;
@@ -69,12 +62,6 @@ interface SalesData {
   totalfinanceSalesPending: number;
   totalPages: number;
   currentPage: number;
-}
-
-interface ApiResponse {
-  success: boolean;
-  message: string;
-  data: SalesData;
 }
 
 interface StatCardProps {
@@ -86,39 +73,7 @@ interface StatCardProps {
   valueType: string;
 }
 
-interface ProfitableProduct {
-  name: string;
-  model: string;
-  category: string;
-  sales: number;
-  units: number;
-  profit: number;
-  profitMargin: number;
-}
-
-// Tab Button Component
-const TabButton = ({
-  selected,
-  onClick,
-  children,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) => (
-  <button
-    onClick={onClick}
-    className={`px-4 py-2 font-medium transition-colors duration-200 ${selected
-        ? 'text-primary border-b-2 border-primary'
-        : 'text-bodydark hover:text-black dark:hover:text-white'
-      }`}
-  >
-    {children}
-  </button>
-);
-
 const SalesDashboard = () => {
-  // Stat Card Component
   const StatCard = ({
     title,
     value,
@@ -160,43 +115,71 @@ const SalesDashboard = () => {
     </div>
   );
 
-  // State management
   const [salesData, setSalesData] = useState<SalesData | null>(null);
-  const [message, setMessage] = useState<{ text: string; type: string } | null>(
-    null,
-  );
-  const [timeFrame, setTimeFrame] = useState('month');
-  const [activeTab, setActiveTab] = useState(0);
+  const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [financeFilter, setFinanceFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [date, setDate] = useState('');
   const [totalPages, setTotalPages] = useState(1);
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [isPayCommissionModalOpen, setPayCommissionModalOpen] = useState(false);
 
-  // Fetch sales data
+  // Filters state
+  const [reportType, setReportType] = useState<'all' | 'category' | 'financer' | 'user'>('all');
+  const [selectedId, setSelectedId] = useState<string>('');
+  const [dateFilter, setDateFilter] = useState('period=month');
+
+  // Data for filters
+  const [users, setUsers] = useState<User[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [financers, setFinancers] = useState<Financer[]>([]);
+
+  useEffect(() => {
+    const fetchFilterData = async () => {
+      const usersRes = await getAllUsers();
+      if (usersRes && !usersRes.error) {
+        setUsers(usersRes.data || []);
+      }
+
+      const categoriesRes = await getCategories();
+      if (categoriesRes && categoriesRes.success) {
+        setCategories(categoriesRes.data || []);
+      }
+
+      const financersRes = await getAllFinancers();
+      if (financersRes && !financersRes.error) {
+        setFinancers(financersRes.data || []);
+      }
+    };
+    fetchFilterData();
+  }, []);
+
   useEffect(() => {
     const fetchSalesData = async () => {
       setLoading(true);
-      const params: SalesReportParams = {
+      let params: SalesReportParams = {
         page: currentPage,
         limit: itemsPerPage,
       };
 
-      if (date) {
-        params.date = date;
-      } else if (timeFrame) {
-        params.period = timeFrame as any;
+      if (dateFilter) {
+        const dateParams = new URLSearchParams(dateFilter);
+        params.period = dateParams.get('period') as any;
+        params.startDate = dateParams.get('startDate') || undefined;
+        params.endDate = dateParams.get('endDate') || undefined;
+      }
+
+      if (reportType !== 'all' && selectedId) {
+        params.reportType = reportType;
+        params.id = selectedId;
+      } else {
+        params.reportType = 'all';
       }
 
       try {
         const response = await getSalesReport(params);
-        // Per the original SalesDashboard, the response data is the payload.
         if (response.data) {
-          // Handle cases where 'sales' might be missing in the response for a successful query with no results
           const salesPayload = {
             ...response.data,
             sales: response.data.sales || [],
@@ -210,16 +193,10 @@ const SalesDashboard = () => {
           throw new Error('No sales data returned from the API.');
         }
       } catch (error: any) {
-        setError(
-          error.response?.data?.message ||
-          error.message ||
-          'Failed to fetch sales data',
-        );
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch sales data';
+        setError(errorMessage);
         setMessage({
-          text:
-            error.response?.data?.message ||
-            error.message ||
-            'Failed to fetch sales data',
+          text: errorMessage,
           type: 'error',
         });
       } finally {
@@ -228,9 +205,8 @@ const SalesDashboard = () => {
     };
 
     fetchSalesData();
-  }, [timeFrame, currentPage, itemsPerPage, date]);
+  }, [reportType, selectedId, dateFilter, currentPage, itemsPerPage]);
 
-  // Calculate metrics from sales data
   const calculateMetrics = () => {
     if (!salesData || !salesData.sales || salesData.sales.length === 0) {
       return {
@@ -243,7 +219,6 @@ const SalesDashboard = () => {
         productMetrics: [],
         categoryMetrics: [],
         financerMetrics: [],
-        mostProfitableProducts: [],
       };
     }
 
@@ -254,13 +229,8 @@ const SalesDashboard = () => {
 
     const avgTicketSize = salesData.totalSales / totalUnits || 0;
 
-    const filteredSales = salesData.sales.filter((sale) => {
-      if (financeFilter === 'all') return true;
-      return sale.financeDetails.financeStatus === financeFilter;
-    });
-
     const productData = new Map();
-    filteredSales.forEach((item) => {
+    salesData.sales.forEach((item) => {
       const productKey = item.productname;
       if (!productData.has(productKey)) {
         productData.set(productKey, {
@@ -268,9 +238,6 @@ const SalesDashboard = () => {
           sales: 0,
           units: 0,
           profit: 0,
-          model: item.productmodel,
-          category: item.category,
-          cost: parseFloat(item.productcost),
         });
       }
       const product = productData.get(productKey);
@@ -279,52 +246,29 @@ const SalesDashboard = () => {
       product.profit += item.netprofit;
     });
 
-    const productMetrics = Array.from(productData.values());
-
-    const profitableProducts: ProfitableProduct[] = productMetrics
-      .map((product) => ({
-        ...product,
-        profitMargin: (product.profit / product.sales) * 100,
-      }))
-      .sort((a, b) => b.profitMargin - a.profitMargin);
-
     const categoryData = new Map();
-    filteredSales.forEach((item) => {
+    salesData.sales.forEach((item) => {
       const categoryKey = item.category;
       if (!categoryData.has(categoryKey)) {
         categoryData.set(categoryKey, {
           name: item.category,
           sales: 0,
-          units: 0,
-          profit: 0,
         });
       }
-      const category = categoryData.get(categoryKey);
-      category.sales += item.soldprice;
-      category.units += item.totaltransaction;
-      category.profit += item.netprofit;
+      categoryData.get(categoryKey).sales += item.soldprice;
     });
-
-    const categoryMetrics = Array.from(categoryData.values());
 
     const financerData = new Map();
-    filteredSales.forEach((item) => {
-      const financerKey = item.financeDetails.financer || 'None';
-      if (!financerData.has(financerKey)) {
-        financerData.set(financerKey, {
-          name: financerKey,
-          count: 0,
-          amount: 0,
-          sales: 0,
-        });
-      }
-      const financer = financerData.get(financerKey);
-      financer.count += 1;
-      financer.amount += item.financeDetails.financeAmount;
-      financer.sales += item.soldprice;
+    salesData.sales.forEach((item) => {
+        const financerKey = item.financeDetails.financer || 'None';
+        if (!financerData.has(financerKey)) {
+            financerData.set(financerKey, { name: financerKey, count: 0, amount: 0, sales: 0 });
+        }
+        const financer = financerData.get(financerKey);
+        financer.count += 1;
+        financer.amount += item.financeDetails.financeAmount;
+        financer.sales += item.soldprice;
     });
-
-    const financerMetrics = Array.from(financerData.values());
 
     const totalPendingFinance = salesData.sales
       .filter((sale) => sale.financeDetails.financeStatus === 'pending')
@@ -337,10 +281,9 @@ const SalesDashboard = () => {
       totalProfit: salesData.totalProfit,
       avgTicketSize,
       totalPendingFinance,
-      productMetrics,
-      categoryMetrics,
-      financerMetrics,
-      mostProfitableProducts: profitableProducts.slice(0, 5),
+      productMetrics: Array.from(productData.values()),
+      categoryMetrics: Array.from(categoryData.values()),
+      financerMetrics: Array.from(financerData.values()),
     };
   };
 
@@ -355,8 +298,6 @@ const SalesDashboard = () => {
     });
   };
 
-  const COLORS = ['#42C8B7', '#80CAEE', '#10B981', '#FFBA00', '#FF6766', '#8884d8', '#82ca9d'];
-
   const handleOpenPayCommissionModal = (sale: any) => {
     setSelectedSale(sale);
     setPayCommissionModalOpen(true);
@@ -369,8 +310,7 @@ const SalesDashboard = () => {
 
   const handleCommissionPaid = () => {
     handleClosePayCommissionModal();
-    // Refetch data after paying commission
-    setCurrentPage(1); // Reset to first page or refetch current
+    setCurrentPage(1);
   };
 
   if (loading && !salesData) {
@@ -402,51 +342,55 @@ const SalesDashboard = () => {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4 text-bodydark" />
+          <div className="flex flex-wrap items-center gap-4">
+            <DateFilter onDateChange={setDateFilter} />
+            
+            <select
+              value={reportType}
+              onChange={(e) => {
+                setReportType(e.target.value as any);
+                setSelectedId('');
+              }}
+              className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
+            >
+              <option value="all">All Sales</option>
+              <option value="category">By Category</option>
+              <option value="financer">By Financer</option>
+              <option value="user">By User</option>
+            </select>
+
+            {reportType === 'category' && (
               <select
-                value={timeFrame}
-                onChange={(e) => {
-                  setTimeFrame(e.target.value);
-                  setDate('');
-                }}
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
                 className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
               >
-                <option value="">Select Period</option>
-                <option value="day">Today</option>
-                <option value="week">Past Week</option>
-                <option value="month">Past Month</option>
-                <option value="year">Past Year</option>
+                <option value="">Select Category</option>
+                {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
               </select>
-            </div>
+            )}
 
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4 text-bodydark" />
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  setTimeFrame('');
-                }}
-                className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none"
-                placeholder="Select a date"
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <CreditCard className="w-4 h-4 text-bodydark" />
+            {reportType === 'financer' && (
               <select
-                value={financeFilter}
-                onChange={(e) => setFinanceFilter(e.target.value)}
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
                 className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
               >
-                <option value="all">All Finance</option>
-                <option value="paid">Paid</option>
-                <option value="pending">Pending</option>
+                <option value="">Select Financer</option>
+                {financers.map(fin => <option key={fin.id} value={fin.id}>{fin.name}</option>)}
               </select>
-            </div>
+            )}
+
+            {reportType === 'user' && (
+              <select
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
+                className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
+              >
+                <option value="">Select User</option>
+                {users.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
+              </select>
+            )}
           </div>
 
           <div className="bg-gray-100 dark:bg-meta-4 rounded-md px-4 py-2 text-sm">
@@ -485,116 +429,30 @@ const SalesDashboard = () => {
         />
       </div>
 
-      <div className="border-b border-stroke dark:border-strokedark mb-6">
-        <div className="flex space-x-4 overflow-x-auto">
-          <TabButton selected={activeTab === 0} onClick={() => setActiveTab(0)}>
-            Overview
-          </TabButton>
-          <TabButton selected={activeTab === 1} onClick={() => setActiveTab(1)}>
-            All Sales
-          </TabButton>
-        </div>
+      <div>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <p>Loading...</p>
+          </div>
+        ) : error ? (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-red-500">{error}</p>
+          </div>
+        ) : salesData?.sales?.length > 0 ? (
+          <SalesTable
+            sales={salesData.sales}
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            onSort={() => {}} // Sorting to be implemented if needed
+            onPayCommission={handleOpenPayCommissionModal}
+          />
+        ) : (
+          <div className="flex justify-center items-center h-64">
+            <p>No sales data found. Try adjusting the filters.</p>
+          </div>
+        )}
       </div>
-
-      {activeTab === 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          <div className="bg-white dark:bg-boxdark rounded-lg shadow-card p-6 border border-stroke dark:border-strokedark">
-            <h2 className="text-title-xs md:text-title-sm font-semibold mb-4 text-black dark:text-white">
-              Category Revenue Distribution
-            </h2>
-            <div className="h-80">
-              {loading ? (
-                <div className="flex justify-center items-center h-full">
-                  <CircularProgress />
-                </div>
-              ) : metrics.categoryMetrics.length === 0 ? (
-                <div className="flex justify-center items-center h-full text-bodydark2">
-                  No data available
-                </div>
-              ) : (
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={metrics.categoryMetrics}
-                      dataKey="sales"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      label={(entry) =>
-                        `${entry.name}: ${entry.sales.toLocaleString()}`
-                      }
-                    >
-                      {metrics.categoryMetrics.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => value.toLocaleString()} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-boxdark rounded-lg shadow-card p-6 border border-stroke dark:border-strokedark">
-            <h2 className="text-title-xs md:text-title-sm font-semibold mb-4 text-black dark:text-white">
-              Product Performance
-            </h2>
-            <div className="h-80">
-              {loading ? (
-                <div className="flex justify-center items-center h-full">
-                  <CircularProgress />
-                </div>
-              ) : metrics.productMetrics.length === 0 ? (
-                <div className="flex justify-center items-center h-full text-bodydark2">
-                  No data available
-                </div>
-              ) : (
-                <ResponsiveContainer>
-                  <BarChart data={metrics.productMetrics.slice(0, 5)}>
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => value.toLocaleString()} />
-                    <Bar dataKey="sales" name="Revenue" fill="#42C8B7" />
-                    <Bar dataKey="profit" name="Profit" fill="#10B981" />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 1 && (
-        <div>
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <p>Loading...</p>
-            </div>
-          ) : error ? (
-            <div className="flex justify-center items-center h-64">
-              <p className="text-red-500">{error}</p>
-            </div>
-          ) : salesData?.sales?.length > 0 ? (
-            <SalesTable
-              sales={salesData.sales}
-              totalPages={totalPages}
-              currentPage={currentPage}
-              onPageChange={setCurrentPage}
-              onSort={() => { }} // Sorting to be implemented if needed
-              onPayCommission={handleOpenPayCommissionModal}
-            />
-          ) : (
-            <div className="flex justify-center items-center h-64">
-              <p>No sales data found. Try adjusting the filters.</p>
-            </div>
-          )}
-        </div>
-      )}
 
       {isPayCommissionModalOpen && selectedSale && (
         <PayCommissionModal

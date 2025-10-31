@@ -503,7 +503,7 @@ const OutletView: React.FC = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'Overview': {
-        if (!currentUser && userPermissions !== 'manager') return null;
+        if (!currentUser && userPermissions !== 'manager' && userPermissions !== 'superuser') return null;
         if (!overviewData) return <CircularProgress />;
 
         return (

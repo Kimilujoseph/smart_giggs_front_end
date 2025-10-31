@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import {
   BarChart,
@@ -18,21 +19,14 @@ import SalesTable from '../../components/SalesDashboard/SalesTable';
 import { getSalesReport } from '../../api/sales_dashboard_manager';
 import DateFilter from '../../components/filters/DateFilter';
 
-interface CategorySalesReportProps {
-  categoryId: string;
-}
-
-const CategorySalesReport: React.FC<CategorySalesReportProps> = ({
-  categoryId,
-}) => {
+const CategorySales: React.FC = () => {
   const [salesData, setSalesData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [dateFilter, setDateFilter] = useState<string>('period=month');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [imeiSearch, setImeiSearch] = useState<string>('');
+  const { categoryId } = useParams();
 
   useEffect(() => {
     const fetchSalesData = async () => {
@@ -44,13 +38,6 @@ const CategorySalesReport: React.FC<CategorySalesReportProps> = ({
       try {
         const filterParams = new URLSearchParams(dateFilter);
         const filters = Object.fromEntries(filterParams.entries());
-
-        if (statusFilter) {
-          filters.status = statusFilter;
-        }
-        if (imeiSearch) {
-          filters.search = imeiSearch;
-        }
 
         const data = await getSalesReport({
           reportType: 'category',
@@ -68,7 +55,7 @@ const CategorySalesReport: React.FC<CategorySalesReportProps> = ({
     };
 
     fetchSalesData();
-  }, [categoryId, currentPage, itemsPerPage, dateFilter, statusFilter, imeiSearch]);
+  }, [categoryId, currentPage, itemsPerPage, dateFilter]);
 
   const individualSalesChartData = useMemo(() => {
     if (!salesData || !salesData.sales) return [];
@@ -100,37 +87,33 @@ const CategorySalesReport: React.FC<CategorySalesReportProps> = ({
     );
   }
 
-  const { analytics, sales, totalPages } = salesData;
-
-  const uniqueStatuses = [...new Set(sales.map((sale: any) => sale.status))];
-
   const stats = [
     {
       title: 'Total Sales',
-      value: `Ksh ${analytics.totalSales?.toLocaleString() || 0}` || '-',
+      value: `Ksh ${salesData.analytics.totalSales?.toLocaleString() || 0}`,
       icon: DollarSign,
       color: 'text-emerald-500',
     },
     {
       title: 'Total Profit',
-      value: `Ksh ${analytics.totalProfit?.toLocaleString() || 0}` || '-',
+      value: `Ksh ${salesData.analytics.totalProfit?.toLocaleString() || 0}`,
       icon: TrendingUp,
       color: 'text-blue-500',
     },
     {
       title: 'Total Commission',
       value:
-        `Ksh ${analytics.totalCommission?.toLocaleString() || 0}` || '-',
+        `Ksh ${salesData.analytics.totalCommission?.toLocaleString() || 0}`,
       icon: Award,
       color: 'text-yellow-500',
     },
     {
       title: 'Total Items Sold',
       value:
-        sales.reduce(
+        salesData.sales.reduce(
           (acc: number, sale: any) => acc + sale.totalsoldunits,
           0,
-        ) || '-',
+        ) || 0,
       icon: ShoppingCart,
       color: 'text-purple-500',
     },
@@ -140,7 +123,7 @@ const CategorySalesReport: React.FC<CategorySalesReportProps> = ({
     <>
       <Breadcrumb
         pageName={`Sales for ${
-          sales[0]?.category || 'Category'
+          salesData.sales[0]?.category || 'Category'
         }`}
       />
       <div className="mx-auto max-w-7xl py-8">
@@ -163,39 +146,6 @@ const CategorySalesReport: React.FC<CategorySalesReportProps> = ({
             </Card>
           ))}
         </div>
-
-        <Card className="mb-6 dark:bg-boxdark dark:text-bodydark">
-          <CardContent>
-            <h3 className="text-lg font-semibold mb-4">Filters</h3>
-            <div className="flex items-center space-x-4">
-              <div>
-                <label htmlFor="status-filter" className="text-sm font-medium text-black dark:text-white">Filter by Status:</label>
-                <select
-                  id="status-filter"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="ml-2 p-2 border rounded-lg dark:bg-form-input dark:border-form-strokedark"
-                >
-                  <option value="">All</option>
-                  {uniqueStatuses.map((status: string) => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="imei-search" className="text-sm font-medium text-black dark:text-white">Search IMEI:</label>
-                <input
-                  id="imei-search"
-                  type="text"
-                  value={imeiSearch}
-                  onChange={(e) => setImeiSearch(e.target.value)}
-                  placeholder="Enter IMEI..."
-                  className="ml-2 p-2 border rounded-lg dark:bg-form-input dark:border-form-strokedark"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card className="mb-6 dark:bg-boxdark dark:text-bodydark">
           <CardContent>
@@ -243,9 +193,9 @@ const CategorySalesReport: React.FC<CategorySalesReportProps> = ({
         </Card>
 
         <SalesTable
-          sales={sales}
-          totalPages={totalPages}
-          currentPage={currentPage}
+          sales={salesData.sales}
+          totalPages={salesData.totalPages}
+          currentPage={salesData.currentPage}
           onPageChange={setCurrentPage}
           onSort={() => {}}
           onPayCommission={() => {}}
@@ -256,4 +206,4 @@ const CategorySalesReport: React.FC<CategorySalesReportProps> = ({
   );
 };
 
-export default CategorySalesReport;
+export default CategorySales;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import Loader from './common/Loader';
 import PageTitle from './components/PageTitle';
 import SignIn from './pages/Authentication/SignIn';
@@ -10,7 +10,7 @@ import UsersManager from './components/users/UsersManager';
 import Settings from './pages/Settings';
 import Settings2 from './pages/Settings2';
 import UserView from './pages/UserView';
-import { AppProvider } from './context/AppContext';
+import { useAppContext } from './context/AppContext';
 import InventoryManager from './components/inventory/InventoryManage';
 import ProductView from './pages/ProductView';
 import OutletManager from './components/outlets/Outlets';
@@ -53,112 +53,74 @@ function App() {
     code: number;
     message: string;
   } | null>(null);
-  const token = localStorage.getItem('tk');
-  const user: DecodedToken | null = token ? jwt_decode(token) : null;
-  const [currentUser, setCurrentUser] = useState<DecodedToken | null>(null);
-
-  // Validate token on mount
-  const validateToken = async () => {
-    if (!token || !user) {
-      localStorage.clear();
-      navigate('/auth/signin');
-      return;
-    }
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${user.email}`,
-        { withCredentials: true },
-      );
-      if (response.status === 401) {
-        localStorage.clear();
-        navigate('/auth/signin');
-      }
-      setCurrentUser(response.data.user);
-    } catch (error: any) {
-      alert("An error occurred");
-      if (error.response?.status === 401) {
-        localStorage.clear();
-        navigate('/auth/signin');
-      }
-    }
-  };
+  const { user, setUser } = useAppContext();
 
   useEffect(() => {
-    const serverStatus = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(
-          `${import.meta.env.VITE_SERVER_HEAD}/api/status`,
-        );
-        if (response.status !== 200) {
-          throw new Error(
-            response.data.message ||
-            'Our servers are unreachable at the moment',
+    const token = localStorage.getItem('tk');
+    if (token && !user) {
+      const decoded: DecodedToken = jwt_decode(token);
+      const fetchUser = async () => {
+        try {
+          const response = await axios.get(
+            `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${decoded.email}`,
+            { withCredentials: true },
           );
+          setUser(response.data.user);
+        } catch (error) {
+          setUser(null);
+          localStorage.clear();
         }
-      } catch (error: any) {
-        setServerStatus(false);
-        setMessage({
-          code: error.response?.status || error.code || 500,
-          message:
-            error.response?.data?.message ||
-            error.message ||
-            'Our servers are unreachable at the moment',
-        });
-      }
-    };
-    serverStatus();
-    validateToken();
-    if (token && currentUser?.workingstatus.toLowerCase() === 'inactive') {
-      setMessage({
-        code: 403,
-        message:
-          'Your account has not been approved. Contact the manager for more information',
-      });
-    } else if (
-      token &&
-      currentUser?.workingstatus.toLowerCase() === 'suspended'
-    ) {
-      setMessage({
-        code: 403,
-        message:
-          'Your account has been suspended. Contact the manager for more information',
-      });
+      };
+      fetchUser();
     }
     setLoading(false);
-  }, [token, currentUser?.role, currentUser?.workingstatus, navigate]);
+  }, [user, setUser]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  useEffect(() => {
-    setTimeout(() => setLoading(false), 3000);
-  }, []);
-
-  if (!serverReachable) {
-    return <ErrorPage code={message?.code} message={message?.message} />;
-  }
-
   return (
-    <AppProvider>
+    <>
       {loading ? (
         <div className="flex justify-center items-center h-screen w-full bg-boxdark">
           <CircularProgress size={60} />
         </div>
-      ) : message ? (
-        <ErrorPage code={message.code} message={message.message} />
       ) : (
-        <>
-          <Routes>
+        <Routes>
+          <Route
+            path="/auth/signin"
+            element={
+              <>
+                <PageTitle title="Signin | smartGiggs" />
+                <SignIn />
+              </>
+            }
+          />
+          <Route
+            path="/auth/signup"
+            element={
+              <>
+                <PageTitle title="Signup | smartGiggs" />
+                <SignUp />
+              </>
+            }
+          />
+          <Route path="*" element={<ErrorPage />} />
+
+          {user ? (
             <Route element={<DefaultLayout children={undefined} />}>
               <Route
                 path="/"
                 element={
-                  <>
-                    <PageTitle title="Dashboard | smartGiggs" />
-                    <Dashboard />
-                  </>
+                  user?.role === 'seller' ? (
+                    <Navigate to="/settings" replace />
+                  ) : (
+                    <>
+                      <PageTitle title="Dashboard | smartGiggs" />
+                      <Dashboard />
+                    </>
+                  )
                 }
               />
 
@@ -371,29 +333,12 @@ function App() {
                 }
               />
             </Route>
-            <Route
-              path="/auth/signin"
-              element={
-                <>
-                  <PageTitle title="Signin | smartGiggs" />
-                  <SignIn />
-                </>
-              }
-            />
-            <Route
-              path="/auth/signup"
-              element={
-                <>
-                  <PageTitle title="Signup | smartGiggs" />
-                  <SignUp />
-                </>
-              }
-            />
-            <Route path="*" element={<ErrorPage />} />
-          </Routes>
-        </>
+          ) : (
+            <Route path="*" element={<Navigate to="/auth/signin" replace />} />
+          )}
+        </Routes>
       )}
-    </AppProvider>
+    </>
   );
 }
 

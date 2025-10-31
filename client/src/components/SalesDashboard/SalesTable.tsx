@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CSVLink } from 'react-csv';
 import * as XLSX from 'xlsx';
@@ -45,6 +44,7 @@ interface SalesTableProps {
   onPageChange: (page: number) => void;
   onSort: (field: keyof Sale) => void;
   onPayCommission: (sale: Sale) => void;
+  showActions?: boolean;
 }
 
 const ExportButtons: React.FC<{ data: Sale[] }> = ({ data }) => {
@@ -81,6 +81,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
   onPageChange,
   onSort,
   onPayCommission,
+  showActions = true,
 }) => {
   return (
     <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -94,61 +95,63 @@ const SalesTable: React.FC<SalesTableProps> = ({
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-gray-2 text-left dark:bg-meta-4">
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Product Name</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Model</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Category</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Storage</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Cost</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Sold Price</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Net Profit</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Commission</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Commission Paid</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Payment Amount</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Transaction ID</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Payment Method</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Payment Status</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Financer</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Finance Status</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">IMEI/Batch</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Seller</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Shop</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Status</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Date</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white">Actions</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Product Name</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Model</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Category</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Storage</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Cost</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Sold Price</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Gross Profit</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Commission</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Net Profit</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Commission Paid</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Payment Amount</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Transaction ID</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Payment Method</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Payment Status</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Financer</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Finance Status</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">IMEI/Batch</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Seller</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Shop</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Status</th>
+              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Date</th>
+              {showActions && <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Actions</th>}
             </tr>
           </thead>
           <tbody>
             {sales.map((sale, index) => (
-              <tr key={index}>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.productname}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.productmodel}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.category}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.storage}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">Ksh {sale.productcost.toLocaleString()}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">Ksh {sale.soldprice.toLocaleString()}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">Ksh {sale.netprofit.toLocaleString()}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">Ksh {sale.commission.toLocaleString()}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.commissionpaid > 0 ? `${sale.commissionpaid.toLocaleString()}` : 'No'}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">Ksh {parseFloat(sale.paymentDetails.amount).toLocaleString()}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.paymentDetails.transactionId}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.paymentDetails.paymentMethod}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.paymentstatus}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.financeDetails?.financer}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.financeDetails?.financeStatus}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.IMEI || sale.batchNumber}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+              <tr key={index} className="hover:bg-gray-2 dark:hover:bg-meta-4">
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.productname}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.productmodel}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.category}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.storage}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {sale.productcost.toLocaleString()}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {sale.soldprice.toLocaleString()}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {sale.netprofit.toLocaleString()}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {sale.commission.toLocaleString()}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {(sale.netprofit - sale.commission).toLocaleString()}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.commissionpaid > 0 ? `${sale.commissionpaid.toLocaleString()}` : 'No'}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {parseFloat(sale.paymentDetails.amount).toLocaleString()}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.paymentDetails.transactionId}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.paymentDetails.paymentMethod}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.paymentstatus}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.financeDetails?.financer}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.financeDetails?.financeStatus}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.IMEI || sale.batchNumber}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">
                   <Link to={`/user/sales?name=${sale.sellername}`} className="text-primary hover:underline">
                     {sale.sellername}
                   </Link>
                 </td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">
                   <Link to={`/shop/sales?name=${sale.shopname}`} className="text-primary hover:underline">
                     {sale.shopname}
                   </Link>
                 </td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{sale.status}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">{new Date(sale.createdAt).toLocaleDateString()}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.status}</td>
+                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{new Date(sale.createdAt).toLocaleDateString()}</td>
+                {showActions && <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">
                   <button 
                     onClick={() => onPayCommission(sale)}
                     className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-4 text-center font-medium text-white hover:bg-opacity-90"
@@ -156,7 +159,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
                   >
                     Pay Commission
                   </button>
-                </td>
+                </td>}
               </tr>
             ))}
           </tbody>

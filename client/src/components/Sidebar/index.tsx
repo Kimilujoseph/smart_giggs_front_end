@@ -24,11 +24,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
   const version = 'v1.0.0';
   const [userRole, setUserRole] = useState<string>('');
+  const [user, setUser] = useState<DecodedToken | null>(null);
 
   useEffect(() => {
     const tokenObj = localStorage.getItem('tk');
     if (tokenObj) {
       const decoded = jwt_decode(tokenObj) as DecodedToken;
+      setUser(decoded);
       if (
         decoded.role === 'superuser' ||
         decoded.role === 'manager' ||
@@ -467,7 +469,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         </li>
                         <li>
                           <NavLink
-                            to="/user/sales"
+                            to={`/user/sales?userId=${user?.id}`}
                             className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('user/sales') &&
                               'bg-meta-2 dark:bg-meta-4'
                               }`}

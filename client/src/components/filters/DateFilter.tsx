@@ -18,12 +18,14 @@ const DateFilter: React.FC<{ onDateChange: (params: string) => void; }> = ({ onD
     };
   
     return (
-      <div className="flex flex-wrap items-center gap-4 rounded-lg bg-white p-4 dark:bg-boxdark-2">
-        {['week', 'month', 'year'].map(p => (
-          <button key={p} onClick={() => handlePeriodChange(p)} className={`rounded-md px-4 py-2 text-base ${activePeriod === p ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-meta-4'}`}>
-            This {p.charAt(0).toUpperCase() + p.slice(1)}
-          </button>
-        ))}
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-center gap-4 rounded-lg bg-white p-4 dark:bg-boxdark-2">
+        <div className="flex flex-wrap gap-4">
+          {['week', 'month', 'year'].map(p => (
+            <button key={p} onClick={() => handlePeriodChange(p)} className={`rounded-md px-4 py-2 text-base ${activePeriod === p ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-meta-4'}`}>
+              This {p.charAt(0).toUpperCase() + p.slice(1)}
+            </button>
+          ))}
+        </div>
         <div className="flex items-center gap-3">
           <input type="date" onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))} className="rounded-md border-gray-300 bg-white p-2 text-base dark:border-gray-600 dark:bg-meta-4" />
           <span className="text-base">to</span>

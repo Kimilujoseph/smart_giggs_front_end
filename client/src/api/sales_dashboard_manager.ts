@@ -1,33 +1,35 @@
 import axios from 'axios';
 
 export interface SalesReportParams {
-  period?: 'day' | 'week' | 'month' | 'year';
-  date?: string;
-  startDate?: string; // YYYY-MM-DD
-  financer?: string;
-  shop?: string;
-  category?: string;
-  paymentStatus?: 'paid' | 'pending';
-  returnStatus?: 'returned' | 'partially returned';
-  productName?: string;
-  sellerName?: string;
-  shopName?: string;
-  imeiOrBatch?: string;
   page?: number;
   limit?: number;
+  period?: 'day' | 'week' | 'month' | 'year';
+  date?: string;
+  startDate?: string;
+  endDate?: string;
+  reportType?: 'all' | 'user' | 'financer' | 'category' | 'shop';
+  id?: string;
+  filters?: { [key: string]: any };
 }
 
 export const getSalesReport = async (params: SalesReportParams) => {
-  const response = await axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/sales/report`, {
-    params,
+  const { reportType, id, filters, ...queryParams } = params;
+  let url = `${import.meta.env.VITE_SERVER_HEAD}/api/sales/report`;
+
+  if (reportType && reportType !== 'all' && id) {
+    url += `/${reportType}/${id}`;
+  }
+
+  const response = await axios.get(url, {
+    params: { ...queryParams, ...filters },
     withCredentials: true,
     headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Pragma: 'no-cache',
-      Expires: '0',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      'Expires': '0',
     },
   });
-  //console.log('salesdata received @@@@@', response);
+
   if (response.status !== 200) {
     throw new Error('Failed to fetch sales report');
   }
