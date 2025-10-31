@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CommissionPayment } from '../../types/commission';
 import { CircularProgress } from '@mui/material';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 interface CommissionsTableProps {
   commissions: CommissionPayment[];
@@ -9,10 +9,94 @@ interface CommissionsTableProps {
   onVoid: (commissionId: number) => void;
 }
 
+const SalesModal: React.FC<{ sales: any; onClose: () => void }> = ({ sales, onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-boxdark rounded-lg shadow-lg p-6 w-full max-w-6xl">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Sales Details</h2>
+          <button onClick={onClose}><X /></button>
+        </div>
+        <div className="mb-6">
+          <h3 className="text-xl font-semibold mb-2">Mobile Sales</h3>
+          {sales.mobileSales.length > 0 ? (
+            <table className="w-full table-auto">
+              <thead>
+                <tr className="bg-gray-2 text-left dark:bg-meta-4">
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Item Name</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">IMEI</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Sold Price</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Profit</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Commission</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sales.mobileSales.map((sale: any) => (
+                  <tr key={sale.id}>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.itemName}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.IMEI}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.soldPrice}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.profit}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.commission}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{new Date(sale.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No mobile sales for this commission.</p>
+          )}
+        </div>
+        <div>
+          <h3 className="text-xl font-semibold mb-2">Accessory Sales</h3>
+          {sales.accessorySales.length > 0 ? (
+            <table className="w-full table-auto">
+              <thead>
+                <tr className="bg-gray-2 text-left dark:bg-meta-4">
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Item Name</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Color</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Quantity</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Sold Price</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Profit</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Commission</th>
+                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sales.accessorySales.map((sale: any) => (
+                  <tr key={sale.id}>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.itemName}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.color}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.quantity}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.soldPrice}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.profit}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.commission}</td>
+                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{new Date(sale.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No accessory sales for this commission.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CommissionsTable: React.FC<CommissionsTableProps> = ({ commissions, loading, onVoid }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSales, setSelectedSales] = useState<any>(null);
+
+  const handleViewSales = (sales: any) => {
+    setSelectedSales(sales);
+    setIsModalOpen(true);
+  };
 
   const filteredCommissions = commissions.filter(
     (commission) =>
@@ -114,6 +198,7 @@ const CommissionsTable: React.FC<CommissionsTableProps> = ({ commissions, loadin
                       </span>
                     </td>
                     <td className="border-b border-[#eee] py-3 px-6 dark:border-strokedark">
+                      <button onClick={() => handleViewSales(commission.sales)} className="text-primary mr-2">View Sales</button>
                       {commission.status !== 'VOIDED' && (
                         <button onClick={() => onVoid(commission.id)} className="text-danger">Void</button>
                       )}
@@ -166,6 +251,8 @@ const CommissionsTable: React.FC<CommissionsTableProps> = ({ commissions, loadin
           </div>
         </div>
       )}
+
+      {isModalOpen && <SalesModal sales={selectedSales} onClose={() => setIsModalOpen(false)} />}
     </div>
   );
 };

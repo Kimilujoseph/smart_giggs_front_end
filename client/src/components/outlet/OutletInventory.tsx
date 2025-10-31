@@ -28,11 +28,11 @@ import {
   Eye,
 } from 'lucide-react';
 import Message from '../alerts/Message';
-// import { getUsers } from '../../api/user_manager';
+// import { getAllUsers } from '../../api/user_manager';
 import ModalAlert from '../alerts/Alert';
 import Breadcrumb from '../Breadcrumbs/Breadcrumb';
 import ClickOutside from '../ClickOutside';
-import { getUsers } from '../../api/user_manager';
+import { getAllUsers } from '../../api/user_manager';
 import ProductTransfer from '../inventory/ProductTransfer';
 
 // interface Notification {
@@ -149,7 +149,7 @@ const OutletInventoryView: React.FC = () => {
     }
     const fetchUsers = async () => {
       try {
-        const user_res = await getUsers();
+        const user_res = await getAllUsers();
         if (user_res?.data) {
           setUsers(user_res?.data);
         }

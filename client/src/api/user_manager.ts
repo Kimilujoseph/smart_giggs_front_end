@@ -1,6 +1,6 @@
 import axios from "axios"
 
-export const getUsers = async () => {
+export const getAllUsers = async () => {
     try {
         const res = await axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/user/all`, { withCredentials: true })
         if (res && res.status === 200) {

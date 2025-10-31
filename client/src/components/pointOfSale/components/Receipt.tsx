@@ -13,7 +13,7 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
 
   // Calculate totals
   const total = saleResponse.reduce(
-    (acc, sale) => acc + sale.soldPrice * sale.quantity,
+    (acc, sale) => acc + sale.soldPrice,
     0,
   );
 
@@ -67,10 +67,10 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
                     <td className="py-2 text-left">{sale.productName}</td>
                     <td className="py-2 text-center">{sale.quantity}</td>
                     <td className="py-2 text-right">
-                      {sale.soldPrice.toLocaleString()}
+                      {(sale.soldPrice / sale.quantity).toLocaleString()}
                     </td>
                     <td className="py-2 text-right">
-                      {(sale.soldPrice * sale.quantity).toLocaleString()}
+                      {sale.soldPrice.toLocaleString()}
                     </td>
                   </tr>
                 ))}
@@ -84,10 +84,7 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
               <span>Total:</span>
               <span>
                 KES{' '}
-                {total.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {+total}
               </span>
             </div>
           </div>

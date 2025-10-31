@@ -281,40 +281,44 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             {sidebarExpanded && 'Financers'}
                           </NavLink>
                         </li>
-                        <li>
-                          <NavLink
-                            to="/commissions"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('commissions') &&
-                              'bg-meta-2 dark:bg-meta-4'
-                              }`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-percentage" width="18" height="18" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                              <path d="M17 4l-10 16" />
-                              <path d="M7 4m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                              <path d="M17 16m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-                            </svg>
-                            {sidebarExpanded && 'Commissions'}
-                          </NavLink>
-                        </li>
-                        <li>
-                          <NavLink
-                            to="/salaries"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('salaries') &&
-                              'bg-meta-2 dark:bg-meta-4'
-                              }`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                              <path d="M12 7h.01" />
-                              <path d="M12 12h.01" />
-                              <path d="M12 17h.01" />
-                            </svg>
-                            {sidebarExpanded && 'Salaries'}
-                          </NavLink>
-                        </li>
+                        {userRole === 'superuser' && (
+                          <>
+                            <li>
+                              <NavLink
+                                to="/commissions"
+                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('commissions') &&
+                                  'bg-meta-2 dark:bg-meta-4'
+                                  }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-percentage" width="18" height="18" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M17 4l-10 16" />
+                                  <path d="M7 4m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                  <path d="M17 16m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                </svg>
+                                {sidebarExpanded && 'Commissions'}
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink
+                                to="/salaries"
+                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('salaries') &&
+                                  'bg-meta-2 dark:bg-meta-4'
+                                  }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                  <path d="M12 7h.01" />
+                                  <path d="M12 12h.01" />
+                                  <path d="M12 17h.01" />
+                                </svg>
+                                {sidebarExpanded && 'Salaries'}
+                              </NavLink>
+                            </li>
+                          </>
+                        )}
                         <li>
                           <NavLink
                             to="/suppliers"
@@ -331,6 +335,71 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             {sidebarExpanded && 'Suppliers'}
                           </NavLink>
                         </li>
+                        {(userRole === 'manager') && (
+                          <>
+                            <li>
+                              <NavLink
+                                to="/my-commissions"
+                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('my-commissions') &&
+                                  'bg-meta-2 dark:bg-meta-4'
+                                  }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-percentage" width="18" height="18" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M17 4l-10 16" />
+                                  <path d="M7 4m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                  <path d="M17 16m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                </svg>
+                                {sidebarExpanded && 'My Commissions'}
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink
+                                to="/my-salary"
+                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('my-salary') &&
+                                  'bg-meta-2 dark:bg-meta-4'
+                                  }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                  <path d="M12 7h.01" />
+                                  <path d="M12 12h.01" />
+                                  <path d="M12 17h.01" />
+                                </svg>
+                                {sidebarExpanded && 'My Salary'}
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink
+                                to="/user/sales"
+                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('user/sales') &&
+                                  'bg-meta-2 dark:bg-meta-4'
+                                  }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <svg
+                                  className="fill-current"
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 22 22"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M3 15l6-6 4 6 8-8"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                                {sidebarExpanded && 'My Sales'}
+                              </NavLink>
+                            </li>
+                          </>
+                        )}
                       </>
                     )}
 
@@ -398,8 +467,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         </li>
                         <li>
                           <NavLink
-                            to="/outlet/sales"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('/outlet/sales') &&
+                            to="/user/sales"
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('user/sales') &&
                               'bg-meta-2 dark:bg-meta-4'
                               }`}
                             onClick={() => setSidebarOpen(false)}
@@ -420,7 +489,41 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                 strokeLinejoin="round"
                               />
                             </svg>
-                            {sidebarExpanded && 'Sales'}
+                            {sidebarExpanded && 'My Sales'}
+                          </NavLink>
+                        </li>
+                        <li>
+                          <NavLink
+                            to="/my-commissions"
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('my-commissions') &&
+                              'bg-meta-2 dark:bg-meta-4'
+                              }`}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-percentage" width="18" height="18" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <path d="M17 4l-10 16" />
+                              <path d="M7 4m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                              <path d="M17 16m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                            </svg>
+                            {sidebarExpanded && 'My Commissions'}
+                          </NavLink>
+                        </li>
+                        <li>
+                          <NavLink
+                            to="/my-salary"
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('my-salary') &&
+                              'bg-meta-2 dark:bg-meta-4'
+                              }`}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                              <path d="M12 7h.01" />
+                              <path d="M12 12h.01" />
+                              <path d="M12 17h.01" />
+                            </svg>
+                            {sidebarExpanded && 'My Salary'}
                           </NavLink>
                         </li>
                         <li>

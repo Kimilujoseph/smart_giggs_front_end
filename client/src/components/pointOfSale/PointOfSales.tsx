@@ -355,7 +355,10 @@ const PointOfSales: React.FC = () => {
         const items = product.items.map((item: any) => ({
           productId: item.stock.productId,
           itemId: item.stock.id,
-          soldprice: soldprice[product.categoryId.id],
+          soldprice:
+            product.categoryId.itemType === 'accessories'
+              ? (soldprice[product.categoryId.id] || 0) * item.quantity
+              : soldprice[product.categoryId.id],
           soldUnits:
             product.categoryId.itemType === 'accessories' ? item.quantity : 1,
           financeAmount:
@@ -908,167 +911,171 @@ const PointOfSales: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                    {groupedCart.map((product: any) => (
-                      <React.Fragment key={product.categoryId.id}>
-                        <div
-                          className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between"
-                        >
-                          <div className="flex-grow">
-                            <h3 className="font-semibold text-black dark:text-slate-200">
-                              {product.categoryId.itemName}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-slate-400">
-                              {product.categoryId.brand} -{' '}
-                              {product.categoryId.itemModel}
-                            </p>
-                            <div className="flex items-center mt-2 space-x-3">
-                              {product.categoryId.itemType === 'mobiles' ? (
-                                <span className="text-black dark:text-slate-200">
-                                  {product.items.length}
-                                </span>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() =>
-                                      updateQuantity(
-                                        product.categoryId.id,
-                                        Number(
-                                          cart.find(
-                                            (item: any) =>
-                                              item.category.id ===
-                                              product.categoryId.id,
-                                          )?.quantity,
-                                        ) - 1,
-                                      )
-                                    }
-                                    className="p-1 rounded-full hover:bg-bodydark2 dark:hover:bg-boxdark-2"
-                                  >
-                                    <ChevronDown className="h-4 w-4 text-black dark:text-red-400" />
-                                  </button>
+                    {groupedCart.map((product: any) => {
+                      const isAccessory = product.categoryId.itemType === 'accessories';
+                      const quantity = isAccessory ? product.quantity : product.items.length;
+                      const perItemPrice = soldprice?.[product.categoryId.id] || 0;
+                      const minItemPrice = product.categoryId.minPrice;
+
+                      return (
+                        <React.Fragment key={product.categoryId.id}>
+                          <div
+                            className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between"
+                          >
+                            <div className="flex-grow">
+                              <h3 className="font-semibold text-black dark:text-slate-200">
+                                {product.categoryId.itemName}
+                              </h3>
+                              <p className="text-sm text-gray-600 dark:text-slate-400">
+                                {product.categoryId.brand} -{' '}
+                                {product.categoryId.itemModel}
+                              </p>
+                              <div className="flex items-center mt-2 space-x-3">
+                                {product.categoryId.itemType === 'mobiles' ? (
                                   <span className="text-black dark:text-slate-200">
-                                    {
-                                      cart.find(
-                                        (item: CartItem) =>
-                                          item.category.id ===
-                                          product.categoryId.id,
-                                      )?.quantity
-                                    }
+                                    {product.items.length}
                                   </span>
-                                  <button
-                                    onClick={() => {
-                                      updateQuantity(
-                                        product.categoryId.id,
-                                        Number(
-                                          cart.find(
-                                            (item: any) =>
-                                              item.category.id ===
-                                              product.categoryId.id,
-                                          )?.quantity,
-                                        ) + 1,
-                                      );
-                                    }}
-                                    className="p-1 rounded-full hover:bg-bodydark2 dark:hover:bg-boxdark-2"
-                                  >
-                                    <ChevronUp className="h-4 w-4 text-black dark:text-green-400" />
-                                  </button>
-                                </div>
-                              )}
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() =>
+                                        updateQuantity(
+                                          product.categoryId.id,
+                                          Number(
+                                            cart.find(
+                                              (item: any) =>
+                                                item.category.id ===
+                                                product.categoryId.id,
+                                            )?.quantity,
+                                          ) - 1,
+                                        )
+                                      }
+                                      className="p-1 rounded-full hover:bg-bodydark2 dark:hover:bg-boxdark-2"
+                                    >
+                                      <ChevronDown className="h-4 w-4 text-black dark:text-red-400" />
+                                    </button>
+                                    <span className="text-black dark:text-slate-200">
+                                      {
+                                        cart.find(
+                                          (item: CartItem) =>
+                                            item.category.id ===
+                                            product.categoryId.id,
+                                        )?.quantity
+                                      }
+                                    </span>
+                                    <button
+                                      onClick={() => {
+                                        updateQuantity(
+                                          product.categoryId.id,
+                                          Number(
+                                            cart.find(
+                                              (item: any) =>
+                                                item.category.id ===
+                                                product.categoryId.id,
+                                            )?.quantity,
+                                          ) + 1,
+                                        );
+                                      }}
+                                      className="p-1 rounded-full hover:bg-bodydark2 dark:hover:bg-boxdark-2"
+                                    >
+                                      <ChevronUp className="h-4 w-4 text-black dark:text-green-400" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-col justify-between h-full items-end gap-2">
+                              <button
+                                onClick={() =>
+                                  removeFromCart(product.categoryId.id)
+                                }
+                                className="text-red-500 hover:text-red-600"
+                              >
+                                <X className="h-5 w-5" />
+                              </button>
+                              <input
+                                type="number"
+                                min={isAccessory ? minItemPrice * quantity : minItemPrice}
+                                max={isAccessory ? undefined : product.categoryId.maxPrice}
+                                value={isAccessory && quantity > 0 ? perItemPrice * quantity : perItemPrice}
+                                onChange={(e) => {
+                                  const newPrice = Number(e.target.value);
+                                  setSoldPrice({
+                                    ...soldprice,
+                                    [product.categoryId.id]: isAccessory && quantity > 0 ? newPrice / quantity : newPrice,
+                                  });
+                                }}
+                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
+                              />
+                              {isAccessory ? 'Total Price' : 'per Item'}
                             </div>
                           </div>
-                          <div className="flex flex-col justify-between h-full items-end gap-2">
-                            <button
-                              onClick={() =>
-                                removeFromCart(product.categoryId.id)
-                              }
-                              className="text-red-500 hover:text-red-600"
-                            >
-                              <X className="h-5 w-5" />
-                            </button>
-                            <input
-                              type="number"
-                              min={product.categoryId.minPrice}
-                              max={product.categoryId.maxPrice}
-                              value={soldprice?.[product.categoryId.id] || 0}
-                              onChange={(e) => {
-                                setSoldPrice({
-                                  ...soldprice,
-                                  [product.categoryId.id]: Number(
-                                    e.target.value,
-                                  ),
-                                });
-                              }}
-                              className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                            />
-                            {'per Item'}
+                          <div className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-4">
+                              <input
+                                type="number"
+                                placeholder="Finance Amount"
+                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
+                                value={financeDetails[product.categoryId.id]?.amount || ''}
+                                onChange={(e) => setFinanceDetails({
+                                  ...financeDetails,
+                                  [product.categoryId.id]: {
+                                    ...financeDetails[product.categoryId.id],
+                                    amount: Number(e.target.value)
+                                  }
+                                })}
+                              />
+                              <select
+                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
+                                value={financeDetails[product.categoryId.id]?.status || 'paid'}
+                                onChange={(e) => setFinanceDetails({
+                                  ...financeDetails,
+                                  [product.categoryId.id]: {
+                                    ...financeDetails[product.categoryId.id],
+                                    status: e.target.value
+                                  }
+                                })}
+                              >
+                                <option value="paid">Paid</option>
+                                <option value="pending">Pending</option>
+                              </select>
+                              <select
+                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
+                                value={financeDetails[product.categoryId.id]?.financerId || ''}
+                                onChange={(e) => setFinanceDetails({
+                                  ...financeDetails,
+                                  [product.categoryId.id]: {
+                                    ...financeDetails[product.categoryId.id],
+                                    financerId: e.target.value
+                                  }
+                                })}
+                              >
+                                <option value="">Select Financer</option>
+                                {financers.map((financer) => (
+                                  <option key={financer.id} value={financer.id}>
+                                    {financer.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                           </div>
-                        </div>
-                        <div className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-4">
-                            <input
-                              type="number"
-                              placeholder="Finance Amount"
-                              className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                              value={financeDetails[product.categoryId.id]?.amount || ''}
-                              onChange={(e) => setFinanceDetails({
-                                ...financeDetails,
-                                [product.categoryId.id]: {
-                                  ...financeDetails[product.categoryId.id],
-                                  amount: Number(e.target.value)
-                                }
-                              })}
-                            />
-                            <select
-                              className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                              value={financeDetails[product.categoryId.id]?.status || 'paid'}
-                              onChange={(e) => setFinanceDetails({
-                                ...financeDetails,
-                                [product.categoryId.id]: {
-                                  ...financeDetails[product.categoryId.id],
-                                  status: e.target.value
-                                }
-                              })}
-                            >
-                              <option value="paid">Paid</option>
-                              <option value="pending">Pending</option>
-                            </select>
-                            <select
-                              className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                              value={financeDetails[product.categoryId.id]?.financerId || ''}
-                              onChange={(e) => setFinanceDetails({
-                                ...financeDetails,
-                                [product.categoryId.id]: {
-                                  ...financeDetails[product.categoryId.id],
-                                  financerId: e.target.value
-                                }
-                              })}
-                            >
-                              <option value="">Select Financer</option>
-                              {financers.map((financer) => (
-                                <option key={financer.id} value={financer.id}>
-                                  {financer.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                        {(soldprice?.[product.categoryId.id] ?? 0) >
-                          product.categoryId.maxPrice && (
+                          {!isAccessory && (perItemPrice > product.categoryId.maxPrice) && (
                             <>
                               <span className="text-xs text-red-400 font-bold animate-pulse">{`Max Price should be ${formatPrice(
                                 product.categoryId.maxPrice,
                               )}`}</span>
                             </>
                           )}
-                        {(soldprice?.[product.categoryId.id] ?? 0) <
-                          product.categoryId.minPrice && (
+                          {perItemPrice < minItemPrice && (
                             <>
                               <span className="text-xs text-red-400 font-bold animate-pulse">{`Min Price should be ${formatPrice(
-                                product.categoryId.minPrice,
+                                minItemPrice,
                               )}`}</span>
                             </>
                           )}
-                      </React.Fragment>
-                    ))}
+                        </React.Fragment>
+                      )}
+                    )}
                   </div>
                 )}
 

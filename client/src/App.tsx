@@ -350,6 +350,26 @@ function App() {
                   </>
                 }
               />
+
+              <Route
+                path="/my-commissions"
+                element={
+                  <>
+                    <PageTitle title="My Commissions | smartGiggs" />
+                    <CommissionManager />
+                  </>
+                }
+              />
+
+              <Route
+                path="/my-salary"
+                element={
+                  <>
+                    <PageTitle title="My Salary | smartGiggs" />
+                    <SalaryManager />
+                  </>
+                }
+              />
             </Route>
             <Route
               path="/auth/signin"

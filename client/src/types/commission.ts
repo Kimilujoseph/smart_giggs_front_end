@@ -17,4 +17,8 @@ export interface CommissionPayment {
         name: string;
         email: string;
     };
+    sales: {
+        mobileSales: any[];
+        accessorySales: any[];
+    };
 }

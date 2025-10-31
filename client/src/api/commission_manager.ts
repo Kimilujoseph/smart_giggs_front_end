@@ -1,8 +1,8 @@
 import axios from "axios";
 
-export const getCommissions = async (page: number, limit: number) => {
+export const getCommissions = async (params: string, page: number, limit: number) => {
     try {
-        const res = await axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/commissions/?page=${page}&limit=${limit}`, { withCredentials: true });
+        const res = await axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/commissions/?${params}&page=${page}&limit=${limit}`, { withCredentials: true });
         if (res && res.status === 200) {
             return { data: res.data.data, code: 1, error: false };
         }

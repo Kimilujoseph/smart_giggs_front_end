@@ -3,7 +3,7 @@ import { Package } from '../../types/package';
 import axios from 'axios';
 import ActionDropdown from './ActionDropdown';
 import { CircularProgress } from '@mui/material';
-import { getUsers } from '../../api/user_manager';
+import { getAllUsers } from '../../api/user_manager';
 import { useNavigate } from 'react-router-dom';
 import capitalizeFirstLetter from '../../common/Loader/TitleCase';
 import Message from '../alerts/Message';
@@ -46,7 +46,7 @@ const UserTable: React.FC<UserTableProps> = ({ onPaySalary }) => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const user_res = await getUsers();
+        const user_res = await getAllUsers();
         if (user_res?.data) {
           setPackageData(user_res?.data);
         }
@@ -88,7 +88,7 @@ const UserTable: React.FC<UserTableProps> = ({ onPaySalary }) => {
       if (res?.status === 200) {
         setMessage({ text: res.data.message || 'Success', type: 'success' });
         setResMessage(true);
-        const res2 = await getUsers();
+        const res2 = await getAllUsers();
         setPackageData(res2?.data);
       }
     } catch (error) {
@@ -112,7 +112,7 @@ const UserTable: React.FC<UserTableProps> = ({ onPaySalary }) => {
       if (res?.status === 200) {
         setMessage({ text: res.data.message || 'Success', type: 'success' });
         setResMessage(true);
-        const res2 = await getUsers();
+        const res2 = await getAllUsers();
         setPackageData(res2?.data);
       }
     } catch (error) {

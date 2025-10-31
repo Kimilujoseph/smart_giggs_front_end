@@ -39,7 +39,7 @@ import Message from '../components/alerts/Message';
 import ModalAlert from '../components/alerts/Alert';
 import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
 import ClickOutside from '../components/ClickOutside';
-import { getUsers } from '../api/user_manager';
+import { getAllUsers } from '../api/user_manager';
 
 const OutletView: React.FC = () => {
   const [shop, setShop] = useState<Shop | null>(null);
@@ -193,7 +193,7 @@ const OutletView: React.FC = () => {
     }
     const fetchUsers = async () => {
       try {
-        const user_res = await getUsers();
+        const user_res = await getAllUsers();
         if (user_res?.data) {
           setUsers(user_res?.data);
         }

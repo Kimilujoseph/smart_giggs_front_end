@@ -3,7 +3,7 @@ import { Package } from '../../types/package';
 import Breadcrumb from '../Breadcrumbs/Breadcrumb';
 import { useEffect, useState } from 'react';
 import UserTable from './UserTable';
-import { getUsers } from '../../api/user_manager';
+import { getAllUsers } from '../../api/user_manager';
 import axios from 'axios';
 import Message from '../alerts/Message';
 
