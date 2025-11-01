@@ -106,7 +106,6 @@ function App() {
               </>
             }
           />
-          <Route path="*" element={<ErrorPage />} />
 
           {user ? (
             <Route element={<DefaultLayout children={undefined} />}>
@@ -334,8 +333,9 @@ function App() {
               />
             </Route>
           ) : (
-            <Route path="*" element={<Navigate to="/auth/signin" replace />} />
+            <Route path="/*" element={<Navigate to="/auth/signin" replace />} />
           )}
+          <Route path="*" element={<ErrorPage />} />
         </Routes>
       )}
     </>
