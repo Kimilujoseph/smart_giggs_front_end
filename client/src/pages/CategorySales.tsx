@@ -126,7 +126,7 @@ const CategorySales: React.FC = () => {
           salesData.sales[0]?.category || 'Category'
         }`}
       />
-      <div className="mx-auto max-w-7xl py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         <DateFilter onDateChange={setDateFilter} />
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-6">

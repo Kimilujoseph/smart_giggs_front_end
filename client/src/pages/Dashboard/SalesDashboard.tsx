@@ -342,16 +342,18 @@ const SalesDashboard = () => {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <DateFilter onDateChange={setDateFilter} />
-            
+          <div className="flex w-full flex-col items-center gap-4 sm:flex-row sm:flex-wrap md:w-auto">
+            <div className="w-full sm:w-auto">
+              <DateFilter onDateChange={setDateFilter} />
+            </div>
+
             <select
               value={reportType}
               onChange={(e) => {
                 setReportType(e.target.value as any);
                 setSelectedId('');
               }}
-              className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
+              className="w-full appearance-none border-stroke bg-transparent px-4 py-2 text-black outline-none focus:border-primary focus:ring-primary dark:border-strokedark dark:bg-boxdark dark:text-white sm:w-auto"
             >
               <option value="all">All Sales</option>
               <option value="category">By Category</option>
@@ -359,41 +361,40 @@ const SalesDashboard = () => {
               <option value="user">By User</option>
             </select>
 
-            {reportType === 'category' && (
+            {reportType !== 'all' && (
               <select
                 value={selectedId}
                 onChange={(e) => setSelectedId(e.target.value)}
-                className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
+                className="w-full appearance-none border-stroke bg-transparent px-4 py-2 text-black outline-none focus:border-primary focus:ring-primary dark:border-strokedark dark:bg-boxdark dark:text-white sm:w-auto"
               >
-                <option value="">Select Category</option>
-                {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-              </select>
-            )}
-
-            {reportType === 'financer' && (
-              <select
-                value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-                className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
-              >
-                <option value="">Select Financer</option>
-                {financers.map(fin => <option key={fin.id} value={fin.id}>{fin.name}</option>)}
-              </select>
-            )}
-
-            {reportType === 'user' && (
-              <select
-                value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-                className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
-              >
-                <option value="">Select User</option>
-                {users.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
+                <option value="">
+                  {reportType === 'category' && 'Select Category'}
+                  {reportType === 'financer' && 'Select Financer'}
+                  {reportType === 'user' && 'Select User'}
+                </option>
+                {reportType === 'category' &&
+                  categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                {reportType === 'financer' &&
+                  financers.map((fin) => (
+                    <option key={fin.id} value={fin.id}>
+                      {fin.name}
+                    </option>
+                  ))}
+                {reportType === 'user' &&
+                  users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
               </select>
             )}
           </div>
 
-          <div className="bg-gray-100 dark:bg-meta-4 rounded-md px-4 py-2 text-sm">
+          <div className="rounded-md bg-gray-100 px-4 py-2 text-sm dark:bg-meta-4">
             <span className="font-medium">Last Updated:</span>{' '}
             {salesData ? formatDate(new Date().toISOString()) : 'N/A'}
           </div>

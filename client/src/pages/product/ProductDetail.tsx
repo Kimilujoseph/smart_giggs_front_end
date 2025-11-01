@@ -906,14 +906,17 @@ const ProductDetail = ({
                             </tr>
                             {product.itemType === 'accessories' &&
                               openHistories[item.id] && (
-                                <tr className="bg-gray-50 dark:bg-boxdark-2">
+                                <tr
+                                  key={`${item.id}-history`}
+                                  className="bg-gray-50 dark:bg-boxdark-2"
+                                >
                                   <td colSpan={9}>
                                     <div className="p-4">
                                       <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-white">
                                         Distribution History
                                       </h4>
                                       {item.accessoryItems &&
-                                        item.accessoryItems.length > 0 ? (
+                                      item.accessoryItems.length > 0 ? (
                                         <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                                           {item.accessoryItems.map(
                                             (

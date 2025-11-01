@@ -764,7 +764,7 @@ const ProductView = () => {
                     ) : (
                       outlets.map((shop: Partial<Shop>) => (
                         <tr
-                          key={shop.id}
+                          key={shop.shopName}
                           className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
                         >
                           <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
@@ -810,7 +810,7 @@ const ProductView = () => {
   };
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <div className="flex items-center space-x-4 w-full justify-end">
         {/* <div className="text-sm font-medium text-gray-600 dark:text-gray-300">
           Available Stock:

@@ -17,7 +17,7 @@ const SalesModal: React.FC<{ sales: any; onClose: () => void }> = ({ sales, onCl
           <h2 className="text-2xl font-bold">Sales Details</h2>
           <button onClick={onClose}><X /></button>
         </div>
-        <div className="mb-6">
+        <div className="mb-6 overflow-x-auto">
           <h3 className="text-xl font-semibold mb-2">Mobile Sales</h3>
           {sales.mobileSales.length > 0 ? (
             <table className="w-full table-auto">
@@ -48,7 +48,7 @@ const SalesModal: React.FC<{ sales: any; onClose: () => void }> = ({ sales, onCl
             <p>No mobile sales for this commission.</p>
           )}
         </div>
-        <div>
+        <div className="overflow-x-auto">
           <h3 className="text-xl font-semibold mb-2">Accessory Sales</h3>
           {sales.accessorySales.length > 0 ? (
             <table className="w-full table-auto">

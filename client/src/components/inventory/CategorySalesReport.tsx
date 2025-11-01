@@ -143,8 +143,10 @@ const CategorySalesReport: React.FC<CategorySalesReportProps> = ({
           sales[0]?.category || 'Category'
         }`}
       />
-      <div className="mx-auto max-w-7xl py-8">
-        <DateFilter onDateChange={setDateFilter} />
+      <div className="mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8 overflow-x-auto">
+        <div className="mb-4">
+          <DateFilter onDateChange={setDateFilter} />
+        </div>
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
           {stats.map((stat, index) => (
@@ -167,31 +169,33 @@ const CategorySalesReport: React.FC<CategorySalesReportProps> = ({
         <Card className="mb-6 dark:bg-boxdark dark:text-bodydark">
           <CardContent>
             <h3 className="text-lg font-semibold mb-4">Filters</h3>
-            <div className="flex items-center space-x-4">
-              <div>
-                <label htmlFor="status-filter" className="text-sm font-medium text-black dark:text-white">Filter by Status:</label>
-                <select
-                  id="status-filter"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="ml-2 p-2 border rounded-lg dark:bg-form-input dark:border-form-strokedark"
-                >
-                  <option value="">All</option>
-                  {uniqueStatuses.map((status: string) => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="imei-search" className="text-sm font-medium text-black dark:text-white">Search IMEI:</label>
-                <input
-                  id="imei-search"
-                  type="text"
-                  value={imeiSearch}
-                  onChange={(e) => setImeiSearch(e.target.value)}
-                  placeholder="Enter IMEI..."
-                  className="ml-2 p-2 border rounded-lg dark:bg-form-input dark:border-form-strokedark"
-                />
+            <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
+                <div>
+                  <label htmlFor="status-filter" className="text-sm font-medium text-black dark:text-white">Filter by Status:</label>
+                  <select
+                    id="status-filter"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full sm:w-auto mt-2 sm:mt-0 sm:ml-2 p-2 border rounded-lg dark:bg-form-input dark:border-form-strokedark"
+                  >
+                    <option value="">All</option>
+                    {uniqueStatuses.map((status: string) => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="imei-search" className="text-sm font-medium text-black dark:text-white">Search IMEI:</label>
+                  <input
+                    id="imei-search"
+                    type="text"
+                    value={imeiSearch}
+                    onChange={(e) => setImeiSearch(e.target.value)}
+                    placeholder="Enter IMEI..."
+                    className="w-full sm:w-auto mt-2 sm:mt-0 sm:ml-2 p-2 border rounded-lg dark:bg-form-input dark:border-form-strokedark"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
