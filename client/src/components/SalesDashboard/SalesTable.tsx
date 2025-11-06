@@ -35,6 +35,7 @@ interface Sale {
   batchNumber: string;
   createdAt: string;
   saleId: number;
+  totalsoldunits: number;
 }
 
 interface SalesTableProps {
@@ -44,6 +45,8 @@ interface SalesTableProps {
   onPageChange: (page: number) => void;
   onSort: (field: keyof Sale) => void;
   onPayCommission: (sale: Sale) => void;
+  onReverseSale: (sale: Sale) => void;
+  userRole?: string;
   showActions?: boolean;
 }
 
@@ -81,6 +84,8 @@ const SalesTable: React.FC<SalesTableProps> = ({
   onPageChange,
   onSort,
   onPayCommission,
+  onReverseSale,
+  userRole,
   showActions = true,
 }) => {
   return (
@@ -152,13 +157,24 @@ const SalesTable: React.FC<SalesTableProps> = ({
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.status}</td>
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{new Date(sale.createdAt).toLocaleDateString()}</td>
                 {showActions && <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">
-                  <button 
-                    onClick={() => onPayCommission(sale)}
-                    className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-4 text-center font-medium text-white hover:bg-opacity-90"
-                    disabled={sale.commission === 0 || sale.commissionpaid >= sale.commission || sale.status === 'RETURNED'}
-                  >
-                    Pay Commission
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button 
+                      onClick={() => onPayCommission(sale)}
+                      className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-4 text-center font-medium text-white hover:bg-opacity-90 disabled:bg-gray-400"
+                      disabled={sale.commission === 0 || sale.commissionpaid >= sale.commission || sale.status === 'RETURNED'}
+                    >
+                      Pay Commission
+                    </button>
+                    {userRole === 'superuser' && (
+                      <button
+                        onClick={() => onReverseSale(sale)}
+                        className="inline-flex items-center justify-center rounded-md bg-meta-1 py-2 px-4 text-center font-medium text-white hover:bg-opacity-90 disabled:bg-gray-400"
+                        disabled={sale.status === 'RETURNED'}
+                      >
+                        Reverse Sale
+                      </button>
+                    )}
+                  </div>
                 </td>}
               </tr>
             ))}

@@ -206,7 +206,16 @@ const Dashboard: React.FC = () => {
   }, [filterParams]);
 
   const { incomeStatement, balanceSheetMetrics } = financialSummary || {};
-  const { netOperatingIncome, grossRevenue, grossProfit, operatingExpenses, costOfGoodsSold } = incomeStatement || {};
+  const {
+    netOperatingIncome,
+    grossProfit,
+    operatingExpenses,
+    costOfGoodsSold,
+    totalSales,
+    totalReturns,
+    netRevenue,
+    accruedCommission,
+  } = incomeStatement || {};
   const { accountsReceivable } = balanceSheetMetrics || {};
 
   const expenseBreakdownData = useMemo(() => {
@@ -218,7 +227,9 @@ const Dashboard: React.FC = () => {
   }, [operatingExpenses]);
 
   const incomeFlowData = [
-    { name: 'Gross Revenue', value: grossRevenue },
+    { name: 'Total Sales', value: totalSales },
+    { name: 'Returned Products', value: totalReturns },
+    { name: 'Net Revenue', value: netRevenue },
     { name: 'Cost of Goods', value: -costOfGoodsSold },
     { name: 'Gross Profit', value: grossProfit },
     { name: 'Operating Expenses', value: -(operatingExpenses?.totalOperatingExpenses) },
@@ -254,7 +265,7 @@ const Dashboard: React.FC = () => {
       {/* Executive Financial Summary */}
       <div className="mb-8">
         <h2 className="mb-4 text-2xl font-bold">Executive Financial Summary</h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Net Operating Income */}
           <div className={`rounded-xl p-6 shadow-sm ${netOperatingIncome >= 0 ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
             <div className="flex items-center justify-between">
@@ -265,11 +276,11 @@ const Dashboard: React.FC = () => {
               {netOperatingIncome >= 0 ? <TrendingUp className="h-8 w-8 text-green-600" /> : <TrendingDown className="h-8 w-8 text-red-600" />}
             </div>
           </div>
-          {/* Gross Revenue */}
+          {/* Net Revenue */}
           <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
-            <p className="text-sm text-gray-500 dark:text-slate-400">Gross Revenue</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">Net Revenue</p>
             <div className="mt-2 flex items-center justify-between">
-              <h3 className="text-2xl font-bold">{formatCurrency(grossRevenue)}</h3>
+              <h3 className="text-2xl font-bold">{formatCurrency(netRevenue)}</h3>
               <DollarSign className="h-6 w-6 text-blue-500" />
             </div>
           </div>
@@ -279,6 +290,30 @@ const Dashboard: React.FC = () => {
             <div className="mt-2 flex items-center justify-between">
               <h3 className="text-2xl font-bold">{formatCurrency(grossProfit)}</h3>
               <Award className="h-6 w-6 text-yellow-500" />
+            </div>
+          </div>
+          {/* Accrued Commissions */}
+          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
+            <p className="text-sm text-gray-500 dark:text-slate-400">Accrued Commissions</p>
+            <div className="mt-2 flex items-center justify-between">
+              <h3 className="text-2xl font-bold">{formatCurrency(accruedCommission)}</h3>
+              <Award className="h-6 w-6 text-indigo-500" />
+            </div>
+          </div>
+          {/* Total Sales */}
+          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
+            <p className="text-sm text-gray-500 dark:text-slate-400">Total Sales</p>
+            <div className="mt-2 flex items-center justify-between">
+              <h3 className="text-2xl font-bold">{formatCurrency(totalSales)}</h3>
+              <TrendingUp className="h-6 w-6 text-green-500" />
+            </div>
+          </div>
+          {/* Returned Products */}
+          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
+            <p className="text-sm text-gray-500 dark:text-slate-400">Returned Products</p>
+            <div className="mt-2 flex items-center justify-between">
+              <h3 className="text-2xl font-bold">{formatCurrency(totalReturns)}</h3>
+              <TrendingDown className="h-6 w-6 text-red-500" />
             </div>
           </div>
           {/* Operating Expenses */}

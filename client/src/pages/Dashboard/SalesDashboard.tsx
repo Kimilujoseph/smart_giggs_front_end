@@ -19,15 +19,18 @@ import { getAllUsers } from '../../api/user_manager';
 import { User } from '../../types/user';
 import { Category } from '../../types/category';
 import { Financer } from '../../types/financer';
+import jwt_decode from 'jwt-decode';
+import { DecodedToken } from '../../types/decodedToken';
+import ReverseSaleModal from '../../components/SalesDashboard/ReverseSaleModal';
 
 // Interface definitions
-interface FinanceDetails {
+export interface FinanceDetails {
   financeStatus: string;
   financeAmount: number;
   financer: string;
 }
 
-interface Sale {
+export interface Sale {
   saleId: number;
   soldprice: number;
   netprofit: number;
@@ -105,8 +108,7 @@ const SalesDashboard = () => {
               <ArrowDown className="text-meta-1 w-4 h-4" />
             )}
             <span
-              className={`ml-1 ${trend > 0 ? 'text-meta-3' : 'text-meta-1'}`}
-            >
+              className={`ml-1 ${trend > 0 ? 'text-meta-3' : 'text-meta-1'}`}>
               {Math.abs(trend)}%
             </span>
           </div>
@@ -124,6 +126,12 @@ const SalesDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [isPayCommissionModalOpen, setPayCommissionModalOpen] = useState(false);
+  const [isReverseSaleModalOpen, setReverseSaleModalOpen] = useState(false);
+  const [selectedSaleForReverse, setSelectedSaleForReverse] = useState<any>(null);
+
+  const token = localStorage.getItem('tk');
+  const decodedToken = token ? jwt_decode<DecodedToken>(token) : null;
+  const userRole = decodedToken?.role;
 
   // Filters state
   const [reportType, setReportType] = useState<'all' | 'category' | 'financer' | 'user'>('all');
@@ -313,6 +321,21 @@ const SalesDashboard = () => {
     setCurrentPage(1);
   };
 
+  const handleOpenReverseSaleModal = (sale: any) => {
+    setSelectedSaleForReverse(sale);
+    setReverseSaleModalOpen(true);
+  };
+
+  const handleCloseReverseSaleModal = () => {
+    setSelectedSaleForReverse(null);
+    setReverseSaleModalOpen(false);
+  };
+
+  const handleSaleReversed = () => {
+    handleCloseReverseSaleModal();
+    setCurrentPage(1);
+  };
+
   if (loading && !salesData) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -447,6 +470,8 @@ const SalesDashboard = () => {
             onPageChange={setCurrentPage}
             onSort={() => {}} // Sorting to be implemented if needed
             onPayCommission={handleOpenPayCommissionModal}
+            onReverseSale={handleOpenReverseSaleModal}
+            userRole={userRole}
           />
         ) : (
           <div className="flex justify-center items-center h-64">
@@ -460,6 +485,14 @@ const SalesDashboard = () => {
           sale={selectedSale}
           onClose={handleClosePayCommissionModal}
           onSuccess={handleCommissionPaid}
+        />
+      )}
+
+      {isReverseSaleModalOpen && selectedSaleForReverse && (
+        <ReverseSaleModal
+          sale={selectedSaleForReverse}
+          onClose={handleCloseReverseSaleModal}
+          onSuccess={handleSaleReversed}
         />
       )}
 
