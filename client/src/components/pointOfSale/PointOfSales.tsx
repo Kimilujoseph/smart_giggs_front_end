@@ -57,13 +57,22 @@ const PointOfSales: React.FC = () => {
   const [financeDetails, setFinanceDetails] = React.useState<{ [key: string]: { amount: number, status: string, financerId: string } }>(
     {},
   );
-  const [paymentMethod, setPaymentMethod] = React.useState<
-    'cash' | 'mpesa' | 'creditcard'
-  >('cash');
-  const [transactionId, setTransactionId] = React.useState<string>('');
+  type PaymentMethod = 'cash' | 'mpesa' | 'creditcard';
+
+  interface Payment {
+    paymentMethod: PaymentMethod;
+    amount: number;
+    transactionId: string;
+  }
+
+  const [payments, setPayments] = React.useState<Payment[]>([
+    { paymentMethod: 'cash', amount: 0, transactionId: '' },
+  ]);
   const [showCustomerDetails, setShowCustomerDetails] =
     React.useState<boolean>(false);
-  const [saleResponse, setSaleResponse] = React.useState<SaleResponse[] | null>(null);
+  const [saleResponse, setSaleResponse] = React.useState<SaleResponse[] | null>(
+    null,
+  );
   const [financers, setFinancers] = React.useState<Financer[]>([]);
   const [formData, setFormData] = React.useState<{
     email: string;
@@ -74,6 +83,28 @@ const PointOfSales: React.FC = () => {
     name: '',
     phonenumber: '',
   });
+
+  const handlePaymentChange = (
+    index: number,
+    field: keyof Payment,
+    value: string | number,
+  ) => {
+    const newPayments = [...payments];
+    (newPayments[index] as any)[field] = value;
+    setPayments(newPayments);
+  };
+
+  const addPayment = () => {
+    setPayments([
+      ...payments,
+      { paymentMethod: 'mpesa', amount: 0, transactionId: '' },
+    ]);
+  };
+
+  const removePayment = (index: number) => {
+    const newPayments = payments.filter((_, i) => i !== index);
+    setPayments(newPayments);
+  };
 
   // Check if an item is in the cart
   const isInCart = (productId: number | string, itemId?: number) => {
@@ -166,13 +197,28 @@ const PointOfSales: React.FC = () => {
     updateTotal();
   }, [soldprice, cart]);
 
+  const totalPaid = React.useMemo(
+    () => payments.reduce((sum, p) => sum + Number(p.amount), 0),
+    [payments],
+  );
+
   useEffect(() => {
-    if (Object.values(soldprice).some((price) => price <= 0)) {
+    if (payments.length === 1) {
+      setPayments((prev) => [{ ...prev[0], amount: total }]);
+    }
+  }, [total]);
+
+  useEffect(() => {
+    const pricesInvalid =
+      Object.values(soldprice).some((price) => price <= 0) && cart.length > 0;
+    const paymentInvalid = total !== totalPaid && cart.length > 0;
+
+    if (pricesInvalid || paymentInvalid) {
       setCheckoutDisabled(true);
     } else {
       setCheckoutDisabled(false);
     }
-  }, [soldprice]);
+  }, [soldprice, payments, total, cart, totalPaid]);
 
   const updateQuantity = (productId: number | string, units: number) => {
     const selected: any = groupedProducts.find(
@@ -350,6 +396,12 @@ const PointOfSales: React.FC = () => {
         return;
       }
 
+      const paymentsForApi = payments.map((p) => ({
+        paymentMethod: p.paymentMethod,
+        amount: p.amount,
+        transactionId: p.transactionId || null,
+      }));
+
       groupedCart.forEach((product: any) => {
         //console.log("products received", product)
         const items = product.items.map((item: any) => ({
@@ -379,8 +431,7 @@ const PointOfSales: React.FC = () => {
           CategoryId: product.categoryId.id.split('-')[1],
           itemType: product.categoryId.itemType,
           items: [...items],
-          paymentmethod: paymentMethod,
-          transactionId: transactionId,
+          payments: paymentsForApi,
         });
       });
 
@@ -411,7 +462,7 @@ const PointOfSales: React.FC = () => {
         setSaleResponse(response.data.data);
         setCart([]);
         setFormData({ name: '', email: '', phonenumber: '' });
-        setTransactionId('');
+        setPayments([{ paymentMethod: 'cash', amount: 0, transactionId: '' }]);
       }
     } catch (error: any) {
       setMessage({
@@ -1127,40 +1178,89 @@ const PointOfSales: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Payment Method */}
+                  {/* Payment Methods */}
                   <div className="mt-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                        Payment Method
-                      </label>
-                      <select
-                        value={paymentMethod}
-                        onChange={(e) =>
-                          setPaymentMethod(
-                            e.target.value as 'cash' | 'mpesa' | 'creditcard',
-                          )
-                        }
-                        className={`w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg`}
-                      >
-                        <option value="cash">Cash</option>
-                        <option value="mpesa">M-pesa</option>
-                        <option value="creditcard">Credit Card</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Transaction ID */}
-                  <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                      Transaction ID (optional)
+                      Payment Methods
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g., RKT... for M-Pesa"
-                      value={transactionId}
-                      onChange={(e) => setTransactionId(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
-                    />
+                    <div className="space-y-2">
+                      {payments.map((payment, index) => (
+                        <div
+                          key={index}
+                          className="flex flex-col md:flex-row gap-2 items-center"
+                        >
+                          <select
+                            value={payment.paymentMethod}
+                            onChange={(e) =>
+                              handlePaymentChange(
+                                index,
+                                'paymentMethod',
+                                e.target.value as PaymentMethod,
+                              )
+                            }
+                            className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
+                          >
+                            <option value="cash">Cash</option>
+                            <option value="mpesa">M-pesa</option>
+                            <option value="creditcard">Credit Card</option>
+                          </select>
+                          <input
+                            type="number"
+                            placeholder="Amount"
+                            value={payment.amount}
+                            onChange={(e) =>
+                              handlePaymentChange(
+                                index,
+                                'amount',
+                                Number(e.target.value),
+                              )
+                            }
+                            className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
+                          />
+                          {payment.paymentMethod !== 'cash' && (
+                            <input
+                              type="text"
+                              placeholder="Transaction ID"
+                              value={payment.transactionId}
+                              onChange={(e) =>
+                                handlePaymentChange(
+                                  index,
+                                  'transactionId',
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
+                            />
+                          )}
+                          {payments.length > 1 && (
+                            <button
+                              onClick={() => removePayment(index)}
+                              className="p-1"
+                            >
+                              <X className="h-5 w-5 text-red-500" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={addPayment}
+                      className="text-primary mt-2 text-sm"
+                    >
+                      + Add Payment Method
+                    </button>
+                    <div className="mt-4 flex justify-between text-sm font-semibold">
+                      <p>Total Paid: {formatPrice(totalPaid)}</p>
+                      <p
+                        className={
+                          total - totalPaid !== 0
+                            ? 'text-red-500'
+                            : 'text-green-500'
+                        }
+                      >
+                        Balance: {formatPrice(total - totalPaid)}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Action Buttons */}
@@ -1169,7 +1269,13 @@ const PointOfSales: React.FC = () => {
                       onClick={() => {
                         setCart([]);
                         setFormData({ name: '', email: '', phonenumber: '' });
-                        setTransactionId('');
+                        setPayments([
+                          {
+                            paymentMethod: 'cash',
+                            amount: 0,
+                            transactionId: '',
+                          },
+                        ]);
                       }}
                       className={`flex justify-center rounded-lg border border-slate-300 dark:border-slate-600 py-2 px-6 font-medium text-black dark:text-white hover:bg-opacity-90`}
                     >

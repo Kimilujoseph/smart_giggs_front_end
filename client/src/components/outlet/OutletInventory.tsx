@@ -384,9 +384,9 @@ const OutletInventoryView: React.FC = () => {
       );
 
       const mobiles = mobileResponse.data.shop.filteredShop.mobileItems?.items || [];
-      console.log("@@@@@@@@", mobiles)
+      //console.log("@@@@@@@@", mobiles)
       const accessories = accessoryResponse.data.shop.filteredShop.accessoryItems?.items || [];
-      console.log("!@!@!@accessories", accessories)
+      // console.log("!@!@!@accessories", accessories)
       setPendingMobiles(mobiles);
       setPendingAccessories(accessories);
       setNewStockTally(mobiles.length + accessories.length);
@@ -464,15 +464,15 @@ const OutletInventoryView: React.FC = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'Transfer':
-        return <ProductTransfer 
-                  currentUser={currentUser} 
-                  mobileItems={mobileItems} 
-                  accessoryItems={accessoryItems}
-                  refreshData={() => {
-                    fetchMobileItems(mobilePage);
-                    fetchAccessoryItems(accessoryPage);
-                  }}
-                />;
+        return <ProductTransfer
+          currentUser={currentUser}
+          mobileItems={mobileItems}
+          accessoryItems={accessoryItems}
+          refreshData={() => {
+            fetchMobileItems(mobilePage);
+            fetchAccessoryItems(accessoryPage);
+          }}
+        />;
       case 'Phones':
       case 'Accessories': {
         const isPhones = activeSection === 'Phones';
@@ -503,7 +503,7 @@ const OutletInventoryView: React.FC = () => {
                     <th className="p-3">Model</th>
                     <th className="p-3">Brand</th>
                     <th className="p-3">Quantity</th>
-                    <th className="p-3">Cost</th>
+                    {userPermissions !== 'seller' && <th className="p-3">Cost</th>}
                     <th className="p-3">{isPhones ? 'IMEI' : 'Batch'}</th>
                   </tr>
                 </thead>
@@ -520,7 +520,7 @@ const OutletInventoryView: React.FC = () => {
                         <td className="p-3">{details.categories.itemModel}</td>
                         <td className="p-3">{details.categories.brand}</td>
                         <td className="p-3">{item.quantity}</td>
-                        <td className="p-3">{details.productCost}</td>
+                        {userPermissions !== 'seller' && <td className="p-3">{details.productCost}</td>}
                         <td className="p-3">{isPhones ? details.IMEI : details.batchNumber}</td>
                       </tr>
                     )

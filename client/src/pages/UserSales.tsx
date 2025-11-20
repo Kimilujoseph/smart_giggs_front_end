@@ -18,6 +18,7 @@ import SuchEmpty from '../components/suchEmpty';
 import SalesTable from '../components/SalesDashboard/SalesTable';
 import { getSalesReport } from '../api/sales_dashboard_manager';
 import DateFilter from '../components/filters/DateFilter';
+import { useAppContext } from '../context/AppContext';
 
 const UserSales: React.FC = () => {
   const [salesData, setSalesData] = useState<any>(null);
@@ -29,6 +30,7 @@ const UserSales: React.FC = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const userId = params.get('userId');
+  const { user } = useAppContext();
 
   useEffect(() => {
     const fetchSalesData = async () => {
@@ -96,7 +98,7 @@ const UserSales: React.FC = () => {
       icon: DollarSign,
       color: 'text-emerald-500',
     },
-    {
+    user?.role !== 'seller' && {
       title: 'Total Profit',
       value: `Ksh ${salesData.analytics.totalProfit.toLocaleString()}` || '-',
       icon: TrendingUp,
@@ -119,7 +121,7 @@ const UserSales: React.FC = () => {
       icon: ShoppingCart,
       color: 'text-purple-500',
     },
-  ];
+  ].filter(Boolean);
 
   return (
     <>
@@ -202,6 +204,7 @@ const UserSales: React.FC = () => {
           onSort={() => {}}
           onPayCommission={() => {}}
           showActions={false}
+          showCostAndProfit={user?.role !== 'seller'}
         />
       </div>
     </>

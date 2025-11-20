@@ -86,7 +86,7 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
     const items = filter === 'phone'
       ? shopData.pendingMobiles || []
       : shopData.pendingAccessories || [];
-    console.log("@@#@3434", items)
+    //console.log("@@#@3434", items)
     return items.map((item: ProductItem | any, index: number) => {
       const details = filter === 'phone' ? item.mobiles : item.accessories;
       const category = details.categories;

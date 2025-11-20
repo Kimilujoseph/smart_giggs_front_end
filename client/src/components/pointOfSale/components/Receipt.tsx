@@ -1,5 +1,6 @@
 import React from 'react';
 import { SaleResponse } from '../types/types';
+import './Receipt.css';
 
 interface ReceiptProps {
   saleResponse: SaleResponse[];
@@ -13,7 +14,7 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
 
   // Calculate totals
   const total = saleResponse.reduce(
-    (acc, sale) => acc + sale.soldPrice,
+    (acc, sale) => acc + Number(sale.soldPrice),
     0,
   );
 
@@ -130,31 +131,6 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
           </button>
         </div>
       </div>
-
-      {/* Print-specific styles */}
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #printable-receipt,
-          #printable-receipt * {
-            visibility: visible;
-          }
-          #printable-receipt {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            padding: 0;
-            margin: 0;
-            border: none;
-          }
-          .no-print {
-            display: none;
-          }
-        }
-      `}</style>
     </div>
   );
 };

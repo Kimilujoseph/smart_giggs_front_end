@@ -48,6 +48,7 @@ interface SalesTableProps {
   onReverseSale: (sale: Sale) => void;
   userRole?: string;
   showActions?: boolean;
+  showCostAndProfit?: boolean;
 }
 
 const ExportButtons: React.FC<{ data: Sale[] }> = ({ data }) => {
@@ -87,6 +88,7 @@ const SalesTable: React.FC<SalesTableProps> = ({
   onReverseSale,
   userRole,
   showActions = true,
+  showCostAndProfit = true,
 }) => {
   return (
     <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -104,15 +106,12 @@ const SalesTable: React.FC<SalesTableProps> = ({
               <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Model</th>
               <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Category</th>
               <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Storage</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Cost</th>
+              {showCostAndProfit && <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Cost</th>}
               <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Sold Price</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Gross Profit</th>
+              {showCostAndProfit && <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Gross Profit</th>}
               <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Commission</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Net Profit</th>
+              {showCostAndProfit && <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Net Profit</th>}
               <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Commission Paid</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Payment Amount</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Transaction ID</th>
-              <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Payment Method</th>
               <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Payment Status</th>
               <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Financer</th>
               <th className="py-4 px-4 font-medium text-black dark:text-white whitespace-nowrap">Finance Status</th>
@@ -131,15 +130,12 @@ const SalesTable: React.FC<SalesTableProps> = ({
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.productmodel}</td>
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.category}</td>
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.storage}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {sale.productcost.toLocaleString()}</td>
+                {showCostAndProfit && <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {sale.productcost.toLocaleString()}</td>}
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {sale.soldprice.toLocaleString()}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {sale.netprofit.toLocaleString()}</td>
+                {showCostAndProfit && <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {sale.netprofit.toLocaleString()}</td>}
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {sale.commission.toLocaleString()}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {(sale.netprofit - sale.commission).toLocaleString()}</td>
+                {showCostAndProfit && <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {(sale.netprofit - sale.commission).toLocaleString()}</td>}
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.commissionpaid > 0 ? `${sale.commissionpaid.toLocaleString()}` : 'No'}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">Ksh {parseFloat(sale.paymentDetails.amount).toLocaleString()}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.paymentDetails.transactionId}</td>
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.paymentDetails.paymentMethod}</td>
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.paymentstatus}</td>
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.financeDetails?.financer}</td>
                 <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark whitespace-nowrap">{sale.financeDetails?.financeStatus}</td>
