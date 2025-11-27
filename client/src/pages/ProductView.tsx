@@ -144,16 +144,25 @@ const ProductView = () => {
       }
       const fetchedProduct = response.data.data;
 
+      if (
+        fetchedProduct.itemType === 'smartphones' ||
+        fetchedProduct.itemType === 'smallphones'
+      ) {
+        fetchedProduct.category = 'mobiles';
+      } else {
+        fetchedProduct.category = 'accessories';
+      }
+
       const uniqueOutlets = new Set();
       fetchedProduct.Items.forEach((item: any) => {
-        if (item.itemType === 'mobiles') {
+        if (fetchedProduct.category === 'mobiles') {
           item.mobileItems.forEach((mobileItem: any) => {
             if (mobileItem.shops.shopName !== shopName) {
               uniqueOutlets.add(JSON.stringify(mobileItem.shops));
             }
           });
         }
-        if (fetchedProduct.itemType === 'accessories') {
+        if (fetchedProduct.category === 'accessories') {
           item.accessoryItems.forEach((accessoryItem: any) => {
             if (accessoryItem.shops.shopName !== shopName) {
               uniqueOutlets.add(JSON.stringify(accessoryItem.shops));
@@ -210,7 +219,7 @@ const ProductView = () => {
   // Modified to handle accessories
   const selectRandomItems = useCallback(
     (n: number) => {
-      if (product?.itemType === 'mobiles') {
+      if (product?.category === 'mobiles') {
         // Existing mobile logic
       } else {
         // Accessories
@@ -225,7 +234,7 @@ const ProductView = () => {
           const allocate = Math.min(item.availableStock || 0, remaining);
           selected.push({
             stockId: item.id,
-            category: product.itemType,
+            category: product.category,
             quantity: allocate,
           });
           remaining -= allocate;
@@ -247,7 +256,7 @@ const ProductView = () => {
         if (isSelected) {
           return prev.filter((i) => i.stockId !== item.id);
         } else {
-          if (product?.itemType === 'mobiles') {
+          if (product?.category === 'mobiles') {
             if (prev.length >= quantity!) {
               setDistributeError(
                 'Cannot select more items than specified quantity',
@@ -256,7 +265,7 @@ const ProductView = () => {
             }
             return [
               ...prev,
-              { stockId: item.id, category: product.itemType, quantity: 1 },
+              { stockId: item.id, category: product.category, quantity: 1 },
             ];
           } else {
             // Accessories
@@ -270,7 +279,7 @@ const ProductView = () => {
               ...prev,
               {
                 stockId: item.id,
-                category: product.itemType,
+                category: product.category,
                 quantity: allocate,
               },
             ];
@@ -278,7 +287,7 @@ const ProductView = () => {
         }
       });
     },
-    [product?.itemType, quantity],
+    [product?.category, quantity],
   );
 
   const handleDistribute = async (event: React.FormEvent) => {
@@ -314,7 +323,7 @@ const ProductView = () => {
                 : currentUser.assignedShop.shopName,
             distributedShop: shopName,
           },
-          category: product?.itemType,
+          category: product?.category,
           bulkDistribution: selectedItems,
         },
         { withCredentials: true },
@@ -427,7 +436,7 @@ const ProductView = () => {
               Selected Items ({selectedItems.length}/{quantity})
             </h3>
             <div className="max-h-60 overflow-y-auto">
-              <pre className="p-3">{`${product?.itemType === 'mobiles' ? 'IMEI' : 's/No'
+              <pre className="p-3">{`${product?.category === 'mobiles' ? 'IMEI' : 's/No'
                 } - Batch Number\n`}</pre>
               {product?.Items?.filter(
                 (available: any) =>
@@ -700,11 +709,9 @@ const ProductView = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'distribute_product':
-        return product?.itemType === 'mobiles'
+        return product?.category === 'mobiles'
           ? renderDistributeSection()
-          : product?.itemType === 'accessories'
-            ? accessoriesDistributeSection()
-            : null;
+          : accessoriesDistributeSection();
 
       case 'transfer_history':
         return (

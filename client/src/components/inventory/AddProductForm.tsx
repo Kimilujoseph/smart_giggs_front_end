@@ -76,17 +76,33 @@ const MobilePhoneForm: React.FC<FormProps> = ({ product, handleChange }) => (
     </div> */}
     <div>
       <label className="mb-2.5 block text-black dark:text-white text-sm">
+        Item Type
+      </label>
+      <select
+        name="itemType"
+        value={product.itemType}
+        onChange={handleChange}
+        className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black text-sm outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+        required
+      >
+        <option value="">Select Item Type</option>
+        <option value="smartphones">Smartphones</option>
+        <option value="smallphones">Smallphones</option>
+      </select>
+    </div>
+    <div>
+      <label className="mb-2.5 block text-black dark:text-white text-sm">
         Category
       </label>
-      <input
-        type="text"
+      <select
         name="category"
         value={product.category}
         onChange={handleChange}
-        placeholder="Smartphone, Feature Phone, etc."
         className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black text-sm outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
         required
-      />
+      >
+        <option value="mobiles">Mobiles</option>
+      </select>
     </div>
     <div>
       <label className="mb-2.5 block text-black dark:text-white text-sm">
@@ -249,17 +265,31 @@ const AccessoriesForm: React.FC<FormProps> = ({ product, handleChange }) => (
     </div>
     <div>
       <label className="mb-2.5 block text-black dark:text-white text-sm">
+        Item Type
+      </label>
+      <select
+        name="itemType"
+        value={product.itemType}
+        onChange={handleChange}
+        className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black text-sm outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+        required
+      >
+        <option value="accessories">Accessories</option>
+      </select>
+    </div>
+    <div>
+      <label className="mb-2.5 block text-black dark:text-white text-sm">
         Category
       </label>
-      <input
-        type="text"
+      <select
         name="category"
         value={product.category}
         onChange={handleChange}
-        placeholder="Smartphone, Feature Phone, etc."
         className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black text-sm outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
         required
-      />
+      >
+        <option value="accessories">Accessories</option>
+      </select>
     </div>
     <div>
       <label className="mb-2.5 block text-black dark:text-white text-sm">
@@ -328,12 +358,12 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     id: null,
     itemName: '',
     itemModel: '',
-    itemType: productType,
+    itemType: productType === 'Accessories' ? 'accessories' : '',
     brand: '',
     quantity: 1,
     minPrice: 0,
     maxPrice: 0,
-    category: '',
+    category: productType === 'Mobiles' ? 'mobiles' : 'accessories',
     Items: [],
     sales: [],
     createdAt: '',
@@ -346,12 +376,19 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     null,
   );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setProduct((prevProduct: any) => ({
-      ...prevProduct,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    if (e.target.type === 'checkbox') {
+      setProduct((prevProduct: any) => ({
+        ...prevProduct,
+        [name]: (e.target as HTMLInputElement).checked,
+      }));
+    } else {
+      setProduct((prevProduct: any) => ({
+        ...prevProduct,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

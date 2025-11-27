@@ -120,6 +120,14 @@ const ProductDetail = ({
   });
 
   useEffect(() => {
+    if (product.category === 'accessories') {
+      setProductType('accessories');
+    } else {
+      setProductType('');
+    }
+  }, [product.category]);
+
+  useEffect(() => {
     const fetchSuppliers = async () => {
       try {
         const response = await axios.get(
@@ -185,7 +193,7 @@ const ProductDetail = ({
       };
 
       let payload;
-      if (product?.itemType === 'mobiles') {
+      if (product?.category === 'mobiles') {
         payload = {
           phoneDetails: {
             ...commonDetails,
@@ -208,7 +216,7 @@ const ProductDetail = ({
       }
 
       const response = await axios.post(
-        product?.itemType === 'mobiles'
+        product?.category === 'mobiles'
           ? `${import.meta.env.VITE_SERVER_HEAD}/api/inventory/add-phone-stock`
           : `${import.meta.env.VITE_SERVER_HEAD
           }/api/inventory/add-accessory-stock`,
@@ -445,7 +453,7 @@ const ProductDetail = ({
                       className="p-4 sm:p-5 border-t dark:border-strokedark bg-bodydark1 dark:bg-boxdark-2"
                     >
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                        {product.itemType === 'mobiles' && (
+                        {product.category === 'mobiles' && (
                           <div>
                             <label
                               htmlFor="imei"
@@ -455,7 +463,7 @@ const ProductDetail = ({
                             </label>
                             <input
                               id="imei"
-                              required={product.itemType === 'mobiles'}
+                              required={product.category === 'mobiles'}
                               type="text"
                               maxLength={15}
                               value={IMEI}
@@ -471,11 +479,11 @@ const ProductDetail = ({
                             htmlFor="batch"
                             className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
                           >
-                            Batch Number{product.itemType === 'accessories' && '*'}
+                            Batch Number{product.category === 'accessories' && '*'}
                           </label>
                           <input
                             id="batch"
-                            required={product.itemType === 'accessories'}
+                            required={product.category === 'accessories'}
                             type="text"
                             value={newBatchNumber}
                             onChange={(e) => setNewBatchNumber(e.target.value)}
@@ -562,7 +570,7 @@ const ProductDetail = ({
                             ))}
                           </select>
                         </div>
-                        {product.itemType === 'mobiles' && (
+                        {product.category === 'mobiles' && (
                           <>
                             <div>
                               <label
@@ -587,20 +595,22 @@ const ProductDetail = ({
                               >
                                 Phone Type
                               </label>
-                              <input
+                              <select
                                 id="productType"
-                                type="text"
                                 value={productType}
                                 onChange={(e) =>
                                   setProductType(e.target.value)
                                 }
-                                placeholder="e.g., smartphone"
                                 className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
-                              />
+                              >
+                                <option value="">Select Phone Type</option>
+                                <option value="smartphones">Smartphones</option>
+                                <option value="smallphones">Smallphones</option>
+                              </select>
                             </div>
                           </>
                         )}
-                        {product.itemType === 'accessories' && (
+                        {product.category === 'accessories' && (
                           <div>
                             <label
                               htmlFor="productTypeAccessory"
@@ -608,18 +618,18 @@ const ProductDetail = ({
                             >
                               Product Type
                             </label>
-                            <input
+                            <select
                               id="productTypeAccessory"
-                              type="text"
                               value={productType}
                               onChange={(e) => setProductType(e.target.value)}
-                              placeholder="e.g., type-C cable"
                               className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
-                            />
+                            >
+                              <option value="accessories">Accessories</option>
+                            </select>
                           </div>
                         )}
                         {/* Financer */}
-                        {product.itemType === 'mobiles' && (
+                        {product.category === 'mobiles' && (
                           <div className="col-span-1">
                             <label
                               className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -702,7 +712,7 @@ const ProductDetail = ({
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder={`Search by Serial or ${product.itemType === 'mobiles' ? 'IMEI' : 'Batch Number'
+                    placeholder={`Search by Serial or ${product.category === 'mobiles' ? 'IMEI' : 'Batch Number'
                       }...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -738,7 +748,7 @@ const ProductDetail = ({
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-strokedark">
                     <thead className="bg-bodydark1 dark:bg-meta-4 sticky top-0 z-10">
                       <tr>
-                        {product.itemType === 'mobiles' && (
+                        {product.category === 'mobiles' && (
                           <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
                             IMEI
                           </th>
@@ -749,7 +759,7 @@ const ProductDetail = ({
                         <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
                           Color
                         </th>
-                        {product.itemType === 'accessories' && (
+                        {product.category === 'accessories' && (
                           <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
                             Units
                           </th>
@@ -785,7 +795,7 @@ const ProductDetail = ({
                         filteredUnits.map((item) => (
                           <React.Fragment key={item.id}>
                             <tr className="hover:bg-bodydark1 dark:hover:bg-meta-4">
-                              {product.itemType === 'mobiles' && (
+                              {product.category === 'mobiles' && (
                                 <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
                                   {item.IMEI}
                                 </td>
@@ -796,7 +806,7 @@ const ProductDetail = ({
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
                                 {item.color}
                               </td>
-                              {product.itemType === 'accessories' && (
+                              {product.category === 'accessories' && (
                                 <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
                                   {item.availableStock}
                                 </td>
@@ -813,7 +823,7 @@ const ProductDetail = ({
                                 </span>
                               </td>
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                                {product.itemType === 'mobiles'
+                                {product.category === 'mobiles'
                                   ? item.mobileItems &&
                                     item.mobileItems.length > 0
                                     ? item.mobileItems[0].shops.shopName
@@ -830,7 +840,7 @@ const ProductDetail = ({
                                     : 'Warehouse'}
                               </td>
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                                {product.itemType === 'mobiles'
+                                {product.category === 'mobiles'
                                   ? item.mobileItems &&
                                     item.mobileItems.length > 0
                                     ? item.mobileItems[0].status
@@ -869,7 +879,7 @@ const ProductDetail = ({
                                     onClick={() =>
                                       handleOpenEditModal({
                                         ...item,
-                                        itemType: product.itemType,
+                                        itemType: product.category,
                                       })
                                     }
                                     className="text-primary hover:underline"
@@ -878,7 +888,7 @@ const ProductDetail = ({
                                   </button>
                                 )}
                                 {user.role !== 'seller' &&
-                                  product.itemType === 'accessories' && (
+                                  product.category === 'accessories' && (
                                     <button
                                       onClick={() => toggleHistory(item.id)}
                                       className="p-1 ml-2 text-gray-500 hover:text-primary"
@@ -892,7 +902,7 @@ const ProductDetail = ({
                                     </button>
                                   )}
                                 {user.role !== 'seller' &&
-                                  product.itemType === 'mobiles' && (
+                                  product.category === 'mobiles' && (
                                     <button
                                       onClick={() =>
                                         handleOpenHistoryModal(item.id)
@@ -904,7 +914,7 @@ const ProductDetail = ({
                                   )}
                               </td>
                             </tr>
-                            {product.itemType === 'accessories' &&
+                            {product.category === 'accessories' &&
                               openHistories[item.id] && (
                                 <tr
                                   key={`${item.id}-history`}

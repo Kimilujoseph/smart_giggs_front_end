@@ -100,7 +100,16 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ open, onClose, onSave, ca
             labelId="item-type-label"
             value={formData.itemType}
             label="Item Type"
-            onChange={(e) => setFormData({ ...formData, itemType: e.target.value })}
+            onChange={(e) => {
+              const newItemType = e.target.value;
+              let newCategory = formData.category;
+              if (newItemType === 'smartphones' || newItemType === 'smallphones') {
+                newCategory = 'mobiles';
+              } else if (newItemType === 'accessories') {
+                newCategory = 'accessories';
+              }
+              setFormData({ ...formData, itemType: newItemType, category: newCategory });
+            }}
             sx={{
               color: colorMode === 'dark' ? 'white' : 'black',
               '& .MuiOutlinedInput-notchedOutline': {
@@ -122,7 +131,8 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ open, onClose, onSave, ca
               },
             }}
           >
-            <MenuItem value="mobiles">Mobiles</MenuItem>
+            <MenuItem value="smartphones">Smartphones</MenuItem>
+            <MenuItem value="smallphones">Smallphones</MenuItem>
             <MenuItem value="accessories">Accessories</MenuItem>
           </Select>
         </FormControl>
