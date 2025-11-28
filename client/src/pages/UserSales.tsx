@@ -21,13 +21,15 @@ import DateFilter from '../components/filters/DateFilter';
 import { useAppContext } from '../context/AppContext';
 import SellerKpis from '../components/users/SellerKpis';
 
+
+
 const UserSales: React.FC = () => {
   const [salesData, setSalesData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [dateFilter, setDateFilter] = useState<string>('period=month');
+    const [dateFilter, setDateFilter] = useState<string>('period=day');
   const [activeTab, setActiveTab] = useState('details'); // 'details' or 'kpis'
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -80,6 +82,8 @@ const UserSales: React.FC = () => {
       status: sale.status,
     }));
   }, [salesData]);
+
+
 
   const renderSalesDetails = () => {
     if (isLoading) {
