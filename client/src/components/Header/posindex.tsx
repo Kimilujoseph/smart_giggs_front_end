@@ -42,7 +42,7 @@ const POSHeader = (props: {
       <NavLink to="/" className="">
         <img
           src="/mutunga_dark_mode.png"
-          alt="smartGiggs Logo"
+          alt="augustusstores Logo"
           className="object-contain w-full h-[50px] "
         />
       </NavLink>

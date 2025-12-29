@@ -92,7 +92,7 @@ function App() {
             path="/auth/signin"
             element={
               <>
-                <PageTitle title="Signin | smartGiggs" />
+                <PageTitle title="Signin | augustusstores" />
                 <SignIn />
               </>
             }
@@ -101,7 +101,7 @@ function App() {
             path="/auth/signup"
             element={
               <>
-                <PageTitle title="Signup | smartGiggs" />
+                <PageTitle title="Signup | augustusstores" />
                 <SignUp />
               </>
             }
@@ -116,7 +116,7 @@ function App() {
                     <Navigate to="/settings" replace />
                   ) : (
                     <>
-                      <PageTitle title="Dashboard | smartGiggs" />
+                      <PageTitle title="Dashboard | augustusstores" />
                       <Dashboard />
                     </>
                   )
@@ -127,7 +127,7 @@ function App() {
                 path="/users"
                 element={
                   <>
-                    <PageTitle title="Users | smartGiggs" />
+                    <PageTitle title="Users | augustusstores" />
                     <UsersManager />
                   </>
                 }
@@ -136,7 +136,7 @@ function App() {
                 path="/outlets"
                 element={
                   <>
-                    <PageTitle title="Outlets | smartGiggs" />
+                    <PageTitle title="Outlets | augustusstores" />
                     <OutletManager />
                   </>
                 }
@@ -146,7 +146,7 @@ function App() {
                 path="/outlets/:shopname"
                 element={
                   <>
-                    <PageTitle title="Outlet View | smartGiggs" />
+                    <PageTitle title="Outlet View | augustusstores" />
                     <OutletView />
                   </>
                 }
@@ -156,7 +156,7 @@ function App() {
                 path="/inventory"
                 element={
                   <>
-                    <PageTitle title="Inventory | smartGiggs" />
+                    <PageTitle title="Inventory | augustusstores" />
                     <InventoryManager />
                   </>
                 }
@@ -166,7 +166,7 @@ function App() {
                 path="/sales"
                 element={
                   <>
-                    <PageTitle title="Sales | smartGiggs" />
+                    <PageTitle title="Sales | augustusstores" />
                     <SalesDashboard />
                   </>
                 }
@@ -175,7 +175,7 @@ function App() {
                 path="/outlet/inventory"
                 element={
                   <>
-                    <PageTitle title="Outlet Inventory | smartGiggs" />
+                    <PageTitle title="Outlet Inventory | augustusstores" />
                     <OutletInventoryView />
                   </>
                 }
@@ -184,7 +184,7 @@ function App() {
                 path="/outlet/inventory/:productId"
                 element={
                   <>
-                    <PageTitle title="Outlet Product | smartGiggs" />
+                    <PageTitle title="Outlet Product | augustusstores" />
                     <ProductView />
                   </>
                 }
@@ -193,7 +193,7 @@ function App() {
                 path="/outlet/sales"
                 element={
                   <>
-                    <PageTitle title="Outlet Outlet | smartGiggs" />
+                    <PageTitle title="Outlet Outlet | augustusstores" />
                     <OutletSalesBackup />
                   </>
                 }
@@ -202,7 +202,7 @@ function App() {
                 path="/inventory/:productId/:isMobile"
                 element={
                   <>
-                    <PageTitle title="Product View | smartGiggs" />
+                    <PageTitle title="Product View | augustusstores" />
                     <ProductView />
                   </>
                 }
@@ -211,7 +211,7 @@ function App() {
                 path="/settings"
                 element={
                   <>
-                    <PageTitle title="Account Settings | smartGiggs" />
+                    <PageTitle title="Account Settings | augustusstores" />
                     <Settings2 />
                   </>
                 }
@@ -220,7 +220,7 @@ function App() {
                 path="/assignmentHistory"
                 element={
                   <>
-                    <PageTitle title="Assignment History | smartGiggs" />
+                    <PageTitle title="Assignment History | augustusstores" />
                     <AssignmentHistory />
                   </>
                 }
@@ -229,7 +229,7 @@ function App() {
                 path="/userprofile"
                 element={
                   <>
-                    <PageTitle title="User View | smartGiggs" />
+                    <PageTitle title="User View | augustusstores" />
                     <UserView />
                   </>
                 }
@@ -238,7 +238,7 @@ function App() {
                 path="/pointOfSale"
                 element={
                   <>
-                    <PageTitle title="Point of sale | smartGiggs" />
+                    <PageTitle title="Point of sale | augustusstores" />
                     <PointOfSales />
                   </>
                 }
@@ -247,7 +247,7 @@ function App() {
                 path="/user/sales"
                 element={
                   <>
-                    <PageTitle title="User Sales | smartGiggs" />
+                    <PageTitle title="User Sales | augustusstores" />
                     <UserSales />
                   </>
                 }
@@ -256,7 +256,7 @@ function App() {
                 path="/shop/sales"
                 element={
                   <>
-                    <PageTitle title="Shop Sales | smartGiggs" />
+                    <PageTitle title="Shop Sales | augustusstores" />
                     <ShopSales />
                   </>
                 }
@@ -266,7 +266,7 @@ function App() {
                 path="/financers"
                 element={
                   <>
-                    <PageTitle title="Financers | smartGiggs" />
+                    <PageTitle title="Financers | augustusstores" />
                     <FinancerManager />
                   </>
                 }
@@ -276,7 +276,7 @@ function App() {
                 path="/financer/report/:financerId"
                 element={
                   <>
-                    <PageTitle title="Financer Sales Report | smartGiggs" />
+                    <PageTitle title="Financer Sales Report | augustusstores" />
                     <FinancerSalesReport />
                   </>
                 }
@@ -286,7 +286,7 @@ function App() {
                 path="/commissions"
                 element={
                   <>
-                    <PageTitle title="Commissions | smartGiggs" />
+                    <PageTitle title="Commissions | augustusstores" />
                     <CommissionManager />
                   </>
                 }
@@ -296,7 +296,7 @@ function App() {
                 path="/salaries"
                 element={
                   <>
-                    <PageTitle title="Salaries | smartGiggs" />
+                    <PageTitle title="Salaries | augustusstores" />
                     <SalaryManager />
                   </>
                 }
@@ -306,7 +306,7 @@ function App() {
                 path="/suppliers"
                 element={
                   <>
-                    <PageTitle title="Suppliers | smartGiggs" />
+                    <PageTitle title="Suppliers | augustusstores" />
                     <SupplierManager />
                   </>
                 }
@@ -316,7 +316,7 @@ function App() {
                 path="/my-commissions"
                 element={
                   <>
-                    <PageTitle title="My Commissions | smartGiggs" />
+                    <PageTitle title="My Commissions | augustusstores" />
                     <CommissionManager />
                   </>
                 }
@@ -326,7 +326,7 @@ function App() {
                 path="/my-salary"
                 element={
                   <>
-                    <PageTitle title="My Salary | smartGiggs" />
+                    <PageTitle title="My Salary | augustusstores" />
                     <SalaryManager />
                   </>
                 }

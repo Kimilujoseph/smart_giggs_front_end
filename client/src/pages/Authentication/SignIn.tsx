@@ -71,7 +71,7 @@ const SignIn: React.FC = () => {
         {/* <CustomLogo /> */}
         <img
           src="/mutunga_dark_mode.png"
-          alt="smartGiggs Logo"
+          alt="augustusstores Logo"
           className="object-contain w-full h-[150px] mix-blend-difference"
         />
       </div>
@@ -83,7 +83,7 @@ const SignIn: React.FC = () => {
               {/* <CustomLogo /> */}
               <img
                 src="/mutunga_dark_mode.png"
-                alt="smartGiggs Logo"
+                alt="augustusstores Logo"
                 className="object-contain w-full h-full mix-blend-difference"
               />
               {/* <span className="mt-15 inline-block">

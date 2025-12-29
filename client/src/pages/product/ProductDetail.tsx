@@ -98,7 +98,7 @@ const ProductDetail = ({
   const [discount, setDiscount] = useState('');
   const [supplierName, setSupplierName] = useState('');
   const [newserialNumber, setNewSerialNumber] = useState('');
-  const [financer, setFinancer] = useState('smartGiggs');
+  const [financer, setFinancer] = useState('augustusstores');
   const [addingUnit, setAddingUnit] = useState<boolean>(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [supplierId, setSupplierId] = useState('');
@@ -203,8 +203,8 @@ const ProductDetail = ({
           },
           financeDetails: {
             financer: financer,
-            financeAmount: financer === 'smartGiggs' ? productcost : 0,
-            financeStatus: financer === 'smartGiggs' ? 'paid' : 'pending',
+            financeAmount: financer === 'augustusstores' ? productcost : 0,
+            financeStatus: financer === 'augustusstores' ? 'paid' : 'pending',
           },
         };
       } else {
@@ -329,8 +329,8 @@ const ProductDetail = ({
                   navigate(`?tab=product_details&subtab=${tab}`);
                 }}
                 className={`pb-2 px-3 sm:px-4 text-sm font-medium transition-colors min-w-fit ${activeTab === tab
-                    ? 'border-b-2 border-primary text-primary'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-primary'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-primary'
                   }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -646,7 +646,7 @@ const ProductDetail = ({
                               className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black text-sm outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                             >
                               <option value="">Select a Financier</option>
-                              <option value="smartGiggs">smartGiggs</option>
+                              <option value="augustusstores">augustusstores</option>
                               <option value="watu">Watu Simu</option>
                               <option value="mkopa">M-Kopa</option>
                             </select>
@@ -895,8 +895,8 @@ const ProductDetail = ({
                                     >
                                       <ChevronDownIcon
                                         className={`w-4 h-4 transition-transform ${openHistories[item.id]
-                                            ? 'rotate-180'
-                                            : ''
+                                          ? 'rotate-180'
+                                          : ''
                                           }`}
                                       />
                                     </button>
@@ -926,7 +926,7 @@ const ProductDetail = ({
                                         Distribution History
                                       </h4>
                                       {item.accessoryItems &&
-                                      item.accessoryItems.length > 0 ? (
+                                        item.accessoryItems.length > 0 ? (
                                         <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                                           {item.accessoryItems.map(
                                             (

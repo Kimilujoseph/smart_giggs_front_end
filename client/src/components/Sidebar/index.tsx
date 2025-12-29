@@ -95,7 +95,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
             {sidebarExpanded ? (
               <img
                 src="/mutunga_dark_mode.png"
-                alt="smartGiggs Logo"
+                alt="augustusstores Logo"
                 className={`object-contain h-[80px] w-auto mix-blend-difference`}
               />
             ) : (
