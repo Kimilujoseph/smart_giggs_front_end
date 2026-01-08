@@ -25,8 +25,10 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
-  
+  const [itemsPerPage, setItemsPerPage] = useState(2);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+
   // Filter states
   const [filters, setFilters] = useState({
     search: '',
@@ -47,7 +49,7 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
 
   useEffect(() => {
     fetchInventory();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
     if (inventory.length > 0) {
@@ -61,11 +63,26 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/category/all`, {
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: String(itemsPerPage),
+      });
+
+      // Append filters only if they have a value
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== 'all') {
+          params.append(key, value);
+        }
+      });
+
+      const res = await axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/category/all?${params.toString()}`, {
         withCredentials: true,
       });
-      const products = res.data.data.map((i: any) => ({ ...i, isMobile: true }));
+      const { data, totalPages: newTotalPages, totalItems: newTotalItems } = res.data;
+      const products = data.map((i: any) => ({ ...i, isMobile: true }));
       setInventory(products);
+      setTotalPages(newTotalPages);
+      setTotalItems(newTotalItems);
     } catch (error) {
       // console.error('Error fetching inventory:', error)
     } finally {
@@ -119,34 +136,6 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
     }
   };
 
-  const getStockStatus = (stock: number) => {
-    if (stock === 0) return 'outOfStock';
-    if (stock < 5) return 'lowStock';
-    return 'inStock';
-  };
-
-  const filterProducts = () => {
-    return inventory.filter(product => {
-      const searchMatch = product.itemName?.toLowerCase().includes(filters.search.toLowerCase());
-      const minPriceMatch = !filters.minPrice || product.minPrice >= Number(filters.minPrice);
-      const maxPriceMatch = !filters.maxPrice || product.maxPrice <= Number(filters.maxPrice);
-      const brandMatch = !filters.brand || product.brand === filters.brand;
-      const categoryMatch = !filters.category || product.category === filters.category;
-      const itemTypeMatch = !filters.itemType || product.itemType === filters.itemType;
-      const stockMatch = filters.stockStatus === 'all' || 
-        (filters.stockStatus === getStockStatus(product.Items?.length || 0));
-
-      return searchMatch && minPriceMatch && maxPriceMatch && brandMatch && 
-             categoryMatch && itemTypeMatch && stockMatch;
-    });
-  };
-
-  const filteredProducts = filterProducts();
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-
   const resetFilters = () => {
     setFilters({
       search: '',
@@ -191,6 +180,9 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
     </div>
   );
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
   return (
     <div className="space-y-4">
       {/* Search and Controls */}
@@ -202,9 +194,36 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
             className="w-full px-4 py-2 rounded-lg border border-stroke bg-transparent text-black dark:text-white focus:border-primary"
             value={filters.search}
             onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                if (filters.search) {
+                  try {
+                    setLoading(true);
+                    const requestBody = {
+                      category: filters.category || 'category',
+                      searchItem: filters.search,
+                    };
+                    const res = await axios.post(`${import.meta.env.VITE_SERVER_HEAD}/api/search/products`, requestBody, {
+                      withCredentials: true,
+                    });
+                    const { data } = res.data;
+                    const products = data.map((i: any) => ({ ...i, isMobile: true }));
+                    setInventory(products);
+                    setTotalPages(1); // Reset pagination for search results
+                    setTotalItems(products.length);
+                  } catch (error) {
+                    // console.error('Error searching inventory:', error)
+                  } finally {
+                    setLoading(false);
+                  }
+                } else {
+                  fetchInventory();
+                }
+              }
+            }}
           />
         </div>
-        
+
         <div className="flex items-center gap-4 w-full lg:w-auto">
           <button
             onClick={handleAdd}
@@ -220,7 +239,7 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
             <Filter className="w-4 h-4" />
             <span>Filters</span>
           </button>
-          
+
           <div className="flex items-center">
             <label className="text-sm text-black dark:text-white">Show&nbsp;</label>
             <select
@@ -253,7 +272,7 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
               Reset
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <FilterInput
               label="Brand"
@@ -261,35 +280,35 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
               onChange={(e: any) => setFilters(prev => ({ ...prev, brand: e.target.value }))}
               options={Array.from(uniqueValues.brands)}
             />
-            
+
             <FilterInput
               label="Category"
               value={filters.category}
               onChange={(e: any) => setFilters(prev => ({ ...prev, category: e.target.value }))}
               options={Array.from(uniqueValues.categories)}
             />
-            
+
             <FilterInput
               label="Item Type"
               value={filters.itemType}
               onChange={(e: any) => setFilters(prev => ({ ...prev, itemType: e.target.value }))}
               options={Array.from(uniqueValues.itemTypes)}
             />
-            
+
             <FilterInput
               label="Stock Status"
               value={filters.stockStatus}
               onChange={(e: any) => setFilters(prev => ({ ...prev, stockStatus: e.target.value }))}
               options={['all', 'inStock', 'lowStock', 'outOfStock']}
             />
-            
+
             <FilterInput
               label="Min Price"
               type="number"
               value={filters.minPrice}
               onChange={(e: any) => setFilters(prev => ({ ...prev, minPrice: e.target.value }))}
             />
-            
+
             <FilterInput
               label="Max Price"
               type="number"
@@ -325,24 +344,23 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
                     </div>
                   </td>
                 </tr>
-              ) : currentItems.length === 0 ? (
+              ) : inventory.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-4 text-center text-black dark:text-white">
                     No items found
                   </td>
                 </tr>
               ) : (
-                currentItems.map((product: Product) => (
+                inventory.map((product: Product) => (
                   <tr key={product.id} className="border-b border-[#eee] dark:border-strokedark hover:bg-gray-1 dark:hover:bg-meta-4">
                     <td className="py-3 px-4">
                       <h5 className="font-medium text-black dark:text-white">{product.itemName}</h5>
                     </td>
                     <td className="py-3 px-4">
-                      <p className={`text-black dark:text-white ${
-                        (product.availableStock) === 0 ? 'text-red-500' :
+                      <p className={`text-black dark:text-white ${(product.availableStock) === 0 ? 'text-red-500' :
                         (product.availableStock) < 5 ? 'text-yellow-500' :
-                        'text-green-500'
-                      }`}>
+                          'text-green-500'
+                        }`}>
                         {product.availableStock}
                       </p>
                     </td>
@@ -360,15 +378,14 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
                     </td>
                     <td className="py-3 px-4">
                       <p
-                        className={`inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium ${
-                          product.status === 'AVAILABLE'
-                            ? 'bg-success text-success'
-                            : product.status === 'DELETED'
+                        className={`inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium ${product.status === 'AVAILABLE'
+                          ? 'bg-success text-success'
+                          : product.status === 'DELETED'
                             ? 'bg-danger text-danger'
                             : product.status === 'SUSPENDED'
-                            ? 'bg-warning text-warning'
-                            : 'bg-primary text-primary'
-                        }`}
+                              ? 'bg-warning text-warning'
+                              : 'bg-primary text-primary'
+                          }`}
                       >
                         {product.status}
                       </p>
@@ -408,10 +425,10 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
         </div>
 
         {/* Pagination */}
-        {!loading && currentItems.length > 0 && (
+        {!loading && inventory.length > 0 && (
           <div className="flex flex-col sm:flex-row justify-between items-center p-4 gap-4">
             <div className="text-sm text-black dark:text-white">
-              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredProducts.length)} of {filteredProducts.length} entries
+              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
             </div>
 
             <div className="flex items-center gap-2">
@@ -426,18 +443,17 @@ const ProductsTable: React.FC<ProductTableProps> = ({ getFreshUserData }) => {
               <div className="flex gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
                   .filter(num => num === 1 || num === totalPages || (num >= currentPage - 1 && num <= currentPage + 1))
-                  .map((number) => (
+                  .map((number, index, arr) => (
                     <React.Fragment key={number}>
-                      {number !== 1 && number !== currentPage - 1 && number > 2 && (
+                      {index > 0 && number > arr[index - 1] + 1 && (
                         <span className="px-2 py-1 text-black dark:text-white">...</span>
                       )}
                       <button
                         onClick={() => setCurrentPage(number)}
-                        className={`min-w-[32px] px-2 py-1 rounded-lg border border-stroke ${
-                          currentPage === number
-                            ? 'bg-primary text-white'
-                            : 'hover:bg-gray-2 dark:hover:bg-meta-4'
-                        }`}
+                        className={`min-w-[32px] px-2 py-1 rounded-lg border border-stroke ${currentPage === number
+                          ? 'bg-primary text-white'
+                          : 'hover:bg-gray-2 dark:hover:bg-meta-4'
+                          }`}
                       >
                         {number}
                       </button>
