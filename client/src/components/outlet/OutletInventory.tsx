@@ -26,6 +26,7 @@ import {
   X,
   UserPlus,
   Eye,
+  CornerUpLeft,
 } from 'lucide-react';
 import Message from '../alerts/Message';
 // import { getAllUsers } from '../../api/user_manager';
@@ -71,6 +72,9 @@ const OutletInventoryView: React.FC = () => {
   const [searchResults, setSearchResults] = useState<any | null>(null);
   const [pendingMobiles, setPendingMobiles] = useState<any[]>([]);
   const [pendingAccessories, setPendingAccessories] = useState<any[]>([]);
+  const [reversalModalOpen, setReversalModalOpen] = useState(false);
+  const [reversingItem, setReversingItem] = useState<any | null>(null);
+  const [reversalQuantity, setReversalQuantity] = useState(1);
 
   useEffect(() => {
     const token = localStorage.getItem('tk');
@@ -457,6 +461,63 @@ const OutletInventoryView: React.FC = () => {
     }
   };
 
+  const handleReversal = async (
+    productItemId: string,
+    quantity: number,
+    productType: string,
+  ) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_SERVER_HEAD
+        }/api/distribution/reversal-distribution`,
+        {
+          productItemId: productItemId,
+          quantity: quantity,
+          productType: productType,
+          fromShop: shopname,
+        },
+        { withCredentials: true },
+      );
+
+      if (response.status === 200) {
+        setMessage({ text: 'Product returned successfully!', type: 'success' });
+        // Refresh data
+        fetchMobileItems(mobilePage);
+        fetchAccessoryItems(accessoryPage);
+      }
+    } catch (error: any) {
+      setMessage({
+        text: error.response?.data?.message || 'Failed to return product',
+        type: 'error',
+      });
+    } finally {
+      setLoading(false);
+      setReversalModalOpen(false);
+      setReversingItem(null);
+    }
+  };
+
+  const handleReturnClick = (
+    item: any,
+    productType: 'mobile' | 'accessory',
+  ) => {
+    if (productType === 'mobile') {
+      if (
+        window.confirm(
+          'Are you sure you want to return this mobile? The quantity is 1.',
+        )
+      ) {
+        handleReversal(item.id, 1, 'mobile');
+      }
+    } else {
+      // accessory
+      setReversingItem(item);
+      setReversalQuantity(1); // Reset quantity
+      setReversalModalOpen(true);
+    }
+  };
+
 
 
 
@@ -505,6 +566,7 @@ const OutletInventoryView: React.FC = () => {
                     <th className="p-3">Quantity</th>
                     {userPermissions !== 'seller' && <th className="p-3">Cost</th>}
                     <th className="p-3">{isPhones ? 'IMEI' : 'Batch'}</th>
+                    <th className="p-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="text-xs md:text-sm lg:text-base text-center">
@@ -522,6 +584,14 @@ const OutletInventoryView: React.FC = () => {
                         <td className="p-3">{item.quantity}</td>
                         {userPermissions !== 'seller' && <td className="p-3">{details.productCost}</td>}
                         <td className="p-3">{isPhones ? details.IMEI : details.batchNumber}</td>
+                        <td className="p-3">
+                          <button
+                            onClick={() => handleReturnClick(item, isPhones ? 'mobile' : 'accessory')}
+                            className="p-1 hover:bg-gray-100 rounded-full text-gray-600 hover:text-primary transition-colors"
+                          >
+                            <CornerUpLeft className="w-4 h-4" />
+                          </button>
+                        </td>
                       </tr>
                     )
                   })}
@@ -949,6 +1019,80 @@ const OutletInventoryView: React.FC = () => {
         // <ModalAlert message='You have not been assigned to any shop' onClose={() => navigate('/settings')} />
         //)
         renderContent()
+      )}
+      {reversalModalOpen && reversingItem && (
+        <Dialog
+          open={reversalModalOpen}
+          onClose={() => setReversalModalOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle className="bg-boxdark/95">
+            <div className="flex justify-between items-center">
+              <span className="text-title-sm font-medium text-black dark:text-white">
+                Return Accessory
+              </span>
+              <button
+                onClick={() => setReversalModalOpen(false)}
+                className="p-1 hover:bg-gray dark:hover:bg-boxdark-2 rounded-full"
+              >
+                <X className="w-5 h-5 text-body dark:text-bodydark" />
+              </button>
+            </div>
+          </DialogTitle>
+          <DialogContent className="dark:bg-boxdark">
+            <div className="mt-4 space-y-4">
+              <p className="dark:text-white">
+                Item: {reversingItem.accessories.categories.itemName}
+              </p>
+              <p className="dark:text-white">
+                Available Quantity: {reversingItem.quantity}
+              </p>
+              <div>
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
+                  Quantity to Return
+                </label>
+                <input
+                  type="number"
+                  value={reversalQuantity}
+                  onChange={(e) =>
+                    setReversalQuantity(Number(e.target.value))
+                  }
+                  min="1"
+                  max={reversingItem.quantity}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setReversalModalOpen(false)}
+                className="px-4 py-2 text-body dark:text-bodydark bg-gray dark:bg-boxdark-2 rounded-lg hover:bg-gray-2 dark:hover:bg-boxdark transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (reversingItem) {
+                    handleReversal(
+                      reversingItem.id,
+                      reversalQuantity,
+                      'accessory',
+                    );
+                  }
+                }}
+                className="px-4 py-2 text-white bg-primary rounded-lg hover:opacity-90 transition-colors"
+                disabled={
+                  !reversalQuantity ||
+                  reversalQuantity <= 0 ||
+                  reversalQuantity > reversingItem.quantity
+                }
+              >
+                Confirm Return
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
       {/* Modal for New Stock */}
       {showNewStock && (

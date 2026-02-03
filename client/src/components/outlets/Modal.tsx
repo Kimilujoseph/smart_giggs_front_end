@@ -82,6 +82,39 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
     }
   };
 
+  const handleReject = async (item: any) => {
+    const fromShop = shopData.name;
+    const productItemId = item.id;
+    const quantity = filter === 'accessory' ? item.quantity : 1;
+    const apiProductType = filter === 'phone' ? 'mobile' : 'accessory';
+
+    try {
+      if (!window.confirm(`Are you sure you want to reject this ${filter}?`)) {
+        return;
+      }
+
+      await axios.post(
+        `${import.meta.env.VITE_SERVER_HEAD
+        }/api/distribution/reversal-distribution`,
+        {
+          productItemId: productItemId,
+          quantity: quantity,
+          productType: apiProductType,
+          fromShop: fromShop,
+        },
+        { withCredentials: true },
+      );
+
+      setMessage({ text: 'Product rejected successfully!', type: 'success' });
+      refreshShopData();
+    } catch (error: any) {
+      setMessage({
+        text: error.response?.data?.message || 'Failed to reject product',
+        type: 'error',
+      });
+    }
+  };
+
   const renderItems = () => {
     const items = filter === 'phone'
       ? shopData.pendingMobiles || []
@@ -119,6 +152,14 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
               onClick={() => handleApprove(item)}
             >
               <span className="bg-success px-2 rounded">Approve</span>
+            </button>
+          </td>
+          <td>
+            <button
+              className="px-2 text-sm tracking-wide text-black text-center dark:text-white flex items-center justify-center"
+              onClick={() => handleReject(item)}
+            >
+              <span className="bg-danger px-2 rounded">Reject</span>
             </button>
           </td>
         </tr>
@@ -159,8 +200,8 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
             </button>
             <button
               className={`w-full md:w-1/4 px-4 py-2 rounded outline-none ${filter === 'accessory'
-                ? 'bg-primary text-white'
-                : 'bg-gray-300 dark:text-boxdark-2'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-300 dark:text-boxdark-2'
                 }`}
               onClick={() => handleFilterChange('accessory')}
             >
@@ -188,20 +229,23 @@ const Modal: React.FC<ModalProps> = ({ onClose, shopData, refreshShopData }) => 
               >
                 Approve All
               </button>
-              <table className="w-full">
-                <thead className="bg-boxdark dark:bg-boxdark-2">
-                  <tr className="text-center *:py-3">
-                    <th>Model</th>
-                    <th>Product</th>
-                    <th>{filter === 'phone' ? 'IMEI' : 'Batch'}</th>
-                    <th>Qty</th>
-                    <th>Status</th>
-                    <th>Price Range</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>{renderItems()}</tbody>
-              </table>
+              <div className="overflow-x-auto w-full">
+                <table className="w-full whitespace-nowrap">
+                  <thead className="bg-boxdark dark:bg-boxdark-2">
+                    <tr className="text-center *:py-3">
+                      <th>Model</th>
+                      <th>Product</th>
+                      <th>{filter === 'phone' ? 'IMEI' : 'Batch'}</th>
+                      <th>Qty</th>
+                      <th>Status</th>
+                      <th>Price Range</th>
+                      <th>Approve</th>
+                      <th>Reject</th>
+                    </tr>
+                  </thead>
+                  <tbody>{renderItems()}</tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
