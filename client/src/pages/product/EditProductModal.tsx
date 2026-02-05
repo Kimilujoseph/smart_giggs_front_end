@@ -62,7 +62,15 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         const productData = isMobile
           ? response.data.data.findSpecificProduct
           : response.data.data;
-        setFormData({ ...productData, itemType: productItem.itemType });
+        if (isMobile) {
+          setFormData({ ...productData, itemType: productItem.itemType });
+        } else {
+          setFormData({
+            ...productData,
+            faultyItems: 0,
+            itemType: productItem.itemType,
+          });
+        }
       } catch (err) {
         console.error('Failed to fetch product details', err);
         setMessage({
@@ -147,6 +155,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       payload.IMEI = formData.IMEI;
     } else {
       payload.productType = formData.productType;
+      payload.faultyItems = Number(formData.faultyItems);
     }
 
     try {
@@ -345,18 +354,33 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 )}
 
                 {!isMobile && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Product Type
-                    </label>
-                    <input
-                      type="text"
-                      name="productType"
-                      value={formData.productType || ''}
-                      onChange={handleChange}
-                      className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Product Type
+                      </label>
+                      <input
+                        type="text"
+                        name="productType"
+                        value={formData.productType || ''}
+                        onChange={handleChange}
+                        className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Faulty Items
+                      </label>
+                      <input
+                        type="number"
+                        name="faultyItems"
+                        value={formData.faultyItems || 0}
+                        onChange={handleChange}
+                        min="0"
+                        className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
+                      />
+                    </div>
+                  </>
                 )}
               </div>
               <div className="flex justify-end pt-4">

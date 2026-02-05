@@ -760,9 +760,14 @@ const ProductDetail = ({
                           Color
                         </th>
                         {product.category === 'accessories' && (
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
-                            Units
-                          </th>
+                          <>
+                            <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                              Units
+                            </th>
+                            <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                              Faulty
+                            </th>
+                          </>
                         )}
                         <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Stock Status
@@ -785,7 +790,7 @@ const ProductDetail = ({
                       {!filteredUnits || filteredUnits.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={9}
+                            colSpan={product.category === 'accessories' ? 10 : 9}
                             className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
                           >
                             No items available
@@ -807,9 +812,20 @@ const ProductDetail = ({
                                 {item.color}
                               </td>
                               {product.category === 'accessories' && (
-                                <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                                  {item.availableStock}
-                                </td>
+                                <>
+                                  <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                    {item.availableStock}
+                                  </td>
+                                  <td
+                                    className={`px-3 sm:px-4 py-3 whitespace-nowrap text-sm table-cell ${
+                                      item.faultyItems > 0
+                                        ? 'text-red-500 font-bold'
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    }`}
+                                  >
+                                    {item.faultyItems || 0}
+                                  </td>
+                                </>
                               )}
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                                 <span
