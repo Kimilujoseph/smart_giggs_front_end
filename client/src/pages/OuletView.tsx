@@ -34,12 +34,14 @@ import {
   Shuffle,
   RefreshCw,
   Check,
+  Receipt,
 } from 'lucide-react';
 import Message from '../components/alerts/Message';
 import ModalAlert from '../components/alerts/Alert';
 import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
 import ClickOutside from '../components/ClickOutside';
 import { getAllUsers } from '../api/user_manager';
+import { ExpenseFormData } from '../types/expense';
 
 const OutletView: React.FC = () => {
   const [shop, setShop] = useState<Shop | null>(null);
@@ -79,6 +81,19 @@ const OutletView: React.FC = () => {
   const [pendingAccessories, setPendingAccessories] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any | null>(null);
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [expenseFormData, setExpenseFormData] = useState<ExpenseFormData>({
+    shopId: 0,
+    amount: 0,
+    category: 'OTHER',
+    subcategory: '',
+    description: '',
+    paymentMethod: 'CASH',
+    vendorName: '',
+    vendorContact: '',
+  });
+  const [submittingExpense, setSubmittingExpense] = useState(false);
+
   const token: string | null = localStorage.getItem('tk') || null;
   const decoded: DecodedToken | null = jwt_decode(token!) || null;
   const sections = [
@@ -101,7 +116,11 @@ const OutletView: React.FC = () => {
       key: 'Low Stock',
       icon: AlertTriangle,
     },
-
+    {
+      name: 'Expenses',
+      key: 'Expenses',
+      icon: Receipt,
+    },
     userPermissions === 'manager' || userPermissions === 'superuser'
       ? {
         name: 'Outlet Sellers',
@@ -118,7 +137,7 @@ const OutletView: React.FC = () => {
         icon: SettingsIcon,
       }
       : null,
-  ];
+  ].filter(Boolean);
   const [activeSection, setActiveSection] = useState<string | undefined>(
     sections[0]?.name || sections[1]?.name,
   );
@@ -496,6 +515,82 @@ const OutletView: React.FC = () => {
     }
   };
 
+  const handleExpenseChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setExpenseFormData((prev) => ({
+      ...prev,
+      [name]: name === 'amount' ? parseFloat(value) || 0 : value,
+    }));
+  };
+
+  const handleExpenseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!shop) {
+      setMessage({ text: 'Shop data not available', type: 'error' });
+      return;
+    }
+
+    const shopIdToUse = Number(shop.id || shop._id);
+
+    if (!shopIdToUse || isNaN(shopIdToUse)) {
+      setMessage({ text: 'Invalid shop ID. Please refresh the page.', type: 'error' });
+      return;
+    }
+
+    if (!expenseFormData.amount || expenseFormData.amount <= 0) {
+      setMessage({ text: 'Please enter a valid amount', type: 'error' });
+      return;
+    }
+
+    if (!expenseFormData.description) {
+      setMessage({ text: 'Please enter a description', type: 'error' });
+      return;
+    }
+
+    try {
+      setSubmittingExpense(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/expenses/create`,
+        {
+          shopId: shopIdToUse,
+          amount: expenseFormData.amount,
+          category: expenseFormData.category,
+          subcategory: expenseFormData.subcategory,
+          description: expenseFormData.description,
+          paymentMethod: expenseFormData.paymentMethod,
+          vendorName: expenseFormData.vendorName,
+          vendorContact: expenseFormData.vendorContact,
+        },
+        { withCredentials: true },
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        setMessage({ text: 'Expense created successfully!', type: 'success' });
+        setExpenseModalOpen(false);
+        setExpenseFormData({
+          shopId: 0,
+          amount: 0,
+          category: 'OTHER',
+          subcategory: '',
+          description: '',
+          paymentMethod: 'CASH',
+          vendorName: '',
+          vendorContact: '',
+        });
+      }
+    } catch (error: any) {
+      setMessage({
+        text: error.response?.data?.message || error.message || 'Failed to create expense',
+        type: 'error',
+      });
+    } finally {
+      setSubmittingExpense(false);
+    }
+  };
+
 
 
 
@@ -838,6 +933,49 @@ const OutletView: React.FC = () => {
         )
       }
 
+      case 'Expenses':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+                Outlet Expense Management
+              </h2>
+              <button
+                onClick={() => setExpenseModalOpen(true)}
+                className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                <Receipt className="w-4 h-4 mr-2" />
+                Add New Expense
+              </button>
+            </div>
+
+            <div className="bg-white dark:bg-boxdark rounded-lg shadow-md p-8">
+              <div className="text-center">
+                <Receipt className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-700 dark:text-white mb-2">
+                  Expense Tracking for {shop?.shopName || shop?.name || 'Outlet'}
+                </h3>
+                <p className="text-gray-500 dark:text-gray-300">
+                  Click "Add New Expense" to record outlet expenses such as rent, utilities, supplies, or marketing costs.
+                </p>
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-gray-50 dark:bg-meta-4 rounded-lg">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Total Expenses</p>
+                    <p className="text-2xl font-bold text-primary">Ksh 0</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-meta-4 rounded-lg">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">This Month</p>
+                    <p className="text-2xl font-bold text-green-600">Ksh 0</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-meta-4 rounded-lg">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Pending Approval</p>
+                    <p className="text-2xl font-bold text-orange-600">0</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
 
       case 'Sellers':
         return (
@@ -1299,6 +1437,164 @@ const OutletView: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Expense Modal */}
+      <Dialog
+        open={expenseModalOpen}
+        onClose={() => setExpenseModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle className="bg-boxdark/95">
+          <div className="flex justify-between items-center">
+            <span className="text-title-sm font-medium text-black dark:text-white">
+              Add New Expense
+            </span>
+            <button
+              onClick={() => setExpenseModalOpen(false)}
+              className="p-1 hover:bg-gray dark:hover:bg-boxdark-2 rounded-full"
+            >
+              <X className="w-5 h-5 text-body dark:text-bodydark" />
+            </button>
+          </div>
+        </DialogTitle>
+        <DialogContent className="dark:bg-boxdark">
+          <form onSubmit={handleExpenseSubmit} className="mt-4 space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-black dark:text-white">
+                  Amount *
+                </label>
+                <input
+                  type="number"
+                  name="amount"
+                  value={expenseFormData.amount}
+                  onChange={handleExpenseChange}
+                  min="0"
+                  step="0.01"
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Enter amount"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-black dark:text-white">
+                  Category *
+                </label>
+                <select
+                  name="category"
+                  value={expenseFormData.category}
+                  onChange={handleExpenseChange}
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="RENT">Rent</option>
+                  <option value="UTILITIES">Utilities</option>
+                  <option value="SUPPLIES">Supplies</option>
+                  <option value="MARKETING">Marketing</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-black dark:text-white">
+                Subcategory
+              </label>
+              <input
+                type="text"
+                name="subcategory"
+                value={expenseFormData.subcategory}
+                onChange={handleExpenseChange}
+                className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter subcategory (optional)"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-black dark:text-white">
+                Description *
+              </label>
+              <textarea
+                name="description"
+                value={expenseFormData.description}
+                onChange={handleExpenseChange}
+                required
+                rows={3}
+                className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter expense description"
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-black dark:text-white">
+                  Payment Method *
+                </label>
+                <select
+                  name="paymentMethod"
+                  value={expenseFormData.paymentMethod}
+                  onChange={handleExpenseChange}
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="CASH">Cash</option>
+                  <option value="CARD">Card</option>
+                  <option value="TRANSFER">Transfer</option>
+                  <option value="MPESA">M-Pesa</option>
+                  <option value="AIRTELMONEY">Airtel Money</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-black dark:text-white">
+                  Vendor Name
+                </label>
+                <input
+                  type="text"
+                  name="vendorName"
+                  value={expenseFormData.vendorName}
+                  onChange={handleExpenseChange}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Enter vendor name"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-black dark:text-white">
+                Vendor Contact
+              </label>
+              <input
+                type="text"
+                name="vendorContact"
+                value={expenseFormData.vendorContact}
+                onChange={handleExpenseChange}
+                className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter vendor contact (optional)"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setExpenseModalOpen(false)}
+                className="px-4 py-2 text-body dark:text-bodydark bg-gray dark:bg-boxdark-2 rounded-lg hover:bg-gray-2 dark:hover:bg-boxdark transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submittingExpense}
+                className="px-4 py-2 text-white bg-primary rounded-lg hover:opacity-90 transition-colors disabled:opacity-50"
+              >
+                {submittingExpense ? 'Submitting...' : 'Submit Expense'}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

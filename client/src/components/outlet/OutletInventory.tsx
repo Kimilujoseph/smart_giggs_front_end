@@ -27,6 +27,8 @@ import {
   UserPlus,
   Eye,
   CornerUpLeft,
+  DollarSign,
+  Receipt,
 } from 'lucide-react';
 import Message from '../alerts/Message';
 // import { getAllUsers } from '../../api/user_manager';
@@ -35,6 +37,7 @@ import Breadcrumb from '../Breadcrumbs/Breadcrumb';
 import ClickOutside from '../ClickOutside';
 import { getAllUsers } from '../../api/user_manager';
 import ProductTransfer from '../inventory/ProductTransfer';
+import { ExpenseFormData } from '../../types/expense';
 
 // interface Notification {
 //   type: string;
@@ -75,6 +78,19 @@ const OutletInventoryView: React.FC = () => {
   const [reversalModalOpen, setReversalModalOpen] = useState(false);
   const [reversingItem, setReversingItem] = useState<any | null>(null);
   const [reversalQuantity, setReversalQuantity] = useState(1);
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [expenseFormData, setExpenseFormData] = useState<ExpenseFormData>({
+    shopId: 0,
+    amount: 0,
+    category: 'OTHER',
+    subcategory: '',
+    description: '',
+    paymentMethod: 'CASH',
+    vendorName: '',
+    vendorContact: '',
+  });
+  const [submittingExpense, setSubmittingExpense] = useState(false);
+  const [parsedShopId, setParsedShopId] = useState<number>(0);
 
   useEffect(() => {
     const token = localStorage.getItem('tk');
@@ -113,19 +129,24 @@ const OutletInventoryView: React.FC = () => {
       key: 'Transfer',
       icon: Share2,
     },
+    {
+      name: 'Expenses',
+      key: 'Expenses',
+      icon: Receipt,
+    },
     userPermissions === 'manager' || userPermissions === 'superuser'
       ? {
-        name: 'Outlet Sellers',
-        key: 'Sellers',
-        icon: UserIcon,
-      }
+          name: 'Outlet Sellers',
+          key: 'Sellers',
+          icon: UserIcon,
+        }
       : null,
     {
       name: 'Outlet Settings',
       key: 'Outlet Settings',
       icon: SettingsIcon,
     },
-  ];
+  ].filter(Boolean);
 
   const [assignmentData, setAssignmentData] = useState({
     name: '',
@@ -158,7 +179,7 @@ const OutletInventoryView: React.FC = () => {
           setUsers(user_res?.data);
         }
       } catch (error: any) {
-        alert("An error occurred while fetching users");
+        alert('An error occurred while fetching users');
       }
     };
     fetchUsers();
@@ -199,8 +220,6 @@ const OutletInventoryView: React.FC = () => {
   const calculateInventoryStats = () => {
     if (!shop) return null;
 
-
-
     const phoneItems = shop.phoneItems || [];
     const accessories = shop.stockItems || [];
     const totalPhones = phoneItems.reduce(
@@ -211,7 +230,6 @@ const OutletInventoryView: React.FC = () => {
       (sum, item) => sum + item.quantity,
       0,
     );
-
 
     const soldPhones = phoneItems.filter(
       (item: any) => item.stock.stockStatus.toLowerCase() === 'sold',
@@ -242,7 +260,6 @@ const OutletInventoryView: React.FC = () => {
         sum + item.quantity * (Number(item.stock.productcost) || 0),
       0,
     );
-
 
     const accessoryValue = accessories.reduce(
       (sum, item) =>
@@ -281,14 +298,12 @@ const OutletInventoryView: React.FC = () => {
           return;
         }
         const response = await axios.get(
-          `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${decoded.email
+          `${import.meta.env.VITE_SERVER_HEAD}/api/user/profile/${
+            decoded.email
           }`,
           { withCredentials: true },
         );
         const { assignedShop } = response.data.user;
-
-
-
 
         if (!assignedShop && userPermissions === 'seller') {
           setModalAlert({
@@ -297,7 +312,11 @@ const OutletInventoryView: React.FC = () => {
           });
         }
         setCurrentUser(response.data.user);
-        // setShop(assignedShop);
+        
+        // Parse and store the shopId
+        const shopIdNum = Number(assignedShop.id);
+        setParsedShopId(shopIdNum);
+        
         setOutletFormData({
           name: assignedShop.shopName,
           address: assignedShop.address,
@@ -335,10 +354,15 @@ const OutletInventoryView: React.FC = () => {
       if (response.data) {
         let outlet = { ...response.data.shop.filteredShop };
         setShop(response.data.shop.filteredShop);
+        
+        // Parse and store the shopId - use _id from shop data
+        const shopIdNum = Number(outlet._id || outlet.id);
+        setParsedShopId(shopIdNum);
+        
         setOutletFormData({
           name: outlet.name,
           address: outlet.address,
-          id: outlet.id,
+          id: outlet._id || outlet.id,
         });
       }
     } catch (error: any) {
@@ -355,47 +379,57 @@ const OutletInventoryView: React.FC = () => {
   const fetchMobileItems = async (page = 1) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?page=${page}&limit=${itemsPerPage}&itemType=mobile&status=confirmed`,
+        `${
+          import.meta.env.VITE_SERVER_HEAD
+        }/api/shop/${shopname}?page=${page}&limit=${itemsPerPage}&itemType=mobile&status=confirmed`,
         { withCredentials: true },
       );
       setMobileItems(response.data.shop.filteredShop.mobileItems);
     } catch (error) {
-      console.error("Failed to fetch mobile items", error);
+      console.error('Failed to fetch mobile items', error);
     }
   };
 
   const fetchAccessoryItems = async (page = 1) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?page=${page}&limit=${itemsPerPage}&itemType=accessory&status=confirmed`,
+        `${
+          import.meta.env.VITE_SERVER_HEAD
+        }/api/shop/${shopname}?page=${page}&limit=${itemsPerPage}&itemType=accessory&status=confirmed`,
         { withCredentials: true },
       );
       setAccessoryItems(response.data.shop.filteredShop.accessoryItems);
     } catch (error) {
-      console.error("Failed to fetch accessory items", error);
+      console.error('Failed to fetch accessory items', error);
     }
   };
 
   const fetchPendingStock = async () => {
     try {
       const mobileResponse = await axios.get(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?itemType=mobile&status=pending`,
+        `${
+          import.meta.env.VITE_SERVER_HEAD
+        }/api/shop/${shopname}?itemType=mobile&status=pending`,
         { withCredentials: true },
       );
       const accessoryResponse = await axios.get(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/${shopname}?itemType=accessory&status=pending`,
+        `${
+          import.meta.env.VITE_SERVER_HEAD
+        }/api/shop/${shopname}?itemType=accessory&status=pending`,
         { withCredentials: true },
       );
 
-      const mobiles = mobileResponse.data.shop.filteredShop.mobileItems?.items || [];
+      const mobiles =
+        mobileResponse.data.shop.filteredShop.mobileItems?.items || [];
       //console.log("@@@@@@@@", mobiles)
-      const accessories = accessoryResponse.data.shop.filteredShop.accessoryItems?.items || [];
+      const accessories =
+        accessoryResponse.data.shop.filteredShop.accessoryItems?.items || [];
       // console.log("!@!@!@accessories", accessories)
       setPendingMobiles(mobiles);
       setPendingAccessories(accessories);
       setNewStockTally(mobiles.length + accessories.length);
     } catch (error) {
-      console.error("Failed to fetch pending stock", error);
+      console.error('Failed to fetch pending stock', error);
     }
   };
 
@@ -406,18 +440,19 @@ const OutletInventoryView: React.FC = () => {
     }
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/searchproducts/${shopname}?productName=${searchTerm}`,
+        `${
+          import.meta.env.VITE_SERVER_HEAD
+        }/api/shop/searchproducts/${shopname}?productName=${searchTerm}`,
         { withCredentials: true },
       );
       setSearchResults(response.data.products);
     } catch (error) {
-      console.error("Failed to search products", error);
+      console.error('Failed to search products', error);
     }
   };
 
   useEffect(() => {
     if (userPermissions === 'seller' && !urlShopname) {
-
       fetchUserData();
     }
   }, [userPermissions]);
@@ -439,7 +474,8 @@ const OutletInventoryView: React.FC = () => {
 
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/update/${outletFormData.id
+        `${import.meta.env.VITE_SERVER_HEAD}/api/shop/update/${
+          outletFormData.id
         }`,
         outletFormData,
         { withCredentials: true },
@@ -469,7 +505,8 @@ const OutletInventoryView: React.FC = () => {
     try {
       setLoading(true);
       const response = await axios.post(
-        `${import.meta.env.VITE_SERVER_HEAD
+        `${
+          import.meta.env.VITE_SERVER_HEAD
         }/api/distribution/reversal-distribution`,
         {
           productItemId: productItemId,
@@ -518,29 +555,167 @@ const OutletInventoryView: React.FC = () => {
     }
   };
 
+  const handleExpenseChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
+    const { name, value } = e.target;
+    setExpenseFormData((prev) => ({
+      ...prev,
+      [name]: name === 'amount' ? parseFloat(value) || 0 : value,
+    }));
+  };
 
+  const handleExpenseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
+    if (!shop && parsedShopId === 0) {
+      setMessage({ text: 'Shop data not available. Please refresh the page.', type: 'error' });
+      return;
+    }
 
+    // Use parsedShopId which was set when shop data was fetched
+    const shopIdToUse = parsedShopId || Number(shop?.id);
+    
+    if (!shopIdToUse || isNaN(shopIdToUse) || shopIdToUse === 0) {
+      setMessage({ 
+        text: 'Invalid shop ID. Please refresh the page and try again.', 
+        type: 'error' 
+      });
+      return;
+    }
+
+    if (!expenseFormData.amount || expenseFormData.amount <= 0) {
+      setMessage({ text: 'Please enter a valid amount', type: 'error' });
+      return;
+    }
+
+    if (!expenseFormData.description) {
+      setMessage({ text: 'Please enter a description', type: 'error' });
+      return;
+    }
+
+    try {
+      setSubmittingExpense(true);
+      
+      const expensePayload = {
+        shopId: shopIdToUse,
+        amount: expenseFormData.amount,
+        category: expenseFormData.category,
+        subcategory: expenseFormData.subcategory,
+        description: expenseFormData.description,
+        paymentMethod: expenseFormData.paymentMethod,
+        vendorName: expenseFormData.vendorName,
+        vendorContact: expenseFormData.vendorContact,
+      };
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_SERVER_HEAD}/api/expenses/create`,
+        expensePayload,
+        { withCredentials: true },
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        setMessage({ text: 'Expense created successfully!', type: 'success' });
+        setExpenseModalOpen(false);
+        setExpenseFormData({
+          shopId: 0,
+          amount: 0,
+          category: 'OTHER',
+          subcategory: '',
+          description: '',
+          paymentMethod: 'CASH',
+          vendorName: '',
+          vendorContact: '',
+        });
+      }
+    } catch (error: any) {
+      setMessage({
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          'Failed to create expense',
+        type: 'error',
+      });
+    } finally {
+      setSubmittingExpense(false);
+    }
+  };
 
   const renderContent = () => {
     switch (activeSection) {
       case 'Transfer':
-        return <ProductTransfer
-          currentUser={currentUser}
-          mobileItems={mobileItems}
-          accessoryItems={accessoryItems}
-          refreshData={() => {
-            fetchMobileItems(mobilePage);
-            fetchAccessoryItems(accessoryPage);
-          }}
-        />;
+        return (
+          <ProductTransfer
+            currentUser={currentUser}
+            mobileItems={mobileItems}
+            accessoryItems={accessoryItems}
+            refreshData={() => {
+              fetchMobileItems(mobilePage);
+              fetchAccessoryItems(accessoryPage);
+            }}
+          />
+        );
+      case 'Expenses':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+                Expense Management
+              </h2>
+              <button
+                onClick={() => setExpenseModalOpen(true)}
+                className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                <Receipt className="w-4 h-4 mr-2" />
+                Add New Expense
+              </button>
+            </div>
+
+            <div className="bg-white dark:bg-boxdark rounded-lg shadow-md p-8">
+              <div className="text-center">
+                <Receipt className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-700 dark:text-white mb-2">
+                  Expense Tracking
+                </h3>
+                <p className="text-gray-500 dark:text-gray-300">
+                  Click "Add New Expense" to record outlet expenses such as
+                  rent, utilities, supplies, or marketing costs.
+                </p>
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-gray-50 dark:bg-meta-4 rounded-lg">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Total Expenses
+                    </p>
+                    <p className="text-2xl font-bold text-primary">Ksh 0</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-meta-4 rounded-lg">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      This Month
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">Ksh 0</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-meta-4 rounded-lg">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Pending Approval
+                    </p>
+                    <p className="text-2xl font-bold text-orange-600">0</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
       case 'Phones':
       case 'Accessories': {
         const isPhones = activeSection === 'Phones';
         const items = isPhones ? mobileItems : accessoryItems;
         const page = isPhones ? mobilePage : accessoryPage;
         const setPage = isPhones ? setMobilePage : setAccessoryPage;
-        const searchItems = isPhones ? searchResults?.phoneItems : searchResults?.stockItems;
+        const searchItems = isPhones
+          ? searchResults?.phoneItems
+          : searchResults?.stockItems;
 
         const displayItems = searchResults ? searchItems?.items : items?.items;
 
@@ -548,11 +723,23 @@ const OutletInventoryView: React.FC = () => {
           <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
             <div className="p-4 bg-gray-50 dark:bg-meta-4 flex justify-between items-center">
               <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">
-                Inventory / <span className="text-sm text-primary">{activeSection}</span>
+                Inventory /{' '}
+                <span className="text-sm text-primary">{activeSection}</span>
               </h2>
               <div className="flex items-center space-x-4">
-                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by IMEI or name" className="p-2 border rounded-lg dark:bg-boxdark" />
-                <button onClick={handleSearch} className="px-4 py-2 rounded-lg bg-primary text-white">Search</button>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by IMEI or name"
+                  className="p-2 border rounded-lg dark:bg-boxdark"
+                />
+                <button
+                  onClick={handleSearch}
+                  className="px-4 py-2 rounded-lg bg-primary text-white"
+                >
+                  Search
+                </button>
               </div>
             </div>
             <div className="max-w-full overflow-x-auto">
@@ -564,7 +751,9 @@ const OutletInventoryView: React.FC = () => {
                     <th className="p-3">Model</th>
                     <th className="p-3">Brand</th>
                     <th className="p-3">Quantity</th>
-                    {userPermissions !== 'seller' && <th className="p-3">Cost</th>}
+                    {userPermissions !== 'seller' && (
+                      <th className="p-3">Cost</th>
+                    )}
                     <th className="p-3">{isPhones ? 'IMEI' : 'Batch'}</th>
                     <th className="p-3">Actions</th>
                   </tr>
@@ -573,47 +762,64 @@ const OutletInventoryView: React.FC = () => {
                   {displayItems?.map((item: any, index: number) => {
                     const details = isPhones ? item.mobiles : item.accessories;
                     return (
-                      <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
-                        ? 'bg-bodydark3 dark:bg-meta-4'
-                        : 'bg-white dark:bg-boxdark'
-                        }`}>
+                      <tr
+                        key={index}
+                        className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
+                          index % 2 === 1
+                            ? 'bg-bodydark3 dark:bg-meta-4'
+                            : 'bg-white dark:bg-boxdark'
+                        }`}
+                      >
                         <td className="p-3">{index + 1}</td>
-                        <td className="p-3 font-medium">{details.categories.itemName}</td>
+                        <td className="p-3 font-medium">
+                          {details.categories.itemName}
+                        </td>
                         <td className="p-3">{details.categories.itemModel}</td>
                         <td className="p-3">{details.categories.brand}</td>
                         <td className="p-3">{item.quantity}</td>
-                        {userPermissions !== 'seller' && <td className="p-3">{details.productCost}</td>}
-                        <td className="p-3">{isPhones ? details.IMEI : details.batchNumber}</td>
+                        {userPermissions !== 'seller' && (
+                          <td className="p-3">{details.productCost}</td>
+                        )}
+                        <td className="p-3">
+                          {isPhones ? details.IMEI : details.batchNumber}
+                        </td>
                         <td className="p-3">
                           <button
-                            onClick={() => handleReturnClick(item, isPhones ? 'mobile' : 'accessory')}
+                            onClick={() =>
+                              handleReturnClick(
+                                item,
+                                isPhones ? 'mobile' : 'accessory',
+                              )
+                            }
                             className="p-1 hover:bg-gray-100 rounded-full text-gray-600 hover:text-primary transition-colors"
                           >
                             <CornerUpLeft className="w-4 h-4" />
                           </button>
                         </td>
                       </tr>
-                    )
+                    );
                   })}
                 </tbody>
               </table>
             </div>
-            {!searchResults && items && <div className="flex justify-end mt-4 p-4">
-              <button
-                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                disabled={page === 1}
-                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage(prev => prev + 1)}
-                disabled={page === items.totalPages}
-                className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>}
+            {!searchResults && items && (
+              <div className="flex justify-end mt-4 p-4">
+                <button
+                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage((prev) => prev + 1)}
+                  disabled={page === items.totalPages}
+                  className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         );
       }
@@ -657,10 +863,10 @@ const OutletInventoryView: React.FC = () => {
                 <div className="mt-4 space-y-4">
                   {users.filter((user: any) => user.role === 'seller')
                     .length === 0 && (
-                      <div className="dark:text-red-500 text-sm">
-                        No sellers to be assigned
-                      </div>
-                    )}
+                    <div className="dark:text-red-500 text-sm">
+                      No sellers to be assigned
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-black dark:text-white">
                       Select Seller
@@ -788,29 +994,29 @@ const OutletInventoryView: React.FC = () => {
                           <td className="p-4 text-sm">
                             {/* {format(new Date(seller.fromDate), 'yyyy-MM-dd')} */}
                             {seller.assignmentHistory &&
-                              seller.assignmentHistory.length > 0
+                            seller.assignmentHistory.length > 0
                               ? format(
-                                new Date(
-                                  seller.assignmentHistory[
-                                    seller.assignmentHistory.length - 1
-                                  ].fromDate,
-                                ),
-                                'dd MMM, yyyy',
-                              )
+                                  new Date(
+                                    seller.assignmentHistory[
+                                      seller.assignmentHistory.length - 1
+                                    ].fromDate,
+                                  ),
+                                  'dd MMM, yyyy',
+                                )
                               : 'N/A'}
                           </td>
                           <td className="p-4 text-sm">
                             {/* {format(new Date(seller.toDate), 'yyyy-MM-dd')} */}
                             {seller.assignmentHistory &&
-                              seller.assignmentHistory.length > 0
+                            seller.assignmentHistory.length > 0
                               ? format(
-                                new Date(
-                                  seller.assignmentHistory[
-                                    seller.assignmentHistory.length - 1
-                                  ].toDate,
-                                ),
-                                'dd MMM, yyyy',
-                              )
+                                  new Date(
+                                    seller.assignmentHistory[
+                                      seller.assignmentHistory.length - 1
+                                    ].toDate,
+                                  ),
+                                  'dd MMM, yyyy',
+                                )
                               : 'N/A'}
                           </td>
                           <td className="p-4 text-sm">
@@ -826,18 +1032,19 @@ const OutletInventoryView: React.FC = () => {
                                       : 'Expired'}
                                   </span> */}
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${seller.assignmentHistory[
-                                seller.assignmentHistory.length - 1
-                              ].type === 'assigned'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                                }`}
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                seller.assignmentHistory[
+                                  seller.assignmentHistory.length - 1
+                                ].type === 'assigned'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
                             >
                               {seller.assignmentHistory &&
-                                seller.assignmentHistory.length > 0
+                              seller.assignmentHistory.length > 0
                                 ? seller.assignmentHistory[
-                                  seller.assignmentHistory.length - 1
-                                ].type
+                                    seller.assignmentHistory.length - 1
+                                  ].type
                                 : 'N/A'}
                             </span>
                           </td>
@@ -948,8 +1155,9 @@ const OutletInventoryView: React.FC = () => {
               disabled={!shop}
             >
               <div
-                className={`relative mr-3 ${newStockTally > 0 && 'animate-bounce'
-                  }`}
+                className={`relative mr-3 ${
+                  newStockTally > 0 && 'animate-bounce'
+                }`}
               >
                 <ShoppingCart className="text-primary group-hover:scale-110 transition-transform" />
                 {newStockTally > 0 && (
@@ -993,9 +1201,10 @@ const OutletInventoryView: React.FC = () => {
                   className={`
                     w-full md:w-auto flex items-center justify-center md:justify-start 
                     p-4 border-b md:border-b-0 last:border-b-0 outline-none
-                    ${activeSection === section.key
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-meta-4'
+                    ${
+                      activeSection === section.key
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-meta-4'
                     }
                   `}
                 >
@@ -1055,9 +1264,7 @@ const OutletInventoryView: React.FC = () => {
                 <input
                   type="number"
                   value={reversalQuantity}
-                  onChange={(e) =>
-                    setReversalQuantity(Number(e.target.value))
-                  }
+                  onChange={(e) => setReversalQuantity(Number(e.target.value))}
                   min="1"
                   max={reversingItem.quantity}
                   className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -1094,6 +1301,163 @@ const OutletInventoryView: React.FC = () => {
           </DialogContent>
         </Dialog>
       )}
+      {/* Expense Modal */}
+      <Dialog
+        open={expenseModalOpen}
+        onClose={() => setExpenseModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle className="bg-boxdark/95">
+          <div className="flex justify-between items-center">
+            <span className="text-title-sm font-medium text-black dark:text-white">
+              Add New Expense
+            </span>
+            <button
+              onClick={() => setExpenseModalOpen(false)}
+              className="p-1 hover:bg-gray dark:hover:bg-boxdark-2 rounded-full"
+            >
+              <X className="w-5 h-5 text-body dark:text-bodydark" />
+            </button>
+          </div>
+        </DialogTitle>
+        <DialogContent className="dark:bg-boxdark">
+          <form onSubmit={handleExpenseSubmit} className="mt-4 space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-black dark:text-white">
+                  Amount *
+                </label>
+                <input
+                  type="number"
+                  name="amount"
+                  value={expenseFormData.amount}
+                  onChange={handleExpenseChange}
+                  min="0"
+                  step="0.01"
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Enter amount"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-black dark:text-white">
+                  Category *
+                </label>
+                <select
+                  name="category"
+                  value={expenseFormData.category}
+                  onChange={handleExpenseChange}
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="RENT">Rent</option>
+                  <option value="UTILITIES">Utilities</option>
+                  <option value="SUPPLIES">Supplies</option>
+                  <option value="MARKETING">Marketing</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-black dark:text-white">
+                Subcategory
+              </label>
+              <input
+                type="text"
+                name="subcategory"
+                value={expenseFormData.subcategory}
+                onChange={handleExpenseChange}
+                className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter subcategory (optional)"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-black dark:text-white">
+                Description *
+              </label>
+              <textarea
+                name="description"
+                value={expenseFormData.description}
+                onChange={handleExpenseChange}
+                required
+                rows={3}
+                className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter expense description"
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-black dark:text-white">
+                  Payment Method *
+                </label>
+                <select
+                  name="paymentMethod"
+                  value={expenseFormData.paymentMethod}
+                  onChange={handleExpenseChange}
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="CASH">Cash</option>
+                  <option value="CARD">Card</option>
+                  <option value="TRANSFER">Transfer</option>
+                  <option value="MPESA">M-Pesa</option>
+                  <option value="AIRTELMONEY">Airtel Money</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-black dark:text-white">
+                  Vendor Name
+                </label>
+                <input
+                  type="text"
+                  name="vendorName"
+                  value={expenseFormData.vendorName}
+                  onChange={handleExpenseChange}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Enter vendor name"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-black dark:text-white">
+                Vendor Contact
+              </label>
+              <input
+                type="text"
+                name="vendorContact"
+                value={expenseFormData.vendorContact}
+                onChange={handleExpenseChange}
+                className="w-full px-3 py-2 rounded-lg border border-slate-600 text-black dark:text-white bg-transparent dark:bg-boxdark focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter vendor contact (optional)"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setExpenseModalOpen(false)}
+                className="px-4 py-2 text-body dark:text-bodydark bg-gray dark:bg-boxdark-2 rounded-lg hover:bg-gray-2 dark:hover:bg-boxdark transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submittingExpense}
+                className="px-4 py-2 text-white bg-primary rounded-lg hover:opacity-90 transition-colors disabled:opacity-50"
+              >
+                {submittingExpense ? 'Submitting...' : 'Submit Expense'}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
       {/* Modal for New Stock */}
       {showNewStock && (
         <div className="flex justify-center fixed inset-0 z-9999 p-4">

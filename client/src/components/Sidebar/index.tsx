@@ -337,6 +337,24 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             {sidebarExpanded && 'Suppliers'}
                           </NavLink>
                         </li>
+                        <li>
+                          <NavLink
+                            to="/expenses"
+                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('expenses') &&
+                              'bg-meta-2 dark:bg-meta-4'
+                              }`}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                              <line x1="16" y1="13" x2="8" y2="13" />
+                              <line x1="16" y1="17" x2="8" y2="17" />
+                              <polyline points="10 9 9 9 8 9" />
+                            </svg>
+                            {sidebarExpanded && 'Expenses'}
+                          </NavLink>
+                        </li>
                         {(userRole === 'manager') && (
                           <>
                             <li>

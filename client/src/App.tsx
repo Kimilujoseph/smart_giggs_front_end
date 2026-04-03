@@ -44,6 +44,8 @@ import SalaryManager from './components/salaries/SalaryManager';
 
 import SupplierManager from './components/suppliers/SupplierManager';
 
+import ExpenseManager from './components/expenses/ExpenseManager';
+
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
@@ -308,6 +310,16 @@ function App() {
                   <>
                     <PageTitle title="Suppliers | augustusstores" />
                     <SupplierManager />
+                  </>
+                }
+              />
+
+              <Route
+                path="/expenses"
+                element={
+                  <>
+                    <PageTitle title="Expenses | augustusstores" />
+                    <ExpenseManager />
                   </>
                 }
               />
