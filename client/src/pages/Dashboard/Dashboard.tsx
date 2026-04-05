@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  Legend,
   PieChart,
   Pie,
   Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from 'recharts';
 import {
   Activity,
@@ -220,10 +218,14 @@ const Dashboard: React.FC = () => {
 
   const expenseBreakdownData = useMemo(() => {
     if (!operatingExpenses) return [];
-    return [
-      { name: 'Salaries', value: operatingExpenses.salaries || 0 },
-      { name: 'Commissions', value: operatingExpenses.commissions || 0 },
-    ].filter(item => item.value > 0);
+    const colors = ['#0088FE', '#FF8042', '#00C49F', '#FFBB28', '#8884d8', '#82ca9d'];
+    return Object.entries(operatingExpenses)
+      .filter(([key]) => key !== 'totalOperatingExpenses')
+      .map(([name, value], index) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value: value as number,
+        fill: colors[index % colors.length],
+      }));
   }, [operatingExpenses]);
 
   const incomeFlowData = [
@@ -336,9 +338,9 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Financial & Sales Performance */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
         {/* Income Statement Flow */}
-        <div className="lg:col-span-1 rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
+        <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
           <h3 className="text-lg font-semibold mb-4">Income Flow</h3>
           <div className="space-y-2">
             {incomeFlowData.map((item, index) => (
@@ -351,15 +353,23 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Expense Breakdown */}
-        <div className="lg:col-span-1 rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
+        <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
           <h3 className="text-lg font-semibold mb-4">Expense Breakdown</h3>
           <div className="h-60">
             {expenseBreakdownData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={expenseBreakdownData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
-                    {expenseBreakdownData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={['#0088FE', '#FF8042'][index % 2]} />
+                  <Pie 
+                    data={expenseBreakdownData} 
+                    dataKey="value" 
+                    nameKey="name" 
+                    cx="50%" 
+                    cy="50%" 
+                    outerRadius={80} 
+                    label
+                  >
+                    {expenseBreakdownData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(value) => formatCurrency(Number(value))} />
@@ -368,26 +378,6 @@ const Dashboard: React.FC = () => {
               </ResponsiveContainer>
             ) : <p className="text-center text-gray-500">No expense data</p>}
           </div>
-        </div>
-        
-        {/* Sales and Profit Trend */}
-        <div className="lg:col-span-1 rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
-            <h3 className="text-lg font-semibold mb-4">Sales & Profit Trend</h3>
-            <div className="h-60">
-                {salesReport?.salesPerMonth && salesReport.salesPerMonth.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={salesReport.salesPerMonth}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="month" />
-                            <YAxis />
-                            <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                            <Legend />
-                            <Line type="monotone" dataKey="totalSales" stroke="#8884d8" name="Total Sales" />
-                            <Line type="monotone" dataKey="totalProfit" stroke="#82ca9d" name="Total Profit" />
-                        </LineChart>
-                    </ResponsiveContainer>
-                ) : <p className="text-center text-gray-500">Trend data not available for this period.</p>}
-            </div>
         </div>
       </div>
 
