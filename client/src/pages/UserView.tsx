@@ -17,19 +17,7 @@ import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SuchEmpty from '../components/suchEmpty';
 import jwt_decode from 'jwt-decode';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from 'recharts';
+import ExpenseTrend from '../components/expenses/ExpenseTrend';
 
 // Type definitions
 interface Sale {
@@ -116,12 +104,6 @@ const UserView: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Expense state
-  const [expenseData, setExpenseData] = useState<ExpenseData | null>(null);
-  const [expenseLoading, setExpenseLoading] = useState(false);
-  const [expensePage, setExpensePage] = useState(1);
-  const [expenseLimit] = useState(10);
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -158,34 +140,6 @@ const UserView: React.FC = () => {
     };
     fetchUser();
   }, [userEmail]);
-
-  // Fetch expenses when userProfile is available
-  useEffect(() => {
-    if (!userProfile?.id) return;
-
-    const fetchExpenses = async () => {
-      setExpenseLoading(true);
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SERVER_HEAD}/api/expenses/?page=${expensePage}&limit=${expenseLimit}&employeeId=${userProfile.id}`,
-          { credentials: 'include' },
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch expenses');
-        }
-
-        const result = await response.json();
-        setExpenseData(result.data);
-      } catch (error) {
-        console.error('Error fetching expenses:', error);
-      } finally {
-        setExpenseLoading(false);
-      }
-    };
-
-    fetchExpenses();
-  }, [userProfile?.id, expensePage, expenseLimit]);
 
   const calculateTotalAmount = (
     user: UserProfile,
@@ -231,44 +185,6 @@ const UserView: React.FC = () => {
       .format(amount)
       .replace('KES', 'KES ');
   };
-
-  // Expense trend data processing
-  const expenseTrendData = expenseData?.expenses
-    .slice()
-    .sort((a, b) => new Date(a.expenseDate).getTime() - new Date(b.expenseDate).getTime())
-    .map(exp => ({
-      date: format(new Date(exp.expenseDate), 'MMM dd'),
-      amount: parseFloat(exp.amount),
-      status: exp.status,
-      category: exp.category,
-    })) || [];
-
-  const expenseCategoryBreakdown = expenseData?.expenses.reduce((acc: any, exp) => {
-    const category = exp.category || 'OTHER';
-    if (!acc[category]) {
-      acc[category] = { name: category, value: 0 };
-    }
-    acc[category].value += parseFloat(exp.amount);
-    return acc;
-  }, {}) || {};
-
-  const categoryPieData = Object.values(expenseCategoryBreakdown);
-
-  const expenseStatusCount = expenseData?.expenses.reduce((acc: any, exp) => {
-    acc[exp.status] = (acc[exp.status] || 0) + 1;
-    return acc;
-  }, {}) || {};
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'APPROVED': return 'text-green-600 bg-green-100 dark:bg-green-900';
-      case 'REJECTED': return 'text-red-600 bg-red-100 dark:bg-red-900';
-      case 'PENDING': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const pieColors = ['#0088FE', '#FF8042', '#00C49F', '#FFBB28', '#8884d8', '#82ca9d', '#FF6B6B'];
 
   const stats = [
     {
@@ -422,201 +338,21 @@ const UserView: React.FC = () => {
 
         {/* Expense Trend Section */}
         <div className="mt-6">
-          <h2 className="text-2xl font-bold mb-4 dark:text-bodydark">Expense Trend</h2>
-          
-          {/* Expense Summary Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card className="dark:bg-boxdark dark:text-bodydark">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-bodydark2">Total Expenses</p>
-                    <p className="text-xl font-semibold">{formatCurrency(parseFloat(expenseData?.totalAmount || '0'))}</p>
-                  </div>
-                  <DollarSign className="h-6 w-6 text-red-500" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="dark:bg-boxdark dark:text-bodydark">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-bodydark2">Average Amount</p>
-                    <p className="text-xl font-semibold">{formatCurrency(parseFloat(expenseData?.averageAmount || '0'))}</p>
-                  </div>
-                  <TrendingUp className="h-6 w-6 text-blue-500" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="dark:bg-boxdark dark:text-bodydark">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-bodydark2">Total Count</p>
-                    <p className="text-xl font-semibold">{expenseData?.totalCount || 0}</p>
-                  </div>
-                  <ChartBar className="h-6 w-6 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="dark:bg-boxdark dark:text-bodydark">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-bodydark2">Status Breakdown</p>
-                    <p className="text-xs text-gray-500 dark:text-bodydark2">
-                      <span className="text-green-600">{expenseStatusCount['APPROVED'] || 0}</span> /{' '}
-                      <span className="text-red-600">{expenseStatusCount['REJECTED'] || 0}</span> /{' '}
-                      <span className="text-yellow-600">{expenseStatusCount['PENDING'] || 0}</span>
-                    </p>
-                  </div>
-                  <Award className="h-6 w-6 text-purple-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Expense Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {/* Expense Trend Line Chart */}
-            <Card className="dark:bg-boxdark dark:text-bodydark">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Expense Over Time</h3>
-                {expenseLoading ? (
-                  <div className="flex items-center justify-center h-60">
-                    <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-                  </div>
-                ) : expenseTrendData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <LineChart data={expenseTrendData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                      <Legend />
-                      <Line type="monotone" dataKey="amount" stroke="#FF6B6B" name="Amount" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <p className="text-center text-gray-500 h-60 flex items-center justify-center">No expense trend data</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Expense Category Pie Chart */}
-            <Card className="dark:bg-boxdark dark:text-bodydark">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Expense by Category</h3>
-                {expenseLoading ? (
-                  <div className="flex items-center justify-center h-60">
-                    <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-                  </div>
-                ) : categoryPieData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <PieChart>
-                      <Pie
-                        data={categoryPieData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        label
-                      >
-                        {categoryPieData.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <p className="text-center text-gray-500 h-60 flex items-center justify-center">No category data</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Expense Table with Pagination */}
-          <Card className="dark:bg-boxdark dark:text-bodydark">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Recent Expenses</h3>
-                {expenseData && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setExpensePage(prev => Math.max(1, prev - 1))}
-                      disabled={expensePage === 1 || expenseLoading}
-                      className="px-3 py-1 rounded bg-gray-200 dark:bg-meta-4 disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-600"
-                    >
-                      Previous
-                    </button>
-                    <span className="text-sm dark:text-bodydark">
-                      Page {expensePage} of {expenseData.totalPages}
-                    </span>
-                    <button
-                      onClick={() => setExpensePage(prev => Math.min(expenseData.totalPages, prev + 1))}
-                      disabled={expensePage === expenseData.totalPages || expenseLoading}
-                      className="px-3 py-1 rounded bg-gray-200 dark:bg-meta-4 disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-600"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {expenseLoading ? (
-                <div className="flex items-center justify-center h-40">
-                  <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-                </div>
-              ) : expenseData?.expenses && expenseData.expenses.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                      <tr>
-                        <th scope="col" className="px-6 py-3">Date</th>
-                        <th scope="col" className="px-6 py-3">Description</th>
-                        <th scope="col" className="px-6 py-3">Category</th>
-                        <th scope="col" className="px-6 py-3">Amount</th>
-                        <th scope="col" className="px-6 py-3">Shop</th>
-                        <th scope="col" className="px-6 py-3">Status</th>
-                        <th scope="col" className="px-6 py-3">Approved By</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {expenseData.expenses.map((expense) => (
-                        <tr key={expense.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                          <td className="px-6 py-4">{formatDate(expense.expenseDate)}</td>
-                          <td className="px-6 py-4">{expense.description}</td>
-                          <td className="px-6 py-4">{expense.category}{expense.subcategory && ` - ${expense.subcategory}`}</td>
-                          <td className="px-6 py-4 font-medium">{formatCurrency(parseFloat(expense.amount))}</td>
-                          <td className="px-6 py-4">{expense.shops.shopName}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(expense.status)}`}>
-                              {expense.status}
-                            </span>
-                            {expense.status === 'REJECTED' && expense.rejectionReason && (
-                              <p className="mt-1 text-xs text-red-500" title={expense.rejectionReason}>
-                                {expense.rejectionReason.slice(0, 30)}...
-                              </p>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">{expense.approvedBy?.name || '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <SuchEmpty
-                  message="No Expenses"
-                  description={`No expense data found for ${userProfile.name}`}
-                  variant="default"
-                />
-              )}
-            </CardContent>
-          </Card>
+          <h2 className="text-2xl font-bold mb-4 dark:text-bodydark">Seller Expense Trend</h2>
+          {userProfile?.id ? (
+            <ExpenseTrend
+              apiUrl={`${import.meta.env.VITE_SERVER_HEAD}/api/expenses/`}
+              filterParam={{ employeeId: userProfile.id }}
+              title={`${userProfile.name}'s Expenses`}
+              showShopColumn={true}
+            />
+          ) : (
+            <SuchEmpty
+              message="No Expenses"
+              description={`No expense data found for ${userProfile?.name || 'this seller'}`}
+              variant="default"
+            />
+          )}
         </div>
       </div>
     </>

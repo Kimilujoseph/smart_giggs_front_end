@@ -38,19 +38,7 @@ import ClickOutside from '../ClickOutside';
 import { getAllUsers } from '../../api/user_manager';
 import ProductTransfer from '../inventory/ProductTransfer';
 import { ExpenseFormData } from '../../types/expense';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from 'recharts';
+import ExpenseTrend from '../expenses/ExpenseTrend';
 
 // interface Notification {
 //   type: string;
@@ -106,10 +94,7 @@ const OutletInventoryView: React.FC = () => {
   const [parsedShopId, setParsedShopId] = useState<number>(0);
 
   // Personal expense tracking
-  const [myExpenseData, setMyExpenseData] = useState<any | null>(null);
-  const [myExpensePage, setMyExpensePage] = useState(1);
-  const [myExpenseLimit] = useState(10);
-  const [myExpenseLoading, setMyExpenseLoading] = useState(false);
+  const [myExpenseRefresh, setMyExpenseRefresh] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('tk');
@@ -516,74 +501,6 @@ const OutletInventoryView: React.FC = () => {
     }
   };
 
-  // Fetch personal expenses when currentUser is available
-  useEffect(() => {
-    if (!currentUser?.id) return;
-
-    const fetchMyExpenses = async () => {
-      setMyExpenseLoading(true);
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_SERVER_HEAD}/api/expenses/?page=${myExpensePage}&limit=${myExpenseLimit}&employeeId=${currentUser.id}`,
-          { withCredentials: true },
-        );
-        setMyExpenseData(response.data.data);
-      } catch (error) {
-        console.error('Failed to fetch personal expenses:', error);
-      } finally {
-        setMyExpenseLoading(false);
-      }
-    };
-
-    fetchMyExpenses();
-  }, [currentUser?.id, myExpensePage, myExpenseLimit]);
-
-  // Personal expense data processing
-  const myExpenseTrendData = useMemo(() => {
-    if (!myExpenseData?.expenses) return [];
-    return myExpenseData.expenses
-      .slice()
-      .sort((a: any, b: any) => new Date(a.expenseDate).getTime() - new Date(b.expenseDate).getTime())
-      .map((exp: any) => ({
-        date: format(new Date(exp.expenseDate), 'MMM dd'),
-        amount: parseFloat(exp.amount),
-        status: exp.status,
-        category: exp.category,
-      }));
-  }, [myExpenseData]);
-
-  const myExpenseCategoryBreakdown = useMemo(() => {
-    if (!myExpenseData?.expenses) return [];
-    const breakdown = myExpenseData.expenses.reduce((acc: any, exp: any) => {
-      const category = exp.category || 'OTHER';
-      if (!acc[category]) {
-        acc[category] = { name: category, value: 0 };
-      }
-      acc[category].value += parseFloat(exp.amount);
-      return acc;
-    }, {});
-    return Object.values(breakdown);
-  }, [myExpenseData]);
-
-  const myExpenseStatusCount = useMemo(() => {
-    if (!myExpenseData?.expenses) return {};
-    return myExpenseData.expenses.reduce((acc: any, exp: any) => {
-      acc[exp.status] = (acc[exp.status] || 0) + 1;
-      return acc;
-    }, {});
-  }, [myExpenseData]);
-
-  const getMyExpenseStatusColor = (status: string) => {
-    switch (status) {
-      case 'APPROVED': return 'text-green-600 bg-green-100 dark:bg-green-900';
-      case 'REJECTED': return 'text-red-600 bg-red-100 dark:bg-red-900';
-      case 'PENDING': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const myExpensePieColors = ['#0088FE', '#FF8042', '#00C49F', '#FFBB28', '#8884d8', '#82ca9d', '#FF6B6B'];
-
   const handleReversal = async (
     productItemId: string,
     quantity: number,
@@ -716,15 +633,8 @@ const OutletInventoryView: React.FC = () => {
           vendorName: '',
           vendorContact: '',
         });
-        // Refresh personal expense data
-        setMyExpensePage(1);
-        if (currentUser?.id) {
-          const response = await axios.get(
-            `${import.meta.env.VITE_SERVER_HEAD}/api/expenses/?page=1&limit=${myExpenseLimit}&employeeId=${currentUser.id}`,
-            { withCredentials: true },
-          );
-          setMyExpenseData(response.data.data);
-        }
+        // Trigger refresh of personal expense trend
+        setMyExpenseRefresh(prev => prev + 1);
       }
     } catch (error: any) {
       setMessage({
@@ -769,192 +679,17 @@ const OutletInventoryView: React.FC = () => {
               </button>
             </div>
 
-            {/* Expense Summary Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Total Expenses</p>
-                    <p className="text-2xl font-bold text-primary">
-                      Ksh {myExpenseData?.totalAmount ? Number(myExpenseData.totalAmount).toLocaleString() : '0'}
-                    </p>
-                  </div>
-                  <TrendingUp className="h-6 w-6 text-red-500" />
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Average Amount</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      Ksh {myExpenseData?.averageAmount ? Number(myExpenseData.averageAmount).toLocaleString() : '0'}
-                    </p>
-                  </div>
-                  <DollarSign className="h-6 w-6 text-blue-500" />
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Total Count</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {myExpenseData?.totalCount || 0}
-                    </p>
-                  </div>
-                  <Receipt className="h-6 w-6 text-green-500" />
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-bodydark1 dark:bg-boxdark dark:text-whiten shadow px-4 py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Status Breakdown</p>
-                    <p className="text-sm">
-                      <span className="text-green-600">{myExpenseStatusCount['APPROVED'] || 0}</span> /{' '}
-                      <span className="text-red-600">{myExpenseStatusCount['REJECTED'] || 0}</span> /{' '}
-                      <span className="text-yellow-600">{myExpenseStatusCount['PENDING'] || 0}</span>
-                    </p>
-                  </div>
-                  <Package className="h-6 w-6 text-purple-500" />
-                </div>
-              </div>
-            </div>
-
-            {/* Expense Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Expense Trend Line Chart */}
-              <div className="rounded-lg bg-white dark:bg-boxdark shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">My Expenses Over Time</h3>
-                {myExpenseLoading ? (
-                  <div className="flex items-center justify-center h-60">
-                    <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-                  </div>
-                ) : myExpenseTrendData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <LineChart data={myExpenseTrendData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => `Ksh ${Number(value).toLocaleString()}`} />
-                      <Legend />
-                      <Line type="monotone" dataKey="amount" stroke="#FF6B6B" name="Amount" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <p className="text-center text-gray-500 h-60 flex items-center justify-center">No expense trend data</p>
-                )}
-              </div>
-
-              {/* Expense Category Pie Chart */}
-              <div className="rounded-lg bg-white dark:bg-boxdark shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">My Expenses by Category</h3>
-                {myExpenseLoading ? (
-                  <div className="flex items-center justify-center h-60">
-                    <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-                  </div>
-                ) : myExpenseCategoryBreakdown.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <PieChart>
-                      <Pie
-                        data={myExpenseCategoryBreakdown}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        label
-                      >
-                        {myExpenseCategoryBreakdown.map((_: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={myExpensePieColors[index % myExpensePieColors.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => `Ksh ${Number(value).toLocaleString()}`} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <p className="text-center text-gray-500 h-60 flex items-center justify-center">No category data</p>
-                )}
-              </div>
-            </div>
-
-            {/* Expense Table with Pagination */}
-            <div className="rounded-lg bg-white dark:bg-boxdark shadow-md p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">My Recent Expenses</h3>
-                {myExpenseData && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setMyExpensePage(prev => Math.max(1, prev - 1))}
-                      disabled={myExpensePage === 1 || myExpenseLoading}
-                      className="px-3 py-1 rounded bg-gray-200 dark:bg-meta-4 disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-600"
-                    >
-                      Previous
-                    </button>
-                    <span className="text-sm dark:text-bodydark">
-                      Page {myExpensePage} of {myExpenseData.totalPages}
-                    </span>
-                    <button
-                      onClick={() => setMyExpensePage(prev => Math.min(myExpenseData.totalPages, prev + 1))}
-                      disabled={myExpensePage === myExpenseData.totalPages || myExpenseLoading}
-                      className="px-3 py-1 rounded bg-gray-200 dark:bg-meta-4 disabled:opacity-50 hover:bg-gray-300 dark:hover:bg-gray-600"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {myExpenseLoading ? (
-                <div className="flex items-center justify-center h-40">
-                  <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-                </div>
-              ) : myExpenseData?.expenses && myExpenseData.expenses.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                      <tr>
-                        <th scope="col" className="px-6 py-3">Date</th>
-                        <th scope="col" className="px-6 py-3">Description</th>
-                        <th scope="col" className="px-6 py-3">Category</th>
-                        <th scope="col" className="px-6 py-3">Amount</th>
-                        <th scope="col" className="px-6 py-3">Shop</th>
-                        <th scope="col" className="px-6 py-3">Payment</th>
-                        <th scope="col" className="px-6 py-3">Status</th>
-                        <th scope="col" className="px-6 py-3">Approved By</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {myExpenseData.expenses.map((expense: any) => (
-                        <tr key={expense.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                          <td className="px-6 py-4">{format(new Date(expense.expenseDate), 'MMM dd, yyyy')}</td>
-                          <td className="px-6 py-4">{expense.description}</td>
-                          <td className="px-6 py-4">{expense.category}{expense.subcategory && ` - ${expense.subcategory}`}</td>
-                          <td className="px-6 py-4 font-medium">Ksh {Number(expense.amount).toLocaleString()}</td>
-                          <td className="px-6 py-4">{expense.shops?.shopName || '-'}</td>
-                          <td className="px-6 py-4">{expense.paymentMethod}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getMyExpenseStatusColor(expense.status)}`}>
-                              {expense.status}
-                            </span>
-                            {expense.status === 'REJECTED' && expense.rejectionReason && (
-                              <p className="mt-1 text-xs text-red-500" title={expense.rejectionReason}>
-                                {expense.rejectionReason.slice(0, 30)}...
-                              </p>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">{expense.approvedBy?.name || '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="text-center text-gray-500 py-8">No personal expense data available</p>
-              )}
-            </div>
+            {currentUser?.id ? (
+              <ExpenseTrend
+                apiUrl={`${import.meta.env.VITE_SERVER_HEAD}/api/expenses/`}
+                filterParam={{ employeeId: currentUser.id }}
+                title="My Expenses"
+                showShopColumn={true}
+                refreshTrigger={myExpenseRefresh}
+              />
+            ) : (
+              <p className="text-center text-gray-500 py-8">User data not available</p>
+            )}
           </div>
         );
       case 'Phones':
