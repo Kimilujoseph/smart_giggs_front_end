@@ -70,8 +70,8 @@ const SignIn: React.FC = () => {
       <div className="flex flex-col items-center xl:hidden">
         {/* <CustomLogo /> */}
         <img
-          src="/mutunga_dark_mode.png"
-          alt="augustusstores Logo"
+          src={import.meta.env.VITE_RECEIPT_LOGO_PATH}
+          alt={`${import.meta.env.VITE_APP_NAME} Logo`}
           className="object-contain w-full h-[150px] mix-blend-difference"
         />
       </div>
@@ -82,8 +82,8 @@ const SignIn: React.FC = () => {
             <div className="py-17.5 px-26 text-center">
               {/* <CustomLogo /> */}
               <img
-                src="/mutunga_dark_mode.png"
-                alt="augustusstores Logo"
+                src={import.meta.env.VITE_RECEIPT_LOGO_PATH}
+                alt={`${import.meta.env.VITE_APP_NAME} Logo`}
                 className="object-contain w-full h-full mix-blend-difference"
               />
               {/* <span className="mt-15 inline-block">

@@ -103,7 +103,7 @@ function App() {
             path="/auth/signup"
             element={
               <>
-                <PageTitle title="Signup | augustusstores" />
+                <PageTitle title={`Signup | ${import.meta.env.VITE_APP_NAME}`} />
                 <SignUp />
               </>
             }
@@ -118,7 +118,7 @@ function App() {
                     <Navigate to="/settings" replace />
                   ) : (
                     <>
-                      <PageTitle title="Dashboard | augustusstores" />
+                      <PageTitle title={`Dashboard | ${import.meta.env.VITE_APP_NAME}`} />
                       <Dashboard />
                     </>
                   )
@@ -129,7 +129,7 @@ function App() {
                 path="/users"
                 element={
                   <>
-                    <PageTitle title="Users | augustusstores" />
+                    <PageTitle title={`Users | ${import.meta.env.VITE_APP_NAME}`} />
                     <UsersManager />
                   </>
                 }
@@ -138,7 +138,7 @@ function App() {
                 path="/outlets"
                 element={
                   <>
-                    <PageTitle title="Outlets | augustusstores" />
+                    <PageTitle title={`Outlets | ${import.meta.env.VITE_APP_NAME}`} />
                     <OutletManager />
                   </>
                 }
@@ -148,7 +148,7 @@ function App() {
                 path="/outlets/:shopname"
                 element={
                   <>
-                    <PageTitle title="Outlet View | augustusstores" />
+                    <PageTitle title={`Outlet View | ${import.meta.env.VITE_APP_NAME}`} />
                     <OutletView />
                   </>
                 }
@@ -158,7 +158,7 @@ function App() {
                 path="/inventory"
                 element={
                   <>
-                    <PageTitle title="Inventory | augustusstores" />
+                    <PageTitle title={`Inventory | ${import.meta.env.VITE_APP_NAME}`} />
                     <InventoryManager />
                   </>
                 }
@@ -168,7 +168,7 @@ function App() {
                 path="/sales"
                 element={
                   <>
-                    <PageTitle title="Sales | augustusstores" />
+                    <PageTitle title={`Sales | ${import.meta.env.VITE_APP_NAME}`} />
                     <SalesDashboard />
                   </>
                 }
@@ -177,7 +177,7 @@ function App() {
                 path="/outlet/inventory"
                 element={
                   <>
-                    <PageTitle title="Outlet Inventory | augustusstores" />
+                    <PageTitle title={`Outlet Inventory | ${import.meta.env.VITE_APP_NAME}`} />
                     <OutletInventoryView />
                   </>
                 }
@@ -186,7 +186,7 @@ function App() {
                 path="/outlet/inventory/:productId"
                 element={
                   <>
-                    <PageTitle title="Outlet Product | augustusstores" />
+                    <PageTitle title={`Outlet Product | ${import.meta.env.VITE_APP_NAME}`} />
                     <ProductView />
                   </>
                 }
@@ -195,7 +195,7 @@ function App() {
                 path="/outlet/sales"
                 element={
                   <>
-                    <PageTitle title="Outlet Outlet | augustusstores" />
+                    <PageTitle title={`Outlet Outlet | ${import.meta.env.VITE_APP_NAME}`} />
                     <OutletSalesBackup />
                   </>
                 }
@@ -204,7 +204,7 @@ function App() {
                 path="/inventory/:productId/:isMobile"
                 element={
                   <>
-                    <PageTitle title="Product View | augustusstores" />
+                    <PageTitle title={`Product View | ${import.meta.env.VITE_APP_NAME}`} />
                     <ProductView />
                   </>
                 }
@@ -213,7 +213,7 @@ function App() {
                 path="/settings"
                 element={
                   <>
-                    <PageTitle title="Account Settings | augustusstores" />
+                    <PageTitle title={`Account Settings | ${import.meta.env.VITE_APP_NAME}`} />
                     <Settings2 />
                   </>
                 }
@@ -222,7 +222,7 @@ function App() {
                 path="/assignmentHistory"
                 element={
                   <>
-                    <PageTitle title="Assignment History | augustusstores" />
+                    <PageTitle title={`Assignment History | ${import.meta.env.VITE_APP_NAME}`} />
                     <AssignmentHistory />
                   </>
                 }
@@ -231,7 +231,7 @@ function App() {
                 path="/userprofile"
                 element={
                   <>
-                    <PageTitle title="User View | augustusstores" />
+                    <PageTitle title={`User View | ${import.meta.env.VITE_APP_NAME}`} />
                     <UserView />
                   </>
                 }
@@ -240,7 +240,7 @@ function App() {
                 path="/pointOfSale"
                 element={
                   <>
-                    <PageTitle title="Point of sale | augustusstores" />
+                    <PageTitle title={`Point of sale | ${import.meta.env.VITE_APP_NAME}`} />
                     <PointOfSales />
                   </>
                 }
@@ -249,7 +249,7 @@ function App() {
                 path="/user/sales"
                 element={
                   <>
-                    <PageTitle title="User Sales | augustusstores" />
+                    <PageTitle title={`User Sales | ${import.meta.env.VITE_APP_NAME}`} />
                     <UserSales />
                   </>
                 }
@@ -258,7 +258,7 @@ function App() {
                 path="/shop/sales"
                 element={
                   <>
-                    <PageTitle title="Shop Sales | augustusstores" />
+                    <PageTitle title={`Shop Sales | ${import.meta.env.VITE_APP_NAME}`} />
                     <ShopSales />
                   </>
                 }
@@ -268,7 +268,7 @@ function App() {
                 path="/financers"
                 element={
                   <>
-                    <PageTitle title="Financers | augustusstores" />
+                    <PageTitle title={`Financers | ${import.meta.env.VITE_APP_NAME}`} />
                     <FinancerManager />
                   </>
                 }
@@ -278,7 +278,7 @@ function App() {
                 path="/financer/report/:financerId"
                 element={
                   <>
-                    <PageTitle title="Financer Sales Report | augustusstores" />
+                    <PageTitle title={`Financer Sales Report | ${import.meta.env.VITE_APP_NAME}`} />
                     <FinancerSalesReport />
                   </>
                 }
@@ -288,7 +288,7 @@ function App() {
                 path="/commissions"
                 element={
                   <>
-                    <PageTitle title="Commissions | augustusstores" />
+                    <PageTitle title={`Commissions | ${import.meta.env.VITE_APP_NAME}`} />
                     <CommissionManager />
                   </>
                 }
@@ -298,7 +298,7 @@ function App() {
                 path="/salaries"
                 element={
                   <>
-                    <PageTitle title="Salaries | augustusstores" />
+                    <PageTitle title={`Salaries | ${import.meta.env.VITE_APP_NAME}`} />
                     <SalaryManager />
                   </>
                 }
@@ -308,7 +308,7 @@ function App() {
                 path="/suppliers"
                 element={
                   <>
-                    <PageTitle title="Suppliers | augustusstores" />
+                    <PageTitle title={`Suppliers | ${import.meta.env.VITE_APP_NAME}`} />
                     <SupplierManager />
                   </>
                 }
@@ -318,7 +318,7 @@ function App() {
                 path="/expenses"
                 element={
                   <>
-                    <PageTitle title="Expenses | augustusstores" />
+                    <PageTitle title={`Expenses | ${import.meta.env.VITE_APP_NAME}`} />
                     <ExpenseManager />
                   </>
                 }
@@ -328,7 +328,7 @@ function App() {
                 path="/my-commissions"
                 element={
                   <>
-                    <PageTitle title="My Commissions | augustusstores" />
+                    <PageTitle title={`My Commissions | ${import.meta.env.VITE_APP_NAME}`} />
                     <CommissionManager />
                   </>
                 }
@@ -338,7 +338,7 @@ function App() {
                 path="/my-salary"
                 element={
                   <>
-                    <PageTitle title="My Salary | augustusstores" />
+                    <PageTitle title={`My Salary | ${import.meta.env.VITE_APP_NAME}`} />
                     <SalaryManager />
                   </>
                 }
