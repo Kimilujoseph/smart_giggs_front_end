@@ -129,7 +129,7 @@ const CommissionManager: React.FC = () => {
 
       
 
-      <CommissionsTable commissions={commissions} loading={loading} onVoid={handleVoid} />
+      <CommissionsTable commissions={commissions} loading={loading} onVoid={handleVoid} userRole={currentUser?.role} />
     </>
   );
 };

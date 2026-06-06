@@ -19,26 +19,26 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center font-sans z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center font-sans z-50">
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm flex flex-col max-h-full">
         {/* Scrollable Printable Area */}
-        <div id="printable-receipt" className="p-6 overflow-y-auto">
+        <div id="printable-receipt" className="receipt-container">
           {/* Header */}
-          <div className="text-center border-b-2 border-dashed pb-4">
+          <div className="receipt-header">
             <img
               src="/mutunga_dark_mode.png"
               alt="SmartOwn Digital Assets Logo"
               className="w-24 h-24 mx-auto mb-2"
             />
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1>
               SmartOwn Digital Assets
             </h1>
-            <p className="text-sm text-gray-500 italic">Own Now, Pay Later</p>
-            <p className="text-sm text-gray-600 mt-2">KRA PIN: P051234567X</p>
+            <p>Own Now, Pay Later</p>
+            <p>KRA PIN: P051234567X</p>
           </div>
 
           {/* Transaction Details */}
-          <div className="my-4 text-sm text-gray-700">
+          <div className="receipt-section">
             <div className="flex justify-between">
               <span>Shop:</span>
               <span>{saleResponse[0]?.shopName}</span>
@@ -52,25 +52,25 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
           </div>
 
           {/* Items Table */}
-          <div className="border-t border-b border-dashed py-4">
+          <div className="receipt-items receipt-section">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="py-2 text-left font-semibold">Item</th>
-                  <th className="py-2 text-center font-semibold">Qty</th>
-                  <th className="py-2 text-right font-semibold">Price</th>
-                  <th className="py-2 text-right font-semibold">Total</th>
+                <tr>
+                  <th>Item</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Total</th>
                 </tr>
               </thead>
               <tbody>
                 {saleResponse.map((sale) => (
                   <tr key={sale.id}>
-                    <td className="py-2 text-left">{sale.productName}</td>
-                    <td className="py-2 text-center">{sale.quantity}</td>
-                    <td className="py-2 text-right">
+                    <td>{sale.productName}</td>
+                    <td>{sale.quantity}</td>
+                    <td>
                       {(sale.soldPrice / sale.quantity).toLocaleString()}
                     </td>
-                    <td className="py-2 text-right">
+                    <td>
                       {sale.soldPrice.toLocaleString()}
                     </td>
                   </tr>
@@ -80,8 +80,8 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
           </div>
 
           {/* Totals Section */}
-          <div className="my-4 text-sm">
-            <div className="flex justify-between font-bold text-lg text-gray-800 mt-2 pt-2 border-t">
+          <div className="receipt-totals receipt-section">
+            <div className="total-line">
               <span>Total:</span>
               <span>
                 KES{' '}
@@ -91,8 +91,8 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
           </div>
 
           {/* Customer Details */}
-          <div className="border-t border-dashed pt-4 text-sm text-gray-700">
-            <h3 className="font-semibold mb-2 text-center">Customer Details</h3>
+          <div className="receipt-section">
+            <h2>Customer Details</h2>
             <div className="flex justify-between">
               <span>Name:</span>
               <span>{saleResponse[0]?.customerName || 'N/A'}</span>
@@ -104,8 +104,8 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
           </div>
 
           {/* Footer */}
-          <div className="text-center mt-6">
-            <p className="text-gray-600 text-sm">
+          <div className="receipt-footer">
+            <p>
               Thank you for your business!
             </p>
             {/* Placeholder for a QR code or barcode */}
@@ -135,4 +135,4 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
   );
 };
 
-export default Receipt;
+export { Receipt };

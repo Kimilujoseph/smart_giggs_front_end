@@ -24,7 +24,7 @@ import { ITEMS_PER_PAGE, PRODUCTS_PER_PAGE } from './constants';
 import { ConsolidatedData } from './types/ConsolidatedData';
 import { GroupedCartItem } from './types/GroupedCartItem';
 import { Product } from './types/Product';
-import Receipt from './components/Receipt';
+import { Receipt } from './components/Receipt';
 import { SaleResponse, Financer } from './types/types';
 
 const PointOfSales: React.FC = () => {
@@ -459,6 +459,7 @@ const PointOfSales: React.FC = () => {
           text: response.data?.message || 'Sale processed successfully',
           type: 'success',
         });
+        console.log("Sale response received from API:", response.data.data, "Type:", typeof response.data.data); // Debug log
         setSaleResponse(response.data.data);
         setCart([]);
         setFormData({ name: '', email: '', phonenumber: '' });
@@ -617,7 +618,10 @@ const PointOfSales: React.FC = () => {
     );
   }
 
+  console.log("Rendering PointOfSales, saleResponse state:", saleResponse, "Type:", typeof saleResponse, "Is array:", Array.isArray(saleResponse)); // Debug log
+
   return (
+
     <>
       {message && (
         <Message

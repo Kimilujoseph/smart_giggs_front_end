@@ -120,11 +120,13 @@ const OutletView: React.FC = () => {
       key: 'Low Stock',
       icon: AlertTriangle,
     },
-    {
-      name: 'Expenses',
-      key: 'Expenses',
-      icon: Receipt,
-    },
+    userPermissions !== 'seller'
+      ? {
+        name: 'Expenses',
+        key: 'Expenses',
+        icon: Receipt,
+      }
+      : null,
     userPermissions === 'manager' || userPermissions === 'superuser'
       ? {
         name: 'Outlet Sellers',
@@ -806,7 +808,7 @@ const OutletView: React.FC = () => {
                         <th className="p-3">Model</th>
                         <th className="p-3">Brand</th>
                         <th className="p-3">Quantity</th>
-                        <th className="p-3">Cost</th>
+                        {userPermissions !== 'seller' && <th className="p-3">Cost</th>}
                         <th className="p-3">IMEI/Batch</th>
                       </tr>
                     </thead>
@@ -821,7 +823,7 @@ const OutletView: React.FC = () => {
                           <td className="p-3">{item.mobiles.categories.itemModel}</td>
                           <td className="p-3">{item.mobiles.categories.brand}</td>
                           <td className="p-3">{item.quantity}</td>
-                          <td className="p-3">{item.mobiles.productCost}</td>
+                          {userPermissions !== 'seller' && <td className="p-3">{item.mobiles.productCost}</td>}
                           <td className="p-3">{item.mobiles.IMEI}</td>
                         </tr>
                       ))}
@@ -857,7 +859,7 @@ const OutletView: React.FC = () => {
                         <th className="p-3">Model</th>
                         <th className="p-3">Brand</th>
                         <th className="p-3">Quantity</th>
-                        <th className="p-3">Cost</th>
+                        {userPermissions !== 'seller' && <th className="p-3">Cost</th>}
                         <th className="p-3">Batch</th>
                       </tr>
                     </thead>
@@ -872,7 +874,7 @@ const OutletView: React.FC = () => {
                           <td className="p-3">{item.accessories.categories.itemModel}</td>
                           <td className="p-3">{item.accessories.categories.brand}</td>
                           <td className="p-3">{item.quantity}</td>
-                          <td className="p-3">{item.accessories.productCost}</td>
+                          {userPermissions !== 'seller' && <td className="p-3">{item.accessories.productCost}</td>}
                           <td className="p-3">{item.accessories.batchNumber}</td>
                         </tr>
                       ))}

@@ -7,9 +7,10 @@ interface CommissionsTableProps {
   commissions: CommissionPayment[];
   loading: boolean;
   onVoid: (commissionId: number) => void;
+  userRole: string | undefined; // Add userRole prop
 }
 
-const SalesModal: React.FC<{ sales: any; onClose: () => void }> = ({ sales, onClose }) => {
+const SalesModal: React.FC<{ sales: any; onClose: () => void; userRole: string | undefined }> = ({ sales, onClose, userRole }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-boxdark rounded-lg shadow-lg p-6 w-full max-w-6xl">
@@ -26,7 +27,7 @@ const SalesModal: React.FC<{ sales: any; onClose: () => void }> = ({ sales, onCl
                   <th className="py-2 px-4 font-semibold text-black dark:text-white">Item Name</th>
                   <th className="py-2 px-4 font-semibold text-black dark:text-white">IMEI</th>
                   <th className="py-2 px-4 font-semibold text-black dark:text-white">Sold Price</th>
-                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Profit</th>
+                  {userRole !== 'seller' && <th className="py-2 px-4 font-semibold text-black dark:text-white">Profit</th>}
                   <th className="py-2 px-4 font-semibold text-black dark:text-white">Commission</th>
                   <th className="py-2 px-4 font-semibold text-black dark:text-white">Date</th>
                 </tr>
@@ -37,7 +38,7 @@ const SalesModal: React.FC<{ sales: any; onClose: () => void }> = ({ sales, onCl
                     <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.itemName}</td>
                     <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.IMEI}</td>
                     <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.soldPrice}</td>
-                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.profit}</td>
+                    {userRole !== 'seller' && <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.profit}</td>}
                     <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.commission}</td>
                     <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{new Date(sale.createdAt).toLocaleDateString()}</td>
                   </tr>
@@ -58,7 +59,7 @@ const SalesModal: React.FC<{ sales: any; onClose: () => void }> = ({ sales, onCl
                   <th className="py-2 px-4 font-semibold text-black dark:text-white">Color</th>
                   <th className="py-2 px-4 font-semibold text-black dark:text-white">Quantity</th>
                   <th className="py-2 px-4 font-semibold text-black dark:text-white">Sold Price</th>
-                  <th className="py-2 px-4 font-semibold text-black dark:text-white">Profit</th>
+                  {userRole !== 'seller' && <th className="py-2 px-4 font-semibold text-black dark:text-white">Profit</th>}
                   <th className="py-2 px-4 font-semibold text-black dark:text-white">Commission</th>
                   <th className="py-2 px-4 font-semibold text-black dark:text-white">Date</th>
                 </tr>
@@ -70,7 +71,7 @@ const SalesModal: React.FC<{ sales: any; onClose: () => void }> = ({ sales, onCl
                     <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.color}</td>
                     <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.quantity}</td>
                     <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.soldPrice}</td>
-                    <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.profit}</td>
+                    {userRole !== 'seller' && <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.profit}</td>}
                     <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{sale.commission}</td>
                     <td className="border-b border-[#eee] py-2 px-4 dark:border-strokedark">{new Date(sale.createdAt).toLocaleDateString()}</td>
                   </tr>
@@ -86,7 +87,7 @@ const SalesModal: React.FC<{ sales: any; onClose: () => void }> = ({ sales, onCl
   );
 };
 
-const CommissionsTable: React.FC<CommissionsTableProps> = ({ commissions, loading, onVoid }) => {
+const CommissionsTable: React.FC<CommissionsTableProps> = ({ commissions, loading, onVoid, userRole }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -252,7 +253,7 @@ const CommissionsTable: React.FC<CommissionsTableProps> = ({ commissions, loadin
         </div>
       )}
 
-      {isModalOpen && <SalesModal sales={selectedSales} onClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && <SalesModal sales={selectedSales} onClose={() => setIsModalOpen(false)} userRole={userRole} />}
     </div>
   );
 };
