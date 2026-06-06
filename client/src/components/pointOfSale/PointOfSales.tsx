@@ -459,7 +459,6 @@ const PointOfSales: React.FC = () => {
           text: response.data?.message || 'Sale processed successfully',
           type: 'success',
         });
-        console.log("Sale response received from API:", response.data.data, "Type:", typeof response.data.data); // Debug log
         setSaleResponse(response.data.data);
         setCart([]);
         setFormData({ name: '', email: '', phonenumber: '' });
@@ -618,11 +617,9 @@ const PointOfSales: React.FC = () => {
     );
   }
 
-  console.log("Rendering PointOfSales, saleResponse state:", saleResponse, "Type:", typeof saleResponse, "Is array:", Array.isArray(saleResponse)); // Debug log
+    return (
 
-  return (
-
-    <>
+      <>
       {message && (
         <Message
           message={message.text}

@@ -94,7 +94,7 @@ function App() {
             path="/auth/signin"
             element={
               <>
-                <PageTitle title="Signin | augustusstores" />
+                <PageTitle title={`Signin | ${import.meta.env.VITE_APP_NAME}`} />
                 <SignIn />
               </>
             }

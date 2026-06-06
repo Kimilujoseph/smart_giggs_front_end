@@ -20,21 +20,21 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center font-sans z-50">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm flex flex-col max-h-full">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-y-auto">
         {/* Scrollable Printable Area */}
         <div id="printable-receipt" className="receipt-container">
           {/* Header */}
           <div className="receipt-header">
             <img
-              src="/mutunga_dark_mode.png"
+              src={import.meta.env.VITE_RECEIPT_LOGO_PATH}
               alt="SmartOwn Digital Assets Logo"
               className="w-24 h-24 mx-auto mb-2"
             />
             <h1>
-              SmartOwn Digital Assets
+              {import.meta.env.VITE_RECEIPT_COMPANY_NAME}
             </h1>
-            <p>Own Now, Pay Later</p>
-            <p>KRA PIN: P051234567X</p>
+            <p>{import.meta.env.VITE_RECEIPT_SLOGAN}</p>
+            <p>KRA PIN: {import.meta.env.VITE_RECEIPT_KRA_PIN}</p>
           </div>
 
           {/* Transaction Details */}
@@ -48,6 +48,10 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
               <span>
                 {new Date(saleResponse[0]?.createdAt).toLocaleString()}
               </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Served by:</span>
+              <span>{saleResponse[0]?.sellerName}</span>
             </div>
           </div>
 
