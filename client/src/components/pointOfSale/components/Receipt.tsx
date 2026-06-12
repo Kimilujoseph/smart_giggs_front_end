@@ -92,46 +92,33 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose
                             {/* Items Table */}
                             <div className="pb-4 border-b border-dashed border-gray-200">
                               <h3 className="font-semibold text-lg mb-2 text-gray-800">Items</h3>
-                              <table className="w-full text-sm mt-3">
-                                <thead>
-                                  <tr className="border-b border-gray-300">
-                                    <th className="py-2 font-medium text-gray-600 text-left">Product</th>
-                                    <th className="py-2 font-medium text-gray-600 text-left">Brand</th>
-                                    <th className="py-2 font-medium text-gray-600 text-left">Model</th>
-                                    <th className="py-2 font-medium text-gray-600 text-left">IMEI</th>
-                                    <th className="py-2 font-medium text-gray-600 text-left">Qty</th>
-                                    <th className="py-2 font-medium text-gray-600 text-right">Price</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {saleResponse.map((sale) => (
-                                    <tr key={sale.id} className="border-b border-dashed border-gray-200 last:border-b-0">
-                                      <td className="py-2 text-gray-700 whitespace-normal">{sale.productName}</td>
-                                      <td className="py-2 text-gray-700">{sale.brand}</td>
-                                      <td className="py-2 text-gray-700">{sale.productModel}</td>
-                                      <td className="py-2 text-gray-700 font-mono break-all">{sale.batchIMEI}</td>
-                                      <td className="py-2 text-gray-700">{sale.quantity}</td>
-                                      <td className="py-2 text-gray-700 text-right">
-                                        {new Intl.NumberFormat('en-KE', {
-                                          style: 'currency',
-                                          currency: 'KES',
-                                        }).format(sale.soldPrice)}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                              <div className="border-t border-b border-gray-200 py-3 space-y-2">
+                                {saleResponse.map((sale) => (
+                                  <div key={sale.id} className="bg-gray-50 p-3 rounded-lg mb-2 last:mb-0">
+                                    <p className="font-medium break-words">{sale.productName}</p>
+                                    <p className="text-sm text-gray-500">
+                                      {sale.brand} • {sale.productModel} • Qty: {sale.quantity}
+                                    </p>
+                                    {sale.batchIMEI && (
+                                      <p className="imei bg-gray-100 p-2 rounded-md font-mono text-sm break-all mt-1">
+                                        📱 IMEI: {sale.batchIMEI}
+                                      </p>
+                                    )}
+                                    <p className="text-right font-semibold mt-2">
+                                      {new Intl.NumberFormat('en-KE', {
+                                        style: 'currency',
+                                        currency: 'KES',
+                                      }).format(sale.soldPrice)}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </div>
 
                           {/* Right Column */}
                           <div className="space-y-4">
-                            {/* QR Code */}
-                            <div className="text-center md:text-right mb-4">
-                              <div className="w-32 h-32 bg-gray-100 inline-flex items-center justify-center rounded-lg">
-                                <p className="text-xs text-gray-400">QR Code</p>
-                              </div>
-                            </div>
+                            {/* QR Code section removed as per requirements */}
 
                             {/* Payment Details */}
                             <div className="pb-4 border-b border-dashed border-gray-200 text-sm">
