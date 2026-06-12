@@ -1,13 +1,25 @@
 import React from 'react';
 import { SaleResponse } from '../types/types';
-import './Receipt.css';
+
+interface Payment {
+  id: number;
+  amount: number;
+  paymentMethod: string;
+  status: string;
+  transactionId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  mobileSaleId: number | null;
+  accessorySaleId: number | null;
+}
 
 interface ReceiptProps {
   saleResponse: SaleResponse[];
+  paymentDetails: Payment[];
   onClose: () => void;
 }
 
-const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
+const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose }) => {
   const handlePrint = () => {
     window.print();
   };
@@ -22,60 +34,85 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center font-sans z-50">
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-y-auto">
         {/* Scrollable Printable Area */}
-        <div id="printable-receipt" className="receipt-container">
+        <div id="printable-receipt" className="font-sans bg-white rounded-xl shadow-xl p-6 max-w-sm mx-auto my-5 text-gray-800 leading-relaxed border border-gray-200">
           {/* Header */}
-          <div className="receipt-header">
+          <div className="text-center mb-5 border-b border-dashed border-gray-300 pb-4">
             <img
-              src={import.meta.env.VITE_RECEIPT_LOGO_PATH}
-              alt="SmartOwn Digital Assets Logo"
-              className="w-24 h-24 mx-auto mb-2"
+              src="/captech_backgroundless.png"
+              alt="Captech Enterprise Logo"
+              className="w-28 h-28 mx-auto mb-2"
             />
-            <h1>
-              {import.meta.env.VITE_RECEIPT_COMPANY_NAME}
+            <h1 className="text-2xl font-extrabold mb-1 text-gray-900">
+              Captech Enterprise
             </h1>
-            <p>{import.meta.env.VITE_RECEIPT_SLOGAN}</p>
-            <p>KRA PIN: {import.meta.env.VITE_RECEIPT_KRA_PIN}</p>
+            <h2 className="text-xl font-bold text-gray-800 mt-4 mb-2">SALES RECEIPT</h2>
+            <p className="text-sm text-gray-600 my-0.5">Nairobi, Kenya</p>
           </div>
 
           {/* Transaction Details */}
-          <div className="receipt-section">
-            <div className="flex justify-between">
-              <span>Shop:</span>
-              <span>{saleResponse[0]?.shopName}</span>
+          <div className="mb-4 pb-4 border-b border-dashed border-gray-200 text-sm">
+            <div className="flex justify-between mb-1">
+              <span className="font-medium">Receipt ID:</span>
+              <span>#{saleResponse[0]?.id}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Date:</span>
+            <div className="flex justify-between mb-1">
+              <span className="font-medium">Date & Time:</span>
               <span>
-                {new Date(saleResponse[0]?.createdAt).toLocaleString()}
+                {new Date(saleResponse[0]?.createdAt).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                })}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span>Served by:</span>
+            <div className="flex justify-between mb-1">
+              <span className="font-medium">Shop:</span>
+              <span>{saleResponse[0]?.shopName}</span>
+            </div>
+            <div className="flex justify-between mb-1">
+              <span className="font-medium">Served by:</span>
               <span>{saleResponse[0]?.sellerName}</span>
+            </div>
+            <div className="flex justify-between mb-1">
+              <span className="font-medium">Customer Name:</span>
+              <span>{saleResponse[0]?.customerName || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">Customer Phone:</span>
+              <span>{saleResponse[0]?.customerphoneNumber || 'N/A'}</span>
             </div>
           </div>
 
           {/* Items Table */}
-          <div className="receipt-items receipt-section">
-            <table className="w-full text-sm">
+          <div className="mb-4 pb-4 border-b border-dashed border-gray-200">
+            <h3 className="font-semibold text-lg mb-2 text-gray-800">Items</h3>
+            <table className="w-full text-sm mt-3">
               <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Qty</th>
-                  <th>Price</th>
-                  <th>Total</th>
+                <tr className="border-b border-gray-300">
+                  <th className="py-2 font-medium text-gray-600 text-left">Product</th>
+                  <th className="py-2 font-medium text-gray-600 text-left">Brand</th>
+                  <th className="py-2 font-medium text-gray-600 text-left">Model</th>
+                  <th className="py-2 font-medium text-gray-600 text-left">IMEI</th>
+                  <th className="py-2 font-medium text-gray-600 text-left">Qty</th>
+                  <th className="py-2 font-medium text-gray-600 text-right">Price</th>
                 </tr>
               </thead>
               <tbody>
                 {saleResponse.map((sale) => (
-                  <tr key={sale.id}>
-                    <td>{sale.productName}</td>
-                    <td>{sale.quantity}</td>
-                    <td>
-                      {(sale.soldPrice / sale.quantity).toLocaleString()}
-                    </td>
-                    <td>
-                      {sale.soldPrice.toLocaleString()}
+                  <tr key={sale.id} className="border-b border-dashed border-gray-200 last:border-b-0">
+                    <td className="py-2 text-gray-700">{sale.productName}</td>
+                    <td className="py-2 text-gray-700">{sale.brand}</td>
+                    <td className="py-2 text-gray-700">{sale.productModel}</td>
+                    <td className="py-2 text-gray-700">{sale.batchIMEI}</td>
+                    <td className="py-2 text-gray-700">{sale.quantity}</td>
+                    <td className="py-2 text-gray-700 text-right">
+                      {new Intl.NumberFormat('en-KE', {
+                        style: 'currency',
+                        currency: 'KES',
+                      }).format(sale.soldPrice)}
                     </td>
                   </tr>
                 ))}
@@ -84,38 +121,45 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
           </div>
 
           {/* Totals Section */}
-          <div className="receipt-totals receipt-section">
-            <div className="total-line">
-              <span>Total:</span>
+          <div className="mb-4 pb-4 border-b border-dashed border-gray-200 text-sm">
+            <h3 className="font-semibold text-lg mb-2 text-gray-800">Payment Details</h3>
+            {paymentDetails && paymentDetails.length > 0 ? (
+              paymentDetails.map((payment, index) => (
+                <div key={index} className="flex justify-between py-1 text-base text-gray-700">
+                  <span>{payment.paymentMethod}:</span>
+                  <span>
+                    {new Intl.NumberFormat('en-KE', {
+                      style: 'currency',
+                      currency: 'KES',
+                    }).format(payment.amount)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="flex justify-between py-1 text-base text-gray-700">
+                <span>Payment Method:</span>
+                <span>Cash</span>
+              </div>
+            )}
+            <div className="flex justify-between font-bold text-lg border-t border-dashed border-gray-300 pt-3 mt-3">
+              <span>Total Amount:</span>
               <span>
-                KES{' '}
-                {+total}
+                {new Intl.NumberFormat('en-KE', {
+                  style: 'currency',
+                  currency: 'KES',
+                }).format(total)}
               </span>
             </div>
           </div>
 
-          {/* Customer Details */}
-          <div className="receipt-section">
-            <h2>Customer Details</h2>
-            <div className="flex justify-between">
-              <span>Name:</span>
-              <span>{saleResponse[0]?.customerName || 'N/A'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Phone:</span>
-              <span>{saleResponse[0]?.customerphoneNumber || 'N/A'}</span>
-            </div>
-          </div>
-
           {/* Footer */}
-          <div className="receipt-footer">
-            <p>
-              Thank you for your business!
-            </p>
-            {/* Placeholder for a QR code or barcode */}
-            <div className="w-24 h-24 bg-gray-200 mx-auto mt-4 flex items-center justify-center">
-              <p className="text-xs text-gray-500">QR Code</p>
+          <div className="text-center mt-6 text-xs text-gray-500">
+            <div className="w-24 h-24 bg-gray-100 mx-auto mt-4 mb-4 flex items-center justify-center rounded-lg">
+              <p className="text-xs text-gray-400">QR Code</p>
             </div>
+            <p className="mb-1 text-gray-600 font-medium">Thank you for shopping with us!</p>
+            <p className="text-xs italic">Items sold are not returnable after 7 days.</p>
+            <p className="mt-2">This is a computer-generated receipt, no signature required.</p>
           </div>
         </div>
 
