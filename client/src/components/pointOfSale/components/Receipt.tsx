@@ -36,28 +36,35 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose
             {/* Scrollable Printable Area */}
             <div id="printable-receipt" className="font-sans bg-white p-3 md:p-6 text-gray-800 leading-relaxed w-full">
                       <div className="max-w-7xl mx-auto">
-                        <div className="grid grid-cols-2 gap-2 items-start border-b border-dashed border-gray-300 pb-4 mb-4">
-                          {/* Left Column - Logo & Company */}
-                          <div>
-                            <img src="/captech_backgroundless.png" alt="Captech Enterprise Logo" className="h-12 md:h-16 w-auto" />
-                            <div className="font-bold text-xs md:text-sm mt-1">Captech</div>
-                            <div className="text-[10px] text-gray-400 hidden sm:block">Nairobi, Kenya</div>
+                        <div className="grid grid-cols-2 gap-2 md:gap-4 items-start border-b border-gray-200 pb-4 mb-4">
+                          {/* Left */}
+                          <div className="flex flex-col items-start">
+                            <img 
+                              src={import.meta.env.VITE_RECEIPT_LOGO_PATH} 
+                              alt="Captech Enterprise Logo" 
+                              className="h-12 md:h-14 w-auto object-contain mb-1.5"
+                            />
+                            <h2 className="text-xs sm:text-sm md:text-base font-bold text-gray-800 leading-tight">
+                              <span className="hidden xs:inline">Captech Enterprise</span>
+                              <span className="xs:hidden">Captech</span>
+                            </h2>
+                            <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">Nairobi, Kenya</p>
                           </div>
 
-                          {/* Right Column - Title & Metadata */}
+                          {/* Right */}
                           <div className="text-right">
-                            <div className="font-black text-sm md:text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                              RECEIPT
-                            </div>
-                            <div className="text-[10px] md:text-xs text-gray-500 mt-0.5">
+                            <h1 className="text-sm sm:text-base md:text-xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                              SALES RECEIPT
+                            </h1>
+                            <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 mt-0.5 md:mt-1">
                               #{saleResponse[0]?.id} • {new Date(saleResponse[0]?.createdAt).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-                            </div>
-                            <div className="text-[10px] text-gray-400 truncate">
+                            </p>
+                            <p className="text-[10px] sm:text-xs text-gray-500 truncate">
                               {saleResponse[0]?.shopName}
-                            </div>
-                            <div className="text-[10px] text-gray-400 mt-0.5">
-                              {saleResponse[0]?.sellerName}
-                            </div>
+                            </p>
+                            <p className="text-[10px] text-gray-400 mt-0.5 hidden xs:block">
+                              Served by: {saleResponse[0]?.sellerName}
+                            </p>
                           </div>
                         </div>
 
