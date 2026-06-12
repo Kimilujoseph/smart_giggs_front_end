@@ -31,7 +31,7 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center font-sans z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center font-sans z-[999]">
           <div className="bg-white shadow-lg rounded-lg w-full max-h-[90vh] overflow-y-auto">
             {/* Scrollable Printable Area */}
             <div id="printable-receipt" className="font-sans bg-white p-3 md:p-6 text-gray-800 leading-relaxed w-full">
