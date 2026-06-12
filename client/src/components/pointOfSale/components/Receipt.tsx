@@ -73,19 +73,19 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose
                               </div>
                               <div className="flex justify-between mb-1">
                                 <span className="font-medium">Shop:</span>
-                                <span>{saleResponse[0]?.shopName}</span>
+                                <span className="break-words text-right">{saleResponse[0]?.shopName}</span>
                               </div>
                               <div className="flex justify-between mb-1">
                                 <span className="font-medium">Served by:</span>
-                                <span>{saleResponse[0]?.sellerName}</span>
+                                <span className="break-words text-right">{saleResponse[0]?.sellerName}</span>
                               </div>
                               <div className="flex justify-between mb-1">
                                 <span className="font-medium">Customer Name:</span>
-                                <span>{saleResponse[0]?.customerName || 'N/A'}</span>
+                                <span className="break-words text-right">{saleResponse[0]?.customerName || 'N/A'}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="font-medium">Customer Phone:</span>
-                                <span>{saleResponse[0]?.customerphoneNumber || 'N/A'}</span>
+                                <span className="break-words text-right">{saleResponse[0]?.customerphoneNumber || 'N/A'}</span>
                               </div>
                             </div>
 
