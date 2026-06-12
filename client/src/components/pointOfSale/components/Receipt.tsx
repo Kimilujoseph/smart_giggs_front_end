@@ -39,7 +39,7 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose
                         <div className="grid grid-cols-2 gap-2 items-start border-b border-dashed border-gray-300 pb-4 mb-4">
                           {/* Left Column - Logo & Company */}
                           <div>
-                            <img src="/captech_backgroundless.png" alt="Captech Enterprise Logo" className="h-10 md:h-12 w-auto" />
+                            <img src="/captech_backgroundless.png" alt="Captech Enterprise Logo" className="h-12 md:h-16 w-auto" />
                             <div className="font-bold text-xs md:text-sm mt-1">Captech</div>
                             <div className="text-[10px] text-gray-400 hidden sm:block">Nairobi, Kenya</div>
                           </div>
