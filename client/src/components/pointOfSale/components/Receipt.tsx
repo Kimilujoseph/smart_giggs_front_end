@@ -1,28 +1,18 @@
 import React from 'react';
-import { SaleResponse } from '../types/types';
-
-interface Payment {
-  id: number;
-  amount: number;
-  paymentMethod: string;
-  status: string;
-  transactionId: string | null;
-  createdAt: string;
-  updatedAt: string;
-  mobileSaleId: number | null;
-  accessorySaleId: number | null;
-}
+import { SaleResponse, Payment } from '../types/types';
 
 interface ReceiptProps {
   saleResponse: SaleResponse[];
-  paymentDetails: Payment[];
   onClose: () => void;
 }
 
-const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose }) => {
+const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
   const handlePrint = () => {
     window.print();
   };
+
+  // Get payment data from the first sale response object
+  const paymentData = saleResponse[0]?.paymentData || [];
 
   // Calculate totals
   const total = saleResponse.reduce(
@@ -39,9 +29,9 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose
                         <div className="grid grid-cols-2 gap-2 md:gap-4 items-start border-b border-gray-200 pb-4 mb-4">
                           {/* Left */}
                           <div className="flex flex-col items-start">
-                            <img 
-                              src={import.meta.env.VITE_RECEIPT_LOGO_PATH} 
-                              alt="Captech Enterprise Logo" 
+                            <img
+                              src={import.meta.env.VITE_RECEIPT_LOGO_PATH}
+                              alt="Captech Enterprise Logo"
                               className="h-12 md:h-14 w-auto object-contain mb-1.5"
                             />
                             <h2 className="text-xs sm:text-sm md:text-base font-bold text-gray-800 leading-tight">
@@ -142,8 +132,8 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose
                             {/* Payment Details */}
                             <div className="pb-4 border-b border-dashed border-gray-200 text-sm">
                               <h3 className="font-semibold text-lg mb-2 text-gray-800">Payment Details</h3>
-                              {paymentDetails && paymentDetails.length > 0 ? (
-                                paymentDetails.map((payment, index) => (
+                              {paymentData && paymentData.length > 0 ? (
+                                paymentData.map((payment, index) => (
                                   <div key={index} className="flex justify-between py-1 text-base text-gray-700">
                                     <span>{payment.paymentMethod}:</span>
                                     <span>
@@ -157,7 +147,7 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose
                               ) : (
                                 <div className="flex justify-between py-1 text-base text-gray-700">
                                   <span>Payment Method:</span>
-                                  <span>Cash</span>
+                                  <span>No payment details available</span>
                                 </div>
                               )}
                               <div className="flex justify-between font-bold text-lg border-t border-dashed border-gray-300 pt-3 mt-3">
@@ -200,5 +190,4 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, paymentDetails, onClose
               </div>
     </div>
                             );
-                          };
-export { Receipt };
+                          };export { Receipt };

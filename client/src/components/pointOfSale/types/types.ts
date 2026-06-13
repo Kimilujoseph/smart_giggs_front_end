@@ -50,6 +50,18 @@ export interface Sale {
     }[];
 }
 
+export interface Payment {
+    id: number;
+    amount: number;
+    paymentMethod: string;
+    status: string;
+    transactionId: string | null;
+    createdAt: string;
+    updatedAt: string;
+    mobileSaleId: number | null;
+    accessorySaleId: number | null;
+}
+
 export interface SaleResponse {
     id: number;
     productID: number;
@@ -77,4 +89,5 @@ export interface SaleResponse {
     productName: string;
     productModel: string;
     brand: string;
+    paymentData: Payment[]; // Added paymentData here
 }
