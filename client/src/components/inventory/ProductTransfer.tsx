@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Shop } from '../../types/shop';
 import { CheckCircle, X } from 'lucide-react';
+import { CircularProgress } from '@mui/material';
 
 const ProductTransfer = ({ currentUser, mobileItems, accessoryItems, refreshData }) => {
   const [shopName, setShopName] = useState('');
@@ -15,6 +16,8 @@ const ProductTransfer = ({ currentUser, mobileItems, accessoryItems, refreshData
   const [transferCategory, setTransferCategory] = useState('mobiles');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [productNotFound, setProductNotFound] = useState(false);
 
   const fetchOutlets = useCallback(async () => {
     try {
@@ -42,17 +45,26 @@ const ProductTransfer = ({ currentUser, mobileItems, accessoryItems, refreshData
   const handleSearch = async () => {
     if (!searchTerm) {
       setSearchResults(null);
+      setProductNotFound(false);
       return;
     }
+    setSearchLoading(true);
+    setProductNotFound(false); // Reset not found status
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_SERVER_HEAD}/api/shop/searchproducts/${currentUser.assignedShop.shopName}?productName=${searchTerm}`,
         { withCredentials: true },
       );
       setSearchResults(response.data.products);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to search products", error);
-      setError("Failed to search products.");
+      if (error.response && error.response.status === 404) {
+        setProductNotFound(true);
+      }
+      setError("Failed to search products."); // Set a general error message
+      setSearchResults(null); // Clear previous results on error
+    } finally {
+      setSearchLoading(false);
     }
   };
 
@@ -209,7 +221,19 @@ const ProductTransfer = ({ currentUser, mobileItems, accessoryItems, refreshData
       <form onSubmit={handleTransfer} className="p-6 space-y-6">
         <div>
           <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">Select Items to Transfer</h3>
-          {renderItemList(itemsToDisplay, transferCategory)}
+          {searchLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <CircularProgress />
+            </div>
+          ) : productNotFound ? (
+            <div className="flex justify-center items-center h-40">
+              <p className="text-gray-500 dark:text-gray-400">
+                No products found for your search.
+              </p>
+            </div>
+          ) : (
+            renderItemList(itemsToDisplay, transferCategory)
+          )}
         </div>
 
         <div>
