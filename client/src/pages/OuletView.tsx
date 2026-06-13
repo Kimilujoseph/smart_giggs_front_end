@@ -82,6 +82,8 @@ const OutletView: React.FC = () => {
   const [pendingAccessories, setPendingAccessories] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any | null>(null);
+  const [searchLoading, setSearchLoading] = useState<boolean>(false);
+  const [productNotFound, setProductNotFound] = useState<boolean>(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [expenseFormData, setExpenseFormData] = useState<ExpenseFormData>({
     shopId: 0,
@@ -460,16 +462,25 @@ const OutletView: React.FC = () => {
   const handleSearch = async () => {
     if (!searchTerm) {
       setSearchResults(null);
+      setProductNotFound(false);
       return;
     }
+    setSearchLoading(true);
+    setProductNotFound(false); // Reset not found status
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_SERVER_HEAD}/api/shop/searchproducts/${shopname}?productName=${searchTerm}`,
         { withCredentials: true },
       );
       setSearchResults(response.data.products);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to search products", error);
+      if (error.response && error.response.status === 404) {
+        setProductNotFound(true);
+      }
+      setSearchResults(null); // Clear previous results on error
+    } finally {
+      setSearchLoading(false);
     }
   };
 
@@ -784,6 +795,9 @@ const OutletView: React.FC = () => {
         );
       }
       case 'Inventory': {
+        const displayMobileItems = searchResults ? searchResults.phoneItems?.items : mobileItems?.items;
+        const displayAccessoryItems = searchResults ? searchResults.stockItems?.items : accessoryItems?.items;
+
         return (
           <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
             <div className="p-4 bg-gray-50 dark:bg-meta-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
@@ -797,110 +811,146 @@ const OutletView: React.FC = () => {
                 <button onClick={() => setInventoryTab('accessories')} className={`px-4 py-2 rounded-lg w-1/2 md:w-auto ${inventoryTab === 'accessories' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Accessories</button>
               </div>
             </div>
-            {inventoryTab === 'mobiles' && (searchResults ? searchResults.phoneItems : mobileItems) && (
+
+            {searchLoading ? (
+              <div className="flex justify-center items-center h-40">
+                <CircularProgress />
+              </div>
+            ) : productNotFound ? (
+              <div className="flex justify-center items-center h-40">
+                <p className="text-gray-500 dark:text-gray-400">
+                  No products found for your search.
+                </p>
+              </div>
+            ) : (
               <>
-                <div className="max-w-full overflow-x-auto">
-                  <table className="w-full table-auto mx-auto">
-                    <thead className="text-xs">
-                      <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
-                        <th className="p-3">#</th>
-                        <th className="p-3">Name</th>
-                        <th className="p-3">Model</th>
-                        <th className="p-3">Brand</th>
-                        <th className="p-3">Quantity</th>
-                        {userPermissions !== 'seller' && <th className="p-3">Cost</th>}
-                        <th className="p-3">IMEI/Batch</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-xs md:text-sm lg:text-base text-center">
-                      {(searchResults ? searchResults.phoneItems.items : mobileItems.items).map((item: any, index: number) => (
-                        <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
-                          ? 'bg-bodydark3 dark:bg-meta-4'
-                          : 'bg-white dark:bg-boxdark'
-                          }`}>
-                          <td className="p-3">{index + 1}</td>
-                          <td className="p-3 font-medium">{item.mobiles.categories.itemName}</td>
-                          <td className="p-3">{item.mobiles.categories.itemModel}</td>
-                          <td className="p-3">{item.mobiles.categories.brand}</td>
-                          <td className="p-3">{item.quantity}</td>
-                          {userPermissions !== 'seller' && <td className="p-3">{item.mobiles.productCost}</td>}
-                          <td className="p-3">{item.mobiles.IMEI}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {!searchResults && <div className="flex justify-end mt-4 p-4">
-                  <button
-                    onClick={() => setMobilePage(prev => Math.max(prev - 1, 1))}
-                    disabled={mobilePage === 1}
-                    className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setMobilePage(prev => prev + 1)}
-                    disabled={mobilePage === mobileItems.totalPages}
-                    className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>}
-              </>
-            )}
-            {inventoryTab === 'accessories' && (searchResults ? searchResults.stockItems : accessoryItems) && (
-              <>
-                <div className="max-w-full overflow-x-auto">
-                  <table className="w-full table-auto mx-auto">
-                    <thead className="text-xs">
-                      <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
-                        <th className="p-3">#</th>
-                        <th className="p-3">Name</th>
-                        <th className="p-3">Model</th>
-                        <th className="p-3">Brand</th>
-                        <th className="p-3">Quantity</th>
-                        {userPermissions !== 'seller' && <th className="p-3">Cost</th>}
-                        <th className="p-3">Batch</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-xs md:text-sm lg:text-base text-center">
-                      {(searchResults ? searchResults.stockItems.items : accessoryItems.items).map((item: any, index: number) => (
-                        <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
-                          ? 'bg-bodydark3 dark:bg-meta-4'
-                          : 'bg-white dark:bg-boxdark'
-                          }`}>
-                          <td className="p-3">{index + 1}</td>
-                          <td className="p-3 font-medium">{item.accessories.categories.itemName}</td>
-                          <td className="p-3">{item.accessories.categories.itemModel}</td>
-                          <td className="p-3">{item.accessories.categories.brand}</td>
-                          <td className="p-3">{item.quantity}</td>
-                          {userPermissions !== 'seller' && <td className="p-3">{item.accessories.productCost}</td>}
-                          <td className="p-3">{item.accessories.batchNumber}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {!searchResults && <div className="flex justify-end mt-4 p-4">
-                  <button
-                    onClick={() => setAccessoryPage(prev => Math.max(prev - 1, 1))}
-                    disabled={accessoryPage === 1}
-                    className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setAccessoryPage(prev => prev + 1)}
-                    disabled={accessoryPage === accessoryItems.totalPages}
-                    className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>}
+                {inventoryTab === 'mobiles' && (
+                  displayMobileItems && displayMobileItems.length > 0 ? (
+                    <>
+                      <div className="max-w-full overflow-x-auto">
+                        <table className="w-full table-auto mx-auto">
+                          <thead className="text-xs">
+                            <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                              <th className="p-3">#</th>
+                              <th className="p-3">Name</th>
+                              <th className="p-3">Model</th>
+                              <th className="p-3">Brand</th>
+                              <th className="p-3">Quantity</th>
+                              {userPermissions !== 'seller' && <th className="p-3">Cost</th>}
+                              <th className="p-3">IMEI/Batch</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-xs md:text-sm lg:text-base text-center">
+                            {displayMobileItems.map((item: any, index: number) => (
+                              <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
+                                ? 'bg-bodydark3 dark:bg-meta-4'
+                                : 'bg-white dark:bg-boxdark'
+                                }`}>
+                                <td className="p-3">{index + 1}</td>
+                                <td className="p-3 font-medium">{item.mobiles.categories.itemName}</td>
+                                <td className="p-3">{item.mobiles.categories.itemModel}</td>
+                                <td className="p-3">{item.mobiles.categories.brand}</td>
+                                <td className="p-3">{item.quantity}</td>
+                                {userPermissions !== 'seller' && <td className="p-3">{item.mobiles.productCost}</td>}
+                                <td className="p-3">{item.mobiles.IMEI}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {!searchResults && mobileItems && (
+                        <div className="flex justify-end mt-4 p-4">
+                          <button
+                            onClick={() => setMobilePage(prev => Math.max(prev - 1, 1))}
+                            disabled={mobilePage === 1}
+                            className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                          >
+                            Previous
+                          </button>
+                          <button
+                            onClick={() => setMobilePage(prev => prev + 1)}
+                            disabled={mobilePage === mobileItems.totalPages}
+                            className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex justify-center items-center h-40">
+                      <p className="text-gray-500 dark:text-gray-400">
+                        No mobile items available.
+                      </p>
+                    </div>
+                  )
+                )}
+
+                {inventoryTab === 'accessories' && (
+                  displayAccessoryItems && displayAccessoryItems.length > 0 ? (
+                    <>
+                      <div className="max-w-full overflow-x-auto">
+                        <table className="w-full table-auto mx-auto">
+                          <thead className="text-xs">
+                            <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                              <th className="p-3">#</th>
+                              <th className="p-3">Name</th>
+                              <th className="p-3">Model</th>
+                              <th className="p-3">Brand</th>
+                              <th className="p-3">Quantity</th>
+                              {userPermissions !== 'seller' && <th className="p-3">Cost</th>}
+                              <th className="p-3">Batch</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-xs md:text-sm lg:text-base text-center">
+                            {displayAccessoryItems.map((item: any, index: number) => (
+                              <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${index % 2 === 1
+                                ? 'bg-bodydark3 dark:bg-meta-4'
+                                : 'bg-white dark:bg-boxdark'
+                                }`}>
+                                <td className="p-3">{index + 1}</td>
+                                <td className="p-3 font-medium">{item.accessories.categories.itemName}</td>
+                                <td className="p-3">{item.accessories.categories.itemModel}</td>
+                                <td className="p-3">{item.accessories.categories.brand}</td>
+                                <td className="p-3">{item.quantity}</td>
+                                {userPermissions !== 'seller' && <td className="p-3">{item.accessories.productCost}</td>}
+                                <td className="p-3">{item.accessories.batchNumber}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {!searchResults && accessoryItems && (
+                        <div className="flex justify-end mt-4 p-4">
+                          <button
+                            onClick={() => setAccessoryPage(prev => Math.max(prev - 1, 1))}
+                            disabled={accessoryPage === 1}
+                            className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                          >
+                            Previous
+                          </button>
+                          <button
+                            onClick={() => setAccessoryPage(prev => prev + 1)}
+                            disabled={accessoryPage === accessoryItems.totalPages}
+                            className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex justify-center items-center h-40">
+                      <p className="text-gray-500 dark:text-gray-400">
+                        No accessory items available.
+                      </p>
+                    </div>
+                  )
+                )}
               </>
             )}
           </div>
-        )
+        );
       }
       case 'Low Stock': {
         if (!overviewData) return <CircularProgress />;
