@@ -195,13 +195,13 @@ const ProductTransfer = ({ currentUser, mobileItems, accessoryItems, refreshData
         <h2 className="text-xl font-bold text-gray-800 dark:text-white">Create a Transfer</h2>
       </div>
       
-      <div className="p-4 flex justify-between items-center">
+      <div className="p-4 flex flex-col md:flex-row md:justify-between items-center gap-4">
         <div className="flex space-x-1 rounded-lg bg-gray-200 dark:bg-meta-4 p-1">
           <button onClick={() => setTransferCategory('mobiles')} className={`px-4 py-2 text-sm font-medium rounded-md ${transferCategory === 'mobiles' ? 'bg-white dark:bg-boxdark text-primary' : 'text-gray-600 dark:text-gray-300'}`}>Mobiles</button>
           <button onClick={() => setTransferCategory('accessories')} className={`px-4 py-2 text-sm font-medium rounded-md ${transferCategory === 'accessories' ? 'bg-white dark:bg-boxdark text-primary' : 'text-gray-600 dark:text-gray-300'}`}>Accessories</button>
         </div>
-        <div className="flex items-center space-x-2">
-          <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search..." className="p-2 border rounded-lg dark:bg-form-input dark:border-form-strokedark" />
+        <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
+          <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search..." className="p-2 border rounded-lg dark:bg-form-input dark:border-form-strokedark flex-grow" />
           <button onClick={handleSearch} className="px-4 py-2 rounded-lg bg-primary text-white">Search</button>
         </div>
       </div>

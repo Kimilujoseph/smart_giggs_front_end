@@ -74,6 +74,8 @@ const OutletInventoryView: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any | null>(null);
+  const [searchLoading, setSearchLoading] = useState<boolean>(false);
+  const [productNotFound, setProductNotFound] = useState<boolean>(false);
   const [pendingMobiles, setPendingMobiles] = useState<any[]>([]);
   const [pendingAccessories, setPendingAccessories] = useState<any[]>([]);
   const [reversalModalOpen, setReversalModalOpen] = useState(false);
@@ -440,8 +442,11 @@ const OutletInventoryView: React.FC = () => {
   const handleSearch = async () => {
     if (!searchTerm) {
       setSearchResults(null);
+      setProductNotFound(false);
       return;
     }
+    setSearchLoading(true);
+    setProductNotFound(false); // Reset not found status
     try {
       const response = await axios.get(
         `${
@@ -450,8 +455,14 @@ const OutletInventoryView: React.FC = () => {
         { withCredentials: true },
       );
       setSearchResults(response.data.products);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to search products', error);
+      if (error.response && error.response.status === 404) {
+        setProductNotFound(true);
+      }
+      setSearchResults(null); // Clear previous results on error
+    } finally {
+      setSearchLoading(false);
     }
   };
 
@@ -704,110 +715,127 @@ const OutletInventoryView: React.FC = () => {
 
         const displayItems = searchResults ? searchItems?.items : items?.items;
 
-        return (
-          <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
-            <div className="p-4 bg-gray-50 dark:bg-meta-4 flex justify-between items-center">
-              <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">
-                Inventory /{' '}
-                <span className="text-sm text-primary">{activeSection}</span>
-              </h2>
-              <div className="flex items-center space-x-4">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by IMEI or name"
-                  className="p-2 border rounded-lg dark:bg-boxdark"
-                />
-                <button
-                  onClick={handleSearch}
-                  className="px-4 py-2 rounded-lg bg-primary text-white"
-                >
-                  Search
-                </button>
-              </div>
-            </div>
-            <div className="max-w-full overflow-x-auto">
-              <table className="w-full table-auto mx-auto">
-                <thead className="text-xs">
-                  <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
-                    <th className="p-3">#</th>
-                    <th className="p-3">Name</th>
-                    <th className="p-3">Model</th>
-                    <th className="p-3">Brand</th>
-                    <th className="p-3">Quantity</th>
-                    {userPermissions !== 'seller' && (
-                      <th className="p-3">Cost</th>
+                return (
+                  <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
+                    <div className="p-4 bg-gray-50 dark:bg-meta-4 flex flex-col md:flex-row md:justify-between items-center gap-4">
+                      <h2 className="md:text-xl font-bold text-gray-800 dark:text-white">
+                        Inventory /{' '}
+                        <span className="text-sm text-primary">{activeSection}</span>
+                      </h2>
+                      <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
+                        <input
+                          type="text"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          placeholder="Search by IMEI or name"
+                          className="p-2 border rounded-lg dark:bg-boxdark flex-grow"
+                        />
+                        <button
+                          onClick={handleSearch}
+                          className="px-4 py-2 rounded-lg bg-primary text-white"
+                        >
+                          Search
+                        </button>
+                      </div>
+                    </div>
+                    <div className="max-w-full overflow-x-auto">
+                      {searchLoading ? (
+                        <div className="flex justify-center items-center h-40">
+                          <CircularProgress />
+                        </div>
+                      ) : productNotFound ? (
+                        <div className="flex justify-center items-center h-40">
+                          <p className="text-gray-500 dark:text-gray-400">
+                            No products found for your search.
+                          </p>
+                        </div>
+                      ) : displayItems && displayItems.length > 0 ? (
+                        <table className="w-full table-auto mx-auto">
+                          <thead className="text-xs">
+                            <tr className="bg-gray-100 dark:bg-meta-4 text-gray-600 dark:text-gray-300 text-center">
+                              <th className="p-3">#</th>
+                              <th className="p-3">Name</th>
+                              <th className="p-3">Model</th>
+                              <th className="p-3">Brand</th>
+                              <th className="p-3">Quantity</th>
+                              {userPermissions !== 'seller' && (
+                                <th className="p-3">Cost</th>
+                              )}
+                              <th className="p-3">{isPhones ? 'IMEI' : 'Batch'}</th>
+                              <th className="p-3">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-xs md:text-sm lg:text-base text-center">
+                            {displayItems?.map((item: any, index: number) => {
+                              const details = isPhones ? item.mobiles : item.accessories;
+                              return (
+                                <tr
+                                  key={index}
+                                  className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
+                                    index % 2 === 1
+                                      ? 'bg-bodydark3 dark:bg-meta-4'
+                                      : 'bg-white dark:bg-boxdark'
+                                  }`}
+                                >
+                                  <td className="p-3">{index + 1}</td>
+                                  <td className="p-3 font-medium">
+                                    {details.categories.itemName}
+                                  </td>
+                                  <td className="p-3">{details.categories.itemModel}</td>
+                                  <td className="p-3">{details.categories.brand}</td>
+                                  <td className="p-3">{item.quantity}</td>
+                                  {userPermissions !== 'seller' && (
+                                    <td className="p-3">{details.productCost}</td>
+                                  )}
+                                  <td className="p-3">
+                                    {isPhones ? details.IMEI : details.batchNumber}
+                                  </td>
+                                  <td className="p-3">
+                                    <button
+                                      onClick={() =>
+                                        handleReturnClick(
+                                          item,
+                                          isPhones ? 'mobile' : 'accessory',
+                                        )
+                                      }
+                                      className="p-1 hover:bg-gray-100 rounded-full text-gray-600 hover:text-primary transition-colors"
+                                    >
+                                      <CornerUpLeft className="w-4 h-4" />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="flex justify-center items-center h-40">
+                          <p className="text-gray-500 dark:text-gray-400">
+                            No {activeSection.toLowerCase()} available.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {!searchResults && items && (
+                      <div className="flex justify-end mt-4 p-4">
+                        <button
+                          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                          disabled={page === 1}
+                          className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => setPage((prev) => prev + 1)}
+                          disabled={page === items.totalPages}
+                          className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
+                        >
+                          Next
+                        </button>
+                      </div>
                     )}
-                    <th className="p-3">{isPhones ? 'IMEI' : 'Batch'}</th>
-                    <th className="p-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="text-xs md:text-sm lg:text-base text-center">
-                  {displayItems?.map((item: any, index: number) => {
-                    const details = isPhones ? item.mobiles : item.accessories;
-                    return (
-                      <tr
-                        key={index}
-                        className={`hover:bg-gray-50 dark:hover:bg-opacity-90 transition-colors ${
-                          index % 2 === 1
-                            ? 'bg-bodydark3 dark:bg-meta-4'
-                            : 'bg-white dark:bg-boxdark'
-                        }`}
-                      >
-                        <td className="p-3">{index + 1}</td>
-                        <td className="p-3 font-medium">
-                          {details.categories.itemName}
-                        </td>
-                        <td className="p-3">{details.categories.itemModel}</td>
-                        <td className="p-3">{details.categories.brand}</td>
-                        <td className="p-3">{item.quantity}</td>
-                        {userPermissions !== 'seller' && (
-                          <td className="p-3">{details.productCost}</td>
-                        )}
-                        <td className="p-3">
-                          {isPhones ? details.IMEI : details.batchNumber}
-                        </td>
-                        <td className="p-3">
-                          <button
-                            onClick={() =>
-                              handleReturnClick(
-                                item,
-                                isPhones ? 'mobile' : 'accessory',
-                              )
-                            }
-                            className="p-1 hover:bg-gray-100 rounded-full text-gray-600 hover:text-primary transition-colors"
-                          >
-                            <CornerUpLeft className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {!searchResults && items && (
-              <div className="flex justify-end mt-4 p-4">
-                <button
-                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={page === 1}
-                  className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setPage((prev) => prev + 1)}
-                  disabled={page === items.totalPages}
-                  className="px-4 py-2 mx-1 bg-gray-300 rounded disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      }
+                  </div>
+                );      }
 
       case 'Sellers':
         return (
