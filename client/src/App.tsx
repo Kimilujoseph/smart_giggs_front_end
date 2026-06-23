@@ -34,6 +34,7 @@ import PointOfSales from './components/pointOfSale/PointOfSales';
 import UserSales from './pages/UserSales';
 import ShopSales from './pages/ShopSales';
 import OutletSalesBackup from './components/outlet/OutletSalesBackup';
+import Payments from './pages/Payments';
 
 import FinancerManager from './components/financers/FinancerManager';
 import FinancerSalesReport from './pages/FinancerSalesReport';
@@ -122,6 +123,16 @@ function App() {
                       <Dashboard />
                     </>
                   )
+                }
+              />
+
+              <Route
+                path="/payments"
+                element={
+                  <>
+                    <PageTitle title={`Payments | ${import.meta.env.VITE_APP_NAME}`} />
+                    <Payments />
+                  </>
                 }
               />
 

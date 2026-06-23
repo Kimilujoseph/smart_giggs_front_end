@@ -140,6 +140,7 @@ const Dashboard: React.FC = () => {
   const [shopPerformance, setShopPerformance] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [topSellers, setTopSellers] = useState<any[]>([]);
+  const [paymentsData, setPaymentsData] = useState<any>(null);
   
   // State for loading and error
   const [loading, setLoading] = useState<boolean>(true);
@@ -161,22 +162,51 @@ const Dashboard: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
+        const params = new URLSearchParams(filterParams);
+        let startDate = params.get('startDate');
+        let endDate = params.get('endDate');
+
+        if (!startDate || !endDate) {
+          const period = params.get('period') || 'week';
+          const end = new Date();
+          const start = new Date();
+
+          if (period === 'day') {
+            start.setHours(0, 0, 0, 0);
+          } else if (period === 'week') {
+            start.setDate(end.getDate() - 7);
+          } else if (period === 'month') {
+            start.setDate(end.getDate() - 30);
+          } else if (period === 'year') {
+            start.setDate(end.getDate() - 365);
+          }
+
+          startDate = start.toISOString().slice(0, 10);
+          endDate = end.toISOString().slice(0, 10);
+        }
+
         const [
           financialSummaryRes,
           salesReportRes,
           shopPerformanceRes,
           topProductsRes,
+          paymentsRes,
         ] = await Promise.all([
           axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/report/financial-summary?${filterParams}`, { withCredentials: true }),
           axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/sales/report?${filterParams}`, { withCredentials: true }),
           axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/analytics/shop-performance-summary?${filterParams}`, { withCredentials: true }),
           axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/analytics/top-products?${filterParams}`, { withCredentials: true }),
+          axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/payments/?startDate=${startDate}&endDate=${endDate}&page=1&limit=5`, { withCredentials: true }).catch(err => {
+            console.error('Error fetching payments:', err);
+            return { data: { data: { summary: {}, payments: [], totalPayments: 0 } } };
+          })
         ]);
 
         setFinancialSummary(financialSummaryRes.data.data);
         setSalesReport(salesReportRes.data.data);
         setShopPerformance(shopPerformanceRes.data.data || []);
         setTopProducts(topProductsRes.data.data || []);
+        setPaymentsData(paymentsRes.data.data);
 
         // Process Top Sellers from sales data
         if (salesReportRes.data.data?.sales) {
@@ -215,6 +245,19 @@ const Dashboard: React.FC = () => {
     accruedCommission,
   } = incomeStatement || {};
   const { accountsReceivable } = balanceSheetMetrics || {};
+
+  const summary = paymentsData?.summary || {};
+  const cashSummary = summary.cash || { totalAmount: '0', count: 0 };
+  const mpesaSummary = summary.mpesa || { totalAmount: '0', count: 0 };
+
+  const cashAmount = parseFloat(cashSummary.totalAmount || '0');
+  const cashCount = cashSummary.count || 0;
+
+  const mpesaAmount = parseFloat(mpesaSummary.totalAmount || '0');
+  const mpesaCount = mpesaSummary.count || 0;
+
+  const totalPaymentAmount = cashAmount + mpesaAmount;
+  const totalPaymentCount = cashCount + mpesaCount;
 
   const expenseBreakdownData = useMemo(() => {
     if (!operatingExpenses) return [];
@@ -337,6 +380,46 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Payments Summary */}
+      <div className="mb-8">
+        <h2 className="mb-4 text-2xl font-bold">Payments Summary</h2>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {/* Total Payments */}
+          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
+            <p className="text-sm text-gray-500 dark:text-slate-400">Total Payments Received</p>
+            <div className="mt-2 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold">{formatCurrency(totalPaymentAmount)}</h3>
+                <p className="text-xs text-gray-400 mt-1">{totalPaymentCount} transaction{totalPaymentCount !== 1 ? 's' : ''}</p>
+              </div>
+              <DollarSign className="h-6 w-6 text-green-500" />
+            </div>
+          </div>
+          {/* Cash Payments */}
+          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
+            <p className="text-sm text-gray-500 dark:text-slate-400">Cash Payments</p>
+            <div className="mt-2 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold">{formatCurrency(cashAmount)}</h3>
+                <p className="text-xs text-gray-400 mt-1">{cashCount} cash payment{cashCount !== 1 ? 's' : ''}</p>
+              </div>
+              <DollarSign className="h-6 w-6 text-blue-500" />
+            </div>
+          </div>
+          {/* M-Pesa Payments */}
+          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
+            <p className="text-sm text-gray-500 dark:text-slate-400">M-Pesa Payments</p>
+            <div className="mt-2 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold">{formatCurrency(mpesaAmount)}</h3>
+                <p className="text-xs text-gray-400 mt-1">{mpesaCount} mpesa payment{mpesaCount !== 1 ? 's' : ''}</p>
+              </div>
+              <Smartphone className="h-6 w-6 text-purple-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Financial & Sales Performance */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
         {/* Income Statement Flow */}
@@ -430,7 +513,7 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* Recent Sales Table */}
-      <div className="bg-white dark:bg-boxdark rounded-xl p-6 shadow-sm mt-6">
+      <div className="bg-white dark:bg-boxdark rounded-xl p-6 shadow-sm mt-6 border border-stroke dark:border-strokedark">
         <h3 className="text-lg font-semibold mb-4">Recent Sales</h3>
         <div className="max-h-96 overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -458,6 +541,62 @@ const Dashboard: React.FC = () => {
             </tbody>
           </table>
            {(!salesReport?.sales || salesReport.sales.length === 0) && <p className="text-center text-gray-500 py-4">No recent sales to display.</p>}
+        </div>
+      </div>
+
+      {/* Recent Payments Table */}
+      <div className="bg-white dark:bg-boxdark rounded-xl p-6 shadow-sm mt-6 border border-stroke dark:border-strokedark">
+        <h3 className="text-lg font-semibold mb-4">Recent Payments</h3>
+        <div className="max-h-96 overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+              <tr>
+                <th scope="col" className="px-6 py-3">Payment ID</th>
+                <th scope="col" className="px-6 py-3">Seller</th>
+                <th scope="col" className="px-6 py-3">Shop</th>
+                <th scope="col" className="px-6 py-3">Amount</th>
+                <th scope="col" className="px-6 py-3">Method</th>
+                <th scope="col" className="px-6 py-3">Status</th>
+                <th scope="col" className="px-6 py-3">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paymentsData?.payments?.slice(0, 5).map((payment: any) => (
+                <tr key={payment.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                  <td className="px-6 py-4 font-medium">
+                    #{payment.id} {payment.transactionId ? `(${payment.transactionId})` : ''}
+                  </td>
+                  <td className="px-6 py-4">{payment.sellerName || 'N/A'}</td>
+                  <td className="px-6 py-4">{payment.shopName || 'N/A'}</td>
+                  <td className="px-6 py-4 font-semibold">{formatCurrency(parseFloat(payment.amount))}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold leading-5 ${
+                      payment.paymentMethod?.toLowerCase() === 'mpesa'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-800/30 dark:text-emerald-400'
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-400'
+                    }`}>
+                      {payment.paymentMethod}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold leading-5 ${
+                      payment.status === 'completed'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-400'
+                        : payment.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-400'
+                        : 'bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-400'
+                    }`}>
+                      {payment.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">{new Date(payment.createdAt).toLocaleDateString()} {new Date(payment.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {(!paymentsData?.payments || paymentsData.payments.length === 0) && (
+            <p className="text-center text-gray-500 py-4">No recent payments to display.</p>
+          )}
         </div>
       </div>
     </div>
