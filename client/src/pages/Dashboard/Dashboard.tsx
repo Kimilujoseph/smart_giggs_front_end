@@ -162,29 +162,6 @@ const Dashboard: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const params = new URLSearchParams(filterParams);
-        let startDate = params.get('startDate');
-        let endDate = params.get('endDate');
-
-        if (!startDate || !endDate) {
-          const period = params.get('period') || 'week';
-          const end = new Date();
-          const start = new Date();
-
-          if (period === 'day') {
-            start.setHours(0, 0, 0, 0);
-          } else if (period === 'week') {
-            start.setDate(end.getDate() - 7);
-          } else if (period === 'month') {
-            start.setDate(end.getDate() - 30);
-          } else if (period === 'year') {
-            start.setDate(end.getDate() - 365);
-          }
-
-          startDate = start.toISOString().slice(0, 10);
-          endDate = end.toISOString().slice(0, 10);
-        }
-
         const [
           financialSummaryRes,
           salesReportRes,
@@ -196,7 +173,7 @@ const Dashboard: React.FC = () => {
           axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/sales/report?${filterParams}`, { withCredentials: true }),
           axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/analytics/shop-performance-summary?${filterParams}`, { withCredentials: true }),
           axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/analytics/top-products?${filterParams}`, { withCredentials: true }),
-          axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/payments/?startDate=${startDate}&endDate=${endDate}&page=1&limit=5`, { withCredentials: true }).catch(err => {
+          axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/payments/?${filterParams}&page=1&limit=5`, { withCredentials: true }).catch(err => {
             console.error('Error fetching payments:', err);
             return { data: { data: { summary: {}, payments: [], totalPayments: 0 } } };
           })
