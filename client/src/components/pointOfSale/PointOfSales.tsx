@@ -1284,7 +1284,7 @@ const PointOfSales: React.FC = () => {
                     </button>
                     <button
                       className="text-white py-2 px-4 rounded-lg bg-primary hover:bg-opacity-90 disabled:opacity-50"
-                      disabled={cart.length === 0 || checkoutDisabled}
+                      disabled={cart.length === 0 || checkoutDisabled || submitting}
                       onClick={handleCheckout}
                     >
                       {submitting ? 'Processing...' : 'Checkout'}
