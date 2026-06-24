@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, Plus } from 'lucide-react';
+import { Filter, Plus, Search, ChevronDown } from 'lucide-react';
 
 interface SearchAndControlsProps {
   searchValue: string;
@@ -22,60 +22,104 @@ const SearchAndControls: React.FC<SearchAndControlsProps> = ({
   itemsPerPage,
   onItemsPerPageChange,
 }) => (
-  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-4">
-    {/* Search Input */}
-    <div className="w-full lg:w-1/3">
+  <div className="flex flex-col gap-3 px-4 sm:gap-4">
+
+    {/* ── Row 1: Search bar – full width on every screen ── */}
+    <div className="relative w-full group">
+      {/* Left search icon */}
+      <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-bodydark2 group-focus-within:text-primary transition-colors duration-200">
+        <Search className="w-4 h-4" />
+      </span>
+
       <input
         type="text"
-        placeholder="Search for specific product..."
-        className="w-full px-4 py-2 rounded-lg border border-stroke bg-transparent text-black dark:text-white focus:border-primary"
+        id="inventory-search"
+        placeholder="Search product, brand, category…"
+        className="w-full pl-10 pr-24 py-2.5 rounded-xl border border-stroke bg-white dark:bg-boxdark text-sm text-black dark:text-white placeholder-bodydark2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
         value={searchValue}
         onChange={(e) => onSearchChange(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') onSearchSubmit();
         }}
       />
+
+      {/* Inline Search button nestled inside the input */}
+      <button
+        onClick={onSearchSubmit}
+        aria-label="Run search"
+        className="absolute inset-y-1 right-1 flex items-center gap-1.5 px-3 rounded-lg bg-primary hover:bg-opacity-90 text-white text-xs font-semibold shadow-sm transition-all duration-200 active:scale-95"
+      >
+        <Search className="w-3 h-3" />
+        <span className="hidden sm:inline">Search</span>
+      </button>
     </div>
 
-    {/* Action Buttons & Entries Selector */}
-    <div className="flex items-center gap-4 w-full lg:w-auto">
-      {/* Add Category */}
+    {/* ── Row 2: Action buttons + entries selector ── */}
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+
+      {/* Add Product Model */}
       <button
+        id="add-product-model-btn"
         onClick={onAddCategory}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stroke hover:bg-gray-2 dark:hover:bg-meta-4"
+        className="inline-flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-r from-primary to-blue-500 hover:from-primary hover:to-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 whitespace-nowrap"
       >
-        <Plus className="w-4 h-4" />
-        <span>Add Product Model</span>
+        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20">
+          <Plus className="w-3.5 h-3.5" />
+        </span>
+        <span className="hidden xs:inline">Add Product Model</span>
+        <span className="xs:hidden sm:hidden">Add</span>
       </button>
 
       {/* Toggle Filters */}
       <button
+        id="toggle-filters-btn"
         onClick={onToggleFilters}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-stroke transition-colors ${showFilters
-          ? 'bg-primary text-white border-primary'
-          : 'hover:bg-gray-2 dark:hover:bg-meta-4'
-          }`}
+        className={`inline-flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border text-xs sm:text-sm font-semibold shadow-sm transition-all duration-200 active:scale-95 whitespace-nowrap ${
+          showFilters
+            ? 'bg-primary border-primary text-white shadow-md'
+            : 'bg-white dark:bg-boxdark border-stroke dark:border-strokedark text-black dark:text-white hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary'
+        }`}
       >
-        <Filter className="w-4 h-4" />
+        <Filter className="w-3.5 h-3.5 flex-shrink-0" />
         <span>Filters</span>
+        {showFilters && (
+          <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white/25 text-[10px] font-bold">
+            ✓
+          </span>
+        )}
       </button>
 
+      {/* Spacer – pushes entries selector to the far right on wider screens */}
+      <div className="flex-1 hidden sm:block" />
+
       {/* Entries per page */}
-      <div className="flex items-center">
-        <label className="text-sm text-black dark:text-white">Show&nbsp;</label>
-        <select
-          className="px-2 py-1 rounded-lg border border-stroke bg-transparent dark:bg-boxdark text-black dark:text-white focus:border-primary"
-          value={itemsPerPage}
-          onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-        >
-          {[5, 10, 20, 50].map((num) => (
-            <option key={num} value={num}>
-              {num}
-            </option>
-          ))}
-        </select>
-        <span className="text-sm text-black dark:text-white">&nbsp;entries</span>
+      <div className="inline-flex items-center gap-2 ml-auto sm:ml-0">
+        <span className="text-xs sm:text-sm text-bodydark2 dark:text-bodydark whitespace-nowrap">
+          Show
+        </span>
+        <div className="relative">
+          <select
+            id="items-per-page-select"
+            className="appearance-none pl-3 pr-7 py-2 rounded-xl border border-stroke dark:border-strokedark bg-white dark:bg-boxdark text-xs sm:text-sm text-black dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 cursor-pointer"
+            value={itemsPerPage}
+            onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+          >
+            {[5, 10, 20, 50].map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
+          </select>
+          {/* Custom chevron icon */}
+          <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-bodydark2">
+            <ChevronDown className="w-3.5 h-3.5" />
+          </span>
+        </div>
+        <span className="text-xs sm:text-sm text-bodydark2 dark:text-bodydark whitespace-nowrap">
+          entries
+        </span>
       </div>
+
     </div>
   </div>
 );
