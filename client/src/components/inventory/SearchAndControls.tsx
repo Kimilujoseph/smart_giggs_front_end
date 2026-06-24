@@ -45,17 +45,16 @@ const SearchAndControls: React.FC<SearchAndControlsProps> = ({
         className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stroke hover:bg-gray-2 dark:hover:bg-meta-4"
       >
         <Plus className="w-4 h-4" />
-        <span>Add Category</span>
+        <span>Add Product Model</span>
       </button>
 
       {/* Toggle Filters */}
       <button
         onClick={onToggleFilters}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-stroke transition-colors ${
-          showFilters
-            ? 'bg-primary text-white border-primary'
-            : 'hover:bg-gray-2 dark:hover:bg-meta-4'
-        }`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-stroke transition-colors ${showFilters
+          ? 'bg-primary text-white border-primary'
+          : 'hover:bg-gray-2 dark:hover:bg-meta-4'
+          }`}
       >
         <Filter className="w-4 h-4" />
         <span>Filters</span>
