@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 import SuchEmpty from '../../suchEmpty';
 import { ProductItemCard } from './ProductItemCard';
 
@@ -20,107 +20,87 @@ interface ProductSectionProps {
 }
 
 export const ProductSection: React.FC<ProductSectionProps> = ({
-  searchTerm,
-  setSearchTerm,
-  selectedBrand,
-  setSelectedBrand,
-  brands,
-  paginatedProducts,
-  filteredProducts,
-  currentPage,
-  setCurrentPage,
-  totalPages,
-  isInCart,
-  addToCart,
-  formatPrice,
-}) => {
-  return (
-    <div className="md:p-6 w-full mx-auto">
-      {/* Header and Controls */}
-      <div className="mb-6">
-        <div className="flex gap-2 md:gap-4 mb-6 mx-auto pr-2">
-          {/* Search */}
-          <div className="flex-1 w-full">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 dark:bg-boxdark border border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-primary/50"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Brand Filter */}
-          <div className="w-auto md:min-w-[200px]">
-            <select
-              className="w-full p-2 dark:bg-boxdark border border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-primary/50"
-              value={selectedBrand}
-              onChange={(e) => setSelectedBrand(e.target.value)}
-            >
-              <option value="">All Brands</option>
-              {brands.map((brand) => (
-                <option key={brand} value={brand}>
-                  {brand}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Results Summary */}
-        <div className="text-gray-600 mb-4">
-          Showing {paginatedProducts.length} of {filteredProducts.length} products
-        </div>
+  searchTerm, setSearchTerm, selectedBrand, setSelectedBrand, brands,
+  paginatedProducts, filteredProducts, currentPage, setCurrentPage,
+  totalPages, isInCart, addToCart, formatPrice,
+}) => (
+  <div className="w-full max-w-3xl mx-auto px-2 pb-10">
+    {/* Search & Filter Bar */}
+    <div className="flex gap-2 mb-4">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search by name, brand, model or IMEI…"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark outline-none focus:ring-2 focus:ring-primary/30 transition text-slate-800 dark:text-slate-200 placeholder-slate-400"
+        />
       </div>
 
-      {paginatedProducts.length === 0 ? (
-        <SuchEmpty
-          message="No products found"
-          description="Try searching for a different product or brand"
-          variant="emptyListing"
-        />
-      ) : (
-        <>
-          {/* Product List */}
-          <div className="grid gap-4">
-            {paginatedProducts.map((product: any) => (
-              <ProductItemCard
-                key={product.categoryId.id}
-                product={product}
-                isInCart={isInCart}
-                addToCart={addToCart}
-                formatPrice={formatPrice}
-              />
-            ))}
-          </div>
+      <div className="relative">
+        <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+        <select
+          value={selectedBrand}
+          onChange={(e) => setSelectedBrand(e.target.value)}
+          className="pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark outline-none focus:ring-2 focus:ring-primary/30 transition text-slate-800 dark:text-slate-200 appearance-none cursor-pointer"
+        >
+          <option value="">All Brands</option>
+          {brands.map((b) => <option key={b} value={b}>{b}</option>)}
+        </select>
+      </div>
+    </div>
 
-          {/* Products Pagination */}
-          <div className="mt-6 flex justify-between items-center">
-            <p className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages}
-            </p>
-            <div className="flex gap-2">
+    {/* Count */}
+    <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 px-1">
+      {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
+      {selectedBrand && ` · ${selectedBrand}`}
+    </p>
+
+    {/* Product List */}
+    {paginatedProducts.length === 0 ? (
+      <SuchEmpty
+        message="No products found"
+        description="Try adjusting your search or brand filter"
+        variant="emptyListing"
+      />
+    ) : (
+      <>
+        <div className="flex flex-col gap-3">
+          {paginatedProducts.map((product: any) => (
+            <ProductItemCard
+              key={product.categoryId.id}
+              product={product}
+              isInCart={isInCart}
+              addToCart={addToCart}
+              formatPrice={formatPrice}
+            />
+          ))}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 text-sm text-slate-500 dark:text-slate-400">
+            <span>Page {currentPage} of {totalPages}</span>
+            <div className="flex gap-1">
               <button
-                className="px-4 py-2 border rounded hover:bg-gray-100 disabled:opacity-50"
+                onClick={() => setCurrentPage((p) => p - 1)}
                 disabled={currentPage === 1}
-                onClick={() => setCurrentPage((prev) => prev - 1)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-boxdark-2 disabled:opacity-30 disabled:cursor-not-allowed transition text-xs"
               >
-                Previous
+                <ChevronLeft className="w-3.5 h-3.5" /> Prev
               </button>
               <button
-                className="px-4 py-2 border rounded hover:bg-gray-100 disabled:opacity-50"
+                onClick={() => setCurrentPage((p) => p + 1)}
                 disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((prev) => prev + 1)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-boxdark-2 disabled:opacity-30 disabled:cursor-not-allowed transition text-xs"
               >
-                Next
+                Next <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
-        </>
-      )}
-    </div>
-  );
-};
+        )}
+      </>
+    )}
+  </div>
+);
