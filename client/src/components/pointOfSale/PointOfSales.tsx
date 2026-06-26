@@ -1,31 +1,19 @@
-import {
-  CheckCircle,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  Package,
-  Search,
-  ShoppingCartIcon,
-  Smartphone,
-  TriangleAlert,
-  UserPlus,
-  X,
-} from 'lucide-react';
 import React, { useEffect } from 'react';
-import SuchEmpty from '../suchEmpty';
 import Message from '../alerts/Message';
 import Breadcrumb from '../Breadcrumbs/Breadcrumb';
 import { CartItem } from './types/Cart';
 import jwt_decode from 'jwt-decode';
 import axios from 'axios';
 import { DecodedToken } from '@/types/decodedToken';
-import { ITEMS_PER_PAGE, PRODUCTS_PER_PAGE } from './constants';
+import { PRODUCTS_PER_PAGE } from './constants';
 import { ConsolidatedData } from './types/ConsolidatedData';
 import { GroupedCartItem } from './types/GroupedCartItem';
 import { Product } from './types/Product';
 import { Receipt } from './components/Receipt';
 import { SaleResponse, Financer } from './types/types';
+import { ShopHeader } from './components/ShopHeader';
+import { ProductSection } from './components/ProductSection';
+import { CartSection } from './components/CartSection';
 
 const PointOfSales: React.FC = () => {
   const [message, setMessage] = React.useState<{
@@ -44,12 +32,6 @@ const PointOfSales: React.FC = () => {
   const [searchTerm, setSearchTerm] = React.useState<string>('');
   const [selectedBrand, setSelectedBrand] = React.useState<string>('');
   const [currentPage, setCurrentPage] = React.useState<number>(1);
-  const [expandedProducts, setExpandedProducts] = React.useState<{
-    [key: string]: boolean;
-  }>({});
-  const [itemPages, setItemPages] = React.useState<{ [key: string]: number }>(
-    {},
-  );
   const [total, setTotal] = React.useState<number>(0);
   const [soldprice, setSoldPrice] = React.useState<{ [key: string]: number }>(
     {},
@@ -163,19 +145,16 @@ const PointOfSales: React.FC = () => {
     });
   };
 
-  // Toggle grouped items visibility
-  const toggleExpand = (productId: string) => {
-    setExpandedProducts((prev) => ({
-      ...prev,
-      [productId]: !prev[productId],
-    }));
-
-    if (!itemPages[productId]) {
-      setItemPages((prev) => ({
-        ...prev,
-        [productId]: 1,
-      }));
-    }
+  const clearCart = () => {
+    setCart([]);
+    setFormData({ name: '', email: '', phonenumber: '' });
+    setPayments([
+      {
+        paymentMethod: 'cash',
+        amount: 0,
+        transactionId: '',
+      },
+    ]);
   };
 
   const updateTotal = () => {
@@ -460,9 +439,7 @@ const PointOfSales: React.FC = () => {
           type: 'success',
         });
         setSaleResponse(response.data.data);
-        setCart([]);
-        setFormData({ name: '', email: '', phonenumber: '' });
-        setPayments([{ paymentMethod: 'cash', amount: 0, transactionId: '' }]);
+        clearCart();
       }
     } catch (error: any) {
       setMessage({
@@ -477,12 +454,7 @@ const PointOfSales: React.FC = () => {
     }
   };
 
-  const handleItemPageChange = (productId: string, page: number) => {
-    setItemPages((prev) => ({
-      ...prev,
-      [productId]: page,
-    }));
-  };
+
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-KE', {
@@ -618,686 +590,98 @@ const PointOfSales: React.FC = () => {
   }
 
     return (
-
       <>
-      {message && (
-        <Message
-          message={message.text}
-          type={message.type}
-          onClose={() => setMessage(null)}
-        />
-      )}
-      {saleResponse && <Receipt saleResponse={saleResponse} onClose={() => setSaleResponse(null)} />}
-      <div className="dark:bg-boxdark-2 min-h-screen mx-auto py-4">
-        <Breadcrumb pageName="Point of Sale" />
+        {message && (
+          <Message
+            message={message.text}
+            type={message.type}
+            onClose={() => setMessage(null)}
+          />
+        )}
+        {saleResponse && <Receipt saleResponse={saleResponse} onClose={() => setSaleResponse(null)} />}
+        <div className="dark:bg-boxdark-2 min-h-screen mx-auto py-4">
+          <Breadcrumb pageName="Point of Sale" />
 
-        {/* Shop Info Header */}
-        <div className="mb-6 p-4 bg-bodydark1 dark:bg-boxdark rounded-lg">
-          <h1 className="text-xl font-bold text-black dark:text-slate-200">
-            {consolidatedData.shopInfo.name}
-          </h1>
-          <p className="text-gray-600 dark:text-slate-400">
-            {consolidatedData.shopInfo.address}
-          </p>
-          {consolidatedData.shopInfo.seller && (
-            <div className="mt-2">
-              <p className="text-sm text-gray-600 dark:text-slate-400">
-                Seller: {consolidatedData.shopInfo.seller.name} (
-                {consolidatedData.shopInfo.seller.phone})
-              </p>
-            </div>
-          )}
-        </div>
+          {/* Shop Info Header */}
+          <ShopHeader shopInfo={consolidatedData.shopInfo} />
 
-        {/* Navigation Tab */}
-        <div className="sticky flex justify-center mb-8 border-b dark:border-boxdark border-slate-300">
-          <button
-            className={`px-4 py-2 w-1/2 text-center outline-none ${activeTab === 'products'
-              ? 'text-lg font-bold border-b-2 border-primary/60'
-              : 'text-sm text-gray-500'
+          {/* Navigation Tab */}
+          <div className="sticky flex justify-center mb-8 border-b dark:border-boxdark border-slate-300">
+            <button
+              className={`px-4 py-2 w-1/2 text-center outline-none ${
+                activeTab === 'products'
+                  ? 'text-lg font-bold border-b-2 border-primary/60'
+                  : 'text-sm text-gray-500'
               }`}
-            onClick={() => setActiveTab('products')}
-          >
-            Products
-          </button>
-          <button
-            className={`px-4 py-2 w-1/2 text-center outline-none ${activeTab === 'cart'
-              ? 'text-lg font-bold border-b-2 border-primary/60'
-              : 'text-sm text-gray-500'
+              onClick={() => setActiveTab('products')}
+            >
+              Products
+            </button>
+            <button
+              className={`px-4 py-2 w-1/2 text-center outline-none ${
+                activeTab === 'cart'
+                  ? 'text-lg font-bold border-b-2 border-primary/60'
+                  : 'text-sm text-gray-500'
               }`}
-            onClick={() => setActiveTab('cart')}
-          >
-            Cart
-            <span className="ml-2 px-2 p-1 rounded-full bg-amber-400 text-black font-bold text-center text-sm">
-              {`${groupedCart.length} (${cart.length})`}
-            </span>
-          </button>
+              onClick={() => setActiveTab('cart')}
+            >
+              Cart
+              <span className="ml-2 px-2 p-1 rounded-full bg-amber-400 text-black font-bold text-center text-sm">
+                {`${groupedCart.length} (${cart.length})`}
+              </span>
+            </button>
+          </div>
+
+          <div className="w-full flex justify-center mx-auto gap-6">
+            {/* Products Section */}
+            {activeTab === 'products' ? (
+              <ProductSection
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                selectedBrand={selectedBrand}
+                setSelectedBrand={setSelectedBrand}
+                brands={brands}
+                paginatedProducts={paginatedProducts}
+                filteredProducts={filteredProducts}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalPages={totalPages}
+                isInCart={isInCart}
+                addToCart={addToCart}
+                formatPrice={formatPrice}
+              />
+            ) : (
+              <CartSection
+                cart={cart}
+                groupedCart={groupedCart}
+                total={total}
+                totalPaid={totalPaid}
+                soldprice={soldprice}
+                setSoldPrice={setSoldPrice}
+                financeDetails={financeDetails}
+                setFinanceDetails={setFinanceDetails}
+                financers={financers}
+                showCustomerDetails={showCustomerDetails}
+                setShowCustomerDetails={setShowCustomerDetails}
+                formData={formData}
+                setFormData={setFormData}
+                payments={payments}
+                handlePaymentChange={handlePaymentChange}
+                addPayment={addPayment}
+                removePayment={removePayment}
+                updateQuantity={updateQuantity}
+                removeFromCart={removeFromCart}
+                clearCart={clearCart}
+                handleCheckout={handleCheckout}
+                checkoutDisabled={checkoutDisabled}
+                submitting={submitting}
+                formatPrice={formatPrice}
+              />
+            )}
+          </div>
         </div>
-
-        <div className="w-full flex justify-center mx-auto gap-6">
-          {/* Products Section */}
-          {activeTab === 'products' ? (
-            <div className="md:p-6 w-full mx-auto">
-              {/* Header and Controls */}
-              <div className="mb-6">
-                <div className="flex gap-2 md:gap-4 mb-6 mx-auto pr-2">
-                  {/* Search */}
-                  <div className="flex-1 w-full">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="text"
-                        placeholder="Search products..."
-                        className="w-full pl-10 pr-4 py-2 dark:bg-boxdark border border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-primary/50"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Brand Filter */}
-                  <div className="w-auto md:min-w-[200px]">
-                    <select
-                      className="w-full p-2 dark:bg-boxdark border border-slate-700 rounded-lg outline-none focus:ring-1 focus:ring-primary/50"
-                      value={selectedBrand}
-                      onChange={(e) => setSelectedBrand(e.target.value)}
-                    >
-                      <option value="">All Brands</option>
-                      {brands.map((brand) => (
-                        <option key={brand} value={brand}>
-                          {brand}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Results Summary */}
-                <div className="text-gray-600 mb-4">
-                  Showing {paginatedProducts.length} of{' '}
-                  {filteredProducts.length} products
-                </div>
-              </div>
-
-              {paginatedProducts.length === 0 ? (
-                <SuchEmpty
-                  message="No products found"
-                  description="Try searching for a different product or brand"
-                  variant="emptyListing"
-                />
-              ) : (
-                <>
-                  {/* Product List */}
-                  <div className="grid gap-4">
-                    {paginatedProducts.map((product: any) => (
-                      <div
-                        key={product.categoryId.id}
-                        className="overflow-hidden rounded-md"
-                      >
-                        <div
-                          className={`cursor-pointer bg-bodydark/50 p-3 dark:bg-boxdark text-black transition-all duration-500 rounded-lg shadow-sm border dark:border-slate-700`}
-                          onClick={() =>
-                            toggleExpand(product.categoryId.id.toString())
-                          }
-                        >
-                          <div className="flex flex-col justify-start">
-                            <div className="w-full flex justify-between">
-                              <div className="flex items-center gap-4">
-                                <div className="bg-bodydark/40 dark:bg-boxdark-2/40 p-2 rounded-lg">
-                                  <Smartphone className="w-6 h-6 text-primary dark:text-blue-600" />
-                                </div>
-                                <div className="text-gray-500 dark:text-slate-200">
-                                  <h2 className="md:text-xl font-semibold">
-                                    {product.categoryId.itemName}
-                                  </h2>
-                                  <h3 className="text-sm text-gray-500 dark:text-slate-400">
-                                    {product.stock.batchNumber}
-                                  </h3>
-                                  <p className="text-gray-500 dark:text-slate-400">
-                                    {product.categoryId.brand} -{' '}
-                                    {product.categoryId.itemModel}
-                                  </p>
-                                </div>
-                              </div>
-                              {expandedProducts[product.categoryId.id] ? (
-                                <ChevronUp className="w-5 h-5 text-boxdark-2 dark:text-gray-400" />
-                              ) : (
-                                <ChevronDown className="w-5 h-5 text-boxdark-2 dark:text-gray-400" />
-                              )}
-                            </div>
-                            <div className="w-full flex justify-between items-center mt-4">
-                              <div className="text-right flex gap-2 text-xs md:text-base text-gray-600">
-                                <p className="hidden md:block text-gray-600 dark:text-slate-400">
-                                  Price Range
-                                </p>
-                                <p className="font-medium text-slate-400">
-                                  <span className="text-red-600 dark:text-red-400/70">
-                                    {formatPrice(product.categoryId.minPrice)}
-                                  </span>{' '}
-                                  /{' '}
-                                  <span className="text-green-600 dark:text-green-400/70">
-                                    {Number(
-                                      product.categoryId.maxPrice,
-                                    ).toLocaleString()}
-                                  </span>
-                                </p>
-                              </div>
-                              <div className="flex items-center space-x-2 dark:text-gray-400 md:text-lg">
-                                <Package className="w-5 h-5" />
-                                <span className="font-medium">
-                                  {product.quantity}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div
-                          className={`bg-bodydark1 dark:bg-boxdark/60 p-2 transition-all duration-500 ${expandedProducts[product.categoryId.id]
-                            ? 'max-h-screen opacity-100'
-                            : 'max-h-0 opacity-0 overflow-hidden'
-                            }`}
-                        >
-                          {/* Items Pagination */}
-                          <div className="flex justify-between items-center mb-4 text-gray-600 dark:text-slate-400">
-                            <p className="text-sm">
-                              Showing items{' '}
-                              {(itemPages[product.categoryId.id] - 1) *
-                                ITEMS_PER_PAGE +
-                                1}{' '}
-                              -
-                              {Math.min(
-                                itemPages[product.categoryId.id] *
-                                ITEMS_PER_PAGE,
-                                product.items.length,
-                              )}{' '}
-                              of {product.items.length}
-                            </p>
-                            <div className="flex gap-2 dark:text-slate-400">
-                              <button
-                                className="px-3 py-1 text-xs md:text-base border border-primary/40 rounded hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-500"
-                                disabled={
-                                  itemPages[product.categoryId.id] === 1
-                                }
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleItemPageChange(
-                                    product.categoryId.id.toString(),
-                                    itemPages[product.categoryId.id] - 1,
-                                  );
-                                }}
-                              >
-                                <ChevronLeft className="w-4 h-4" />
-                              </button>
-                              <button
-                                className="px-3 py-1 text-xs md:text-base border border-primary/40 rounded hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-500"
-                                disabled={
-                                  itemPages[product.categoryId.id] *
-                                  ITEMS_PER_PAGE >=
-                                  product.items.length
-                                }
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleItemPageChange(
-                                    product.categoryId.id.toString(),
-                                    itemPages[product.categoryId.id] + 1,
-                                  );
-                                }}
-                              >
-                                <ChevronRight className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Items List */}
-                          {product.items.length === 0 ? (
-                            <div className="w-full h-12 flex justify-center items-center gap-4 text-yellow-500">
-                              <TriangleAlert />
-                              <span>This product is out of stock</span>
-                            </div>
-                          ) : (
-                            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-3">
-                              {product.items
-                                .slice(
-                                  (itemPages[product.categoryId.id] - 1) *
-                                  ITEMS_PER_PAGE,
-                                  itemPages[product.categoryId.id] *
-                                  ITEMS_PER_PAGE,
-                                )
-                                .map((item: any) => (
-                                  <div
-                                    key={item.id}
-                                    onClick={() =>
-                                      addToCart(product.categoryId, item)
-                                    }
-                                    className={`relative cursor-pointer bg-bodydark/50 dark:bg-boxdark p-4 rounded-lg shadow-sm flex justify-between items-center border hover:scale-110 transition-transform duration-300
-                                    ${isInCart(
-                                      product.categoryId.id,
-                                      item.id,
-                                    )
-                                        ? 'border-primary/70'
-                                        : 'dark:border-slate-700'
-                                      }`}
-                                  >
-                                    {isInCart(
-                                      product.categoryId.id,
-                                      item.id,
-                                    ) && (
-                                        <CheckCircle className="text-primary absolute top-2 right-2 h-4 w-4" />
-                                      )}
-                                    <div className="text-xs">
-                                      {product.categoryId.itemType ===
-                                        'mobiles' ? (
-                                        <p className="font-medium text-black dark:text-slate-300">
-                                          IMEI: {item.IMEI}
-                                        </p>
-                                      ) : (
-                                        <div className="font-medium text-black dark:text-slate-300">
-                                          <p>Batch: {item.batchNumber}</p>
-                                          <p>Stock: {item.quantity}</p>
-                                        </div>
-                                      )}
-                                      <div className="text-sm dark:text-slate-400 mt-1">
-                                        {item.discount > 0 && (
-                                          <p className="text-green-600">
-                                            Discount:{' '}
-                                            {formatPrice(item.discount)}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Products Pagination */}
-                  <div className="mt-6 flex justify-between items-center">
-                    <p className="text-sm text-gray-600">
-                      Page {currentPage} of {totalPages}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        className="px-4 py-2 border rounded hover:bg-gray-100 disabled:opacity-50"
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage((prev) => prev - 1)}
-                      >
-                        Previous
-                      </button>
-                      <button
-                        className="px-4 py-2 border rounded hover:bg-gray-100 disabled:opacity-50"
-                        disabled={currentPage === totalPages}
-                        onClick={() => setCurrentPage((prev) => prev + 1)}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="w-full md:w-3/4 xl:w-1/2 mx-auto">
-              <div className="bg-bodydark/50 dark:bg-boxdark rounded-lg p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-black dark:text-slate-200 flex items-center">
-                    <ShoppingCartIcon className="h-6 w-6 mr-2 text-primary" />
-                    Shopping Cart
-                  </h2>
-                  <p className="text-lg font-semibold text-black dark:text-slate-200">
-                    Total: {formatPrice(total)}
-                  </p>
-                </div>
-
-                {cart.length === 0 ? (
-                  <div className="border-4 border-dashed border-slate-400/20 rounded-lg">
-                    <SuchEmpty
-                      message="Your cart is empty"
-                      description="Add items from the products section to get started"
-                      variant="emptyCart"
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                    {groupedCart.map((product: any) => {
-                      const isAccessory = product.categoryId.itemType === 'accessories';
-                      const quantity = isAccessory ? product.quantity : product.items.length;
-                      const perItemPrice = soldprice?.[product.categoryId.id] || 0;
-                      const minItemPrice = product.categoryId.minPrice;
-
-                      return (
-                        <React.Fragment key={product.categoryId.id}>
-                          <div
-                            className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between"
-                          >
-                            <div className="flex-grow">
-                              <h3 className="font-semibold text-black dark:text-slate-200">
-                                {product.categoryId.itemName}
-                              </h3>
-                              <p className="text-sm text-gray-600 dark:text-slate-400">
-                                {product.categoryId.brand} -{' '}
-                                {product.categoryId.itemModel}
-                              </p>
-                              <div className="flex items-center mt-2 space-x-3">
-                                {product.categoryId.itemType === 'mobiles' ? (
-                                  <span className="text-black dark:text-slate-200">
-                                    {product.items.length}
-                                  </span>
-                                ) : (
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() =>
-                                        updateQuantity(
-                                          product.categoryId.id,
-                                          Number(
-                                            cart.find(
-                                              (item: any) =>
-                                                item.category.id ===
-                                                product.categoryId.id,
-                                            )?.quantity,
-                                          ) - 1,
-                                        )
-                                      }
-                                      className="p-1 rounded-full hover:bg-bodydark2 dark:hover:bg-boxdark-2"
-                                    >
-                                      <ChevronDown className="h-4 w-4 text-black dark:text-red-400" />
-                                    </button>
-                                    <span className="text-black dark:text-slate-200">
-                                      {
-                                        cart.find(
-                                          (item: CartItem) =>
-                                            item.category.id ===
-                                            product.categoryId.id,
-                                        )?.quantity
-                                      }
-                                    </span>
-                                    <button
-                                      onClick={() => {
-                                        updateQuantity(
-                                          product.categoryId.id,
-                                          Number(
-                                            cart.find(
-                                              (item: any) =>
-                                                item.category.id ===
-                                                product.categoryId.id,
-                                            )?.quantity,
-                                          ) + 1,
-                                        );
-                                      }}
-                                      className="p-1 rounded-full hover:bg-bodydark2 dark:hover:bg-boxdark-2"
-                                    >
-                                      <ChevronUp className="h-4 w-4 text-black dark:text-green-400" />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex flex-col justify-between h-full items-end gap-2">
-                              <button
-                                onClick={() =>
-                                  removeFromCart(product.categoryId.id)
-                                }
-                                className="text-red-500 hover:text-red-600"
-                              >
-                                <X className="h-5 w-5" />
-                              </button>
-                              <input
-                                type="number"
-                                min={isAccessory ? minItemPrice * quantity : minItemPrice}
-                                max={isAccessory ? undefined : product.categoryId.maxPrice}
-                                value={isAccessory && quantity > 0 ? perItemPrice * quantity : perItemPrice}
-                                onChange={(e) => {
-                                  const newPrice = Number(e.target.value);
-                                  setSoldPrice({
-                                    ...soldprice,
-                                    [product.categoryId.id]: isAccessory && quantity > 0 ? newPrice / quantity : newPrice,
-                                  });
-                                }}
-                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                              />
-                              {isAccessory ? 'Total Price' : 'per Item'}
-                            </div>
-                          </div>
-                          <div className="bg-bodydark1 dark:bg-boxdark/60 p-4 rounded-lg flex items-center justify-between mt-2">
-                            <div className="flex items-center gap-4">
-                              <input
-                                type="number"
-                                placeholder="Finance Amount"
-                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                                value={financeDetails[product.categoryId.id]?.amount || ''}
-                                onChange={(e) => setFinanceDetails({
-                                  ...financeDetails,
-                                  [product.categoryId.id]: {
-                                    ...financeDetails[product.categoryId.id],
-                                    amount: Number(e.target.value)
-                                  }
-                                })}
-                              />
-                              <select
-                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                                value={financeDetails[product.categoryId.id]?.status || 'paid'}
-                                onChange={(e) => setFinanceDetails({
-                                  ...financeDetails,
-                                  [product.categoryId.id]: {
-                                    ...financeDetails[product.categoryId.id],
-                                    status: e.target.value
-                                  }
-                                })}
-                              >
-                                <option value="paid">Paid</option>
-                                <option value="pending">Pending</option>
-                              </select>
-                              <select
-                                className="dark:bg-boxdark border border-slate-500 px-2 p-1 rounded-md"
-                                value={financeDetails[product.categoryId.id]?.financerId || ''}
-                                onChange={(e) => setFinanceDetails({
-                                  ...financeDetails,
-                                  [product.categoryId.id]: {
-                                    ...financeDetails[product.categoryId.id],
-                                    financerId: e.target.value
-                                  }
-                                })}
-                              >
-                                <option value="">Select Financer</option>
-                                {financers.map((financer) => (
-                                  <option key={financer.id} value={financer.id}>
-                                    {financer.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                          {!isAccessory && (perItemPrice > product.categoryId.maxPrice) && (
-                            <>
-                              <span className="text-xs text-red-400 font-bold animate-pulse">{`Max Price should be ${formatPrice(
-                                product.categoryId.maxPrice,
-                              )}`}</span>
-                            </>
-                          )}
-                          {perItemPrice < minItemPrice && (
-                            <>
-                              <span className="text-xs text-red-400 font-bold animate-pulse">{`Min Price should be ${formatPrice(
-                                minItemPrice,
-                              )}`}</span>
-                            </>
-                          )}
-                        </React.Fragment>
-                      )}
-                    )}
-                  </div>
-                )}
-
-                {/* Customer Details Section */}
-                <div className="mt-6">
-                  <button
-                    onClick={() => setShowCustomerDetails(!showCustomerDetails)}
-                    className="w-full flex items-center justify-center py-2 px-4 bg-bodydark dark:bg-accent1 text-black dark:text-slate-400 rounded-lg hover:bg-opacity-90 transition-colors"
-                  >
-                    <UserPlus className="h-5 w-5 mr-2" />
-                    {showCustomerDetails ? 'Hide' : 'Add'} Customer Details{' '}
-                    {!showCustomerDetails ? '(optional)' : ''}
-                  </button>
-
-                  {showCustomerDetails && (
-                    <div className="space-y-4 mt-4">
-                      <input
-                        type="email"
-                        placeholder="Email"
-                        value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
-                      />
-                      <div className="flex flex-col md:flex-row gap-4">
-                        <input
-                          type="text"
-                          placeholder="Full Name"
-                          value={formData.name}
-                          onChange={(e) =>
-                            setFormData({ ...formData, name: e.target.value })
-                          }
-                          className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
-                        />
-                        <input
-                          type="phone"
-                          placeholder="Phone Number"
-                          value={formData.phonenumber}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              phonenumber: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Payment Methods */}
-                  <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                      Payment Methods
-                    </label>
-                    <div className="space-y-2">
-                      {payments.map((payment, index) => (
-                        <div
-                          key={index}
-                          className="flex flex-col md:flex-row gap-2 items-center"
-                        >
-                          <select
-                            value={payment.paymentMethod}
-                            onChange={(e) =>
-                              handlePaymentChange(
-                                index,
-                                'paymentMethod',
-                                e.target.value as PaymentMethod,
-                              )
-                            }
-                            className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
-                          >
-                            <option value="cash">Cash</option>
-                            <option value="mpesa">M-pesa</option>
-                            <option value="creditcard">Credit Card</option>
-                          </select>
-                          <input
-                            type="number"
-                            placeholder="Amount"
-                            value={payment.amount}
-                            onChange={(e) =>
-                              handlePaymentChange(
-                                index,
-                                'amount',
-                                Number(e.target.value),
-                              )
-                            }
-                            className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
-                          />
-                          {payment.paymentMethod !== 'cash' && (
-                            <input
-                              type="text"
-                              placeholder="Transaction ID"
-                              value={payment.transactionId}
-                              onChange={(e) =>
-                                handlePaymentChange(
-                                  index,
-                                  'transactionId',
-                                  e.target.value,
-                                )
-                              }
-                              className="w-full px-3 py-2 bg-white dark:bg-boxdark border border-slate-300 dark:border-slate-600 rounded-lg"
-                            />
-                          )}
-                          {payments.length > 1 && (
-                            <button
-                              onClick={() => removePayment(index)}
-                              className="p-1"
-                            >
-                              <X className="h-5 w-5 text-red-500" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      onClick={addPayment}
-                      className="text-primary mt-2 text-sm"
-                    >
-                      + Add Payment Method
-                    </button>
-                    <div className="mt-4 flex justify-between text-sm font-semibold">
-                      <p>Total Paid: {formatPrice(totalPaid)}</p>
-                      <p
-                        className={
-                          total - totalPaid !== 0
-                            ? 'text-red-500'
-                            : 'text-green-500'
-                        }
-                      >
-                        Balance: {formatPrice(total - totalPaid)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="grid grid-cols-2 gap-4 mt-6">
-                    <button
-                      onClick={() => {
-                        setCart([]);
-                        setFormData({ name: '', email: '', phonenumber: '' });
-                        setPayments([
-                          {
-                            paymentMethod: 'cash',
-                            amount: 0,
-                            transactionId: '',
-                          },
-                        ]);
-                      }}
-                      className={`flex justify-center rounded-lg border border-slate-300 dark:border-slate-600 py-2 px-6 font-medium text-black dark:text-white hover:bg-opacity-90`}
-                    >
-                      Clear Cart
-                    </button>
-                    <button
-                      className="text-white py-2 px-4 rounded-lg bg-primary hover:bg-opacity-90 disabled:opacity-50"
-                      disabled={cart.length === 0 || checkoutDisabled || submitting}
-                      onClick={handleCheckout}
-                    >
-                      {submitting ? 'Processing...' : 'Checkout'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
+      </>
+    );
 };
 
 export default PointOfSales;

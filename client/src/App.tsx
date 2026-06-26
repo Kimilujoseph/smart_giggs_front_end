@@ -15,7 +15,6 @@ import InventoryManager from './components/inventory/InventoryManage';
 import ProductView from './pages/ProductView';
 import OutletManager from './components/outlets/Outlets';
 import OutletView from './pages/OuletView';
-import PointOfSale from './components/pointOfSale/PointOfSale';
 import POSLayout from './layout/POSLayout';
 import AssignmentHistory from './pages/AssignmentHistory';
 import OutletInventoryView from './components/outlet/OutletInventory';

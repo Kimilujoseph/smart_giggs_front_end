@@ -23,7 +23,6 @@ import axios from 'axios';
 import { CircularProgress } from '@mui/material';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import PointOfSale from '../components/pointOfSale/PointOfSale';
 
 interface Report {
   id: {
