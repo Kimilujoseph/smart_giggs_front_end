@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 const DateFilter: React.FC<{ onDateChange: (params: string) => void }> = ({
   onDateChange,
 }) => {
-  const [activePeriod, setActivePeriod] = useState('day');
+  const [activePeriod, setActivePeriod] = useState('month');
   const [customRange, setCustomRange] = useState({ start: '', end: '' });
 
   const handlePeriodChange = (period: string) => {
@@ -15,49 +15,60 @@ const DateFilter: React.FC<{ onDateChange: (params: string) => void }> = ({
 
   const handleCustomDateApply = () => {
     if (customRange.start && customRange.end) {
-      onDateChange(`startDate=${customRange.start}&endDate=${customRange.end}`);
+      // Convert plain date strings to ISO-8601 UTC DateTime
+      // startDate: beginning of selected start day (UTC midnight)
+      const startISO = new Date(customRange.start + 'T00:00:00.000Z').toISOString();
+      // endDate: end of selected end day (UTC 23:59:59.999)
+      const endISO = new Date(customRange.end + 'T23:59:59.999Z').toISOString();
+      setActivePeriod('custom');
+      onDateChange(`startDate=${startISO}&endDate=${endISO}`);
     }
   };
 
+  const periods = [
+    { key: 'day', label: 'Today' },
+    { key: 'week', label: 'Week' },
+    { key: 'month', label: 'Month' },
+    { key: 'year', label: 'Year' },
+  ];
+
   return (
-    <div className="flex flex-col items-center gap-4 rounded-lg bg-white p-4 dark:bg-boxdark-2 sm:flex-row sm:flex-wrap">
-      <div className="flex flex-wrap justify-center gap-4">
-        {['day', 'week', 'month', 'year'].map((p) => (
+    <div className="flex flex-col gap-2 w-full">
+      {/* Period Pills */}
+      <div className="flex flex-wrap gap-1.5">
+        {periods.map((p) => (
           <button
-            key={p}
-            onClick={() => handlePeriodChange(p)}
-            className={`rounded-md px-4 py-2 text-base ${
-              activePeriod === p
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 dark:bg-meta-4'
+            key={p.key}
+            onClick={() => handlePeriodChange(p.key)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              activePeriod === p.key
+                ? 'bg-primary text-white shadow-sm'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
-            {p === 'day' ? 'Today' : `This ${p.charAt(0).toUpperCase() + p.slice(1)}`}
+            {p.label}
           </button>
         ))}
       </div>
-      <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
+
+      {/* Custom Date Range */}
+      <div className="flex flex-wrap items-center gap-2">
         <input
           type="date"
-          onChange={(e) =>
-            setCustomRange((prev) => ({ ...prev, start: e.target.value }))
-          }
-          className="w-full rounded-md border-gray-300 bg-white p-2 text-base dark:border-gray-600 dark:bg-meta-4 sm:w-auto"
+          value={customRange.start}
+          onChange={(e) => setCustomRange((prev) => ({ ...prev, start: e.target.value }))}
+          className="flex-1 min-w-[120px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark text-slate-700 dark:text-slate-200 px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/30 transition"
         />
-        <span className="hidden text-base sm:inline">to</span>
+        <span className="text-xs text-slate-400 font-medium">–</span>
         <input
           type="date"
-          onChange={(e) =>
-            setCustomRange((prev) => ({ ...prev, end: e.target.value }))
-          }
-          className="w-full rounded-md border-gray-300 bg-white p-2 text-base dark:border-gray-600 dark:bg-meta-4 sm:w-auto"
+          value={customRange.end}
+          onChange={(e) => setCustomRange((prev) => ({ ...prev, end: e.target.value }))}
+          className="flex-1 min-w-[120px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark text-slate-700 dark:text-slate-200 px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/30 transition"
         />
         <button
           onClick={handleCustomDateApply}
-          onFocus={() => setActivePeriod('custom')}
-          className={`w-full rounded-md bg-green-500 px-4 py-2 text-base text-white sm:w-auto ${
-            activePeriod === 'custom' ? 'ring-2 ring-green-400' : ''
-          }`}
+          className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold transition-all shadow-sm whitespace-nowrap"
         >
           Apply
         </button>
@@ -66,4 +77,4 @@ const DateFilter: React.FC<{ onDateChange: (params: string) => void }> = ({
   );
 };
 
-export default DateFilter;
+export default DateFilter;

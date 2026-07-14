@@ -11,7 +11,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { CircularProgress } from '@mui/material';
-import { getSalesReport, SalesReportParams } from '../../api/sales_dashboard_manager';
+import { getSalesReport, getSalesSummary, SalesReportParams } from '../../api/sales_dashboard_manager';
 import Message from '../../components/alerts/Message';
 import SalesTable from '../../components/SalesDashboard/SalesTable';
 import PayCommissionModal from '../../components/SalesDashboard/PayCommissionModal';
@@ -52,6 +52,7 @@ export interface Sale {
   category: string;
   sellername: string;
   shopname: string;
+  customerId?: number;
 }
 
 interface SalesData {
@@ -154,6 +155,8 @@ const SelectField: React.FC<{
 
 const SalesDashboard = () => {
   const [salesData, setSalesData] = useState<SalesData | null>(null);
+  const [summaryData, setSummaryData] = useState<any>(null);
+  const [modelFilter, setModelFilter] = useState<'all' | 'mobiles' | 'accessories'>('all');
   const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -211,13 +214,26 @@ const SalesDashboard = () => {
         params.reportType = 'all';
       }
 
+      if (modelFilter !== 'all') {
+        params.model = modelFilter;
+      }
+
+      const summaryParams = { ...params };
+      delete summaryParams.page;
+      delete summaryParams.limit;
+      delete summaryParams.model;
+
       try {
-        const response = await getSalesReport(params);
-        if (response.data) {
+        const [salesRes, summaryRes] = await Promise.all([
+          getSalesReport(params),
+          getSalesSummary(summaryParams),
+        ]);
+
+        if (salesRes.data) {
           const salesPayload = {
-            ...response.data,
-            sales: response.data.sales || [],
-            totalPages: response.data.totalPages || 1,
+            ...salesRes.data,
+            sales: salesRes.data.sales || [],
+            totalPages: salesRes.data.totalPages || 1,
           };
           setSalesData(salesPayload);
           setTotalPages(salesPayload.totalPages);
@@ -225,6 +241,12 @@ const SalesDashboard = () => {
         } else {
           setSalesData(null);
           throw new Error('No sales data returned from the API.');
+        }
+
+        if (summaryRes.success && summaryRes.data) {
+          setSummaryData(summaryRes.data);
+        } else {
+          setSummaryData(null);
         }
       } catch (error: any) {
         const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch sales data';
@@ -236,18 +258,39 @@ const SalesDashboard = () => {
     };
 
     fetchSalesData();
-  }, [reportType, selectedId, dateFilter, currentPage, itemsPerPage]);
+  }, [reportType, selectedId, dateFilter, currentPage, itemsPerPage, modelFilter]);
 
   const calculateMetrics = () => {
-    if (!salesData || !salesData.sales || salesData.sales.length === 0) {
-      return { totalSales: 0, totalUnits: 0, totalCommission: 0, totalProfit: 0, avgTicketSize: 0, totalPendingFinance: 0, productMetrics: [], categoryMetrics: [], financerMetrics: [] };
+    const sales = salesData?.sales || [];
+    const totalUnits = sales.reduce((sum, item) => sum + item.totaltransaction, 0);
+
+    let totalSales = 0;
+    let totalProfit = 0;
+    let totalCommission = 0;
+    let totalPendingFinance = 0;
+
+    if (summaryData) {
+      if (modelFilter === 'mobiles') {
+        totalSales = summaryData.totalMobileSales || 0;
+        totalProfit = summaryData.totalMobileProfit || 0;
+        totalCommission = summaryData.totalMobileCommission || 0;
+      } else if (modelFilter === 'accessories') {
+        totalSales = summaryData.totalAccessorySales || 0;
+        totalProfit = summaryData.totalAccessoryProfit || 0;
+        totalCommission = summaryData.totalAccessoryCommission || 0;
+      } else {
+        totalSales = summaryData.totalSales || 0;
+        totalProfit = summaryData.totalProfit || 0;
+        totalCommission = summaryData.totalCommission || 0;
+      }
+
+      totalPendingFinance = parseFloat(summaryData.accountReceivable?.[0]?.totalFinanceAmount || '0');
     }
 
-    const totalUnits = salesData.sales.reduce((sum, item) => sum + item.totaltransaction, 0);
-    const avgTicketSize = salesData.totalSales / totalUnits || 0;
+    const avgTicketSize = totalSales / totalUnits || 0;
 
     const productData = new Map<string, any>();
-    salesData.sales.forEach((item) => {
+    sales.forEach((item) => {
       const k = item.productname;
       if (!productData.has(k)) productData.set(k, { name: k, sales: 0, units: 0, profit: 0 });
       const p = productData.get(k)!;
@@ -257,24 +300,20 @@ const SalesDashboard = () => {
     });
 
     const financerData = new Map<string, any>();
-    salesData.sales.forEach((item) => {
-      const k = item.financeDetails.financer || 'None';
+    sales.forEach((item) => {
+      const k = item.financeDetails?.financer || 'None';
       if (!financerData.has(k)) financerData.set(k, { name: k, count: 0, amount: 0, sales: 0 });
       const f = financerData.get(k)!;
       f.count += 1;
-      f.amount += item.financeDetails.financeAmount;
+      f.amount += item.financeDetails?.financeAmount || 0;
       f.sales += item.soldprice;
     });
 
-    const totalPendingFinance = salesData.sales
-      .filter((s) => s.financeDetails.financeStatus === 'pending')
-      .reduce((sum, s) => sum + s.financeDetails.financeAmount, 0);
-
     return {
-      totalSales: salesData.totalSales,
+      totalSales,
       totalUnits,
-      totalCommission: salesData.totalCommission,
-      totalProfit: salesData.totalProfit,
+      totalCommission,
+      totalProfit,
       avgTicketSize,
       totalPendingFinance,
       productMetrics: Array.from(productData.values()),
@@ -344,13 +383,16 @@ const SalesDashboard = () => {
 
       {/* ── Filters Panel ── */}
       {filtersOpen && (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-4 flex flex-col gap-3 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-4 flex flex-col gap-4 shadow-sm">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Filter Options</p>
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3">
-            <div className="w-full sm:w-auto flex-1 min-w-[180px]">
-              <DateFilter onDateChange={(v) => { setDateFilter(v); setCurrentPage(1); }} />
-            </div>
 
+          {/* Row 1: Date filter — always full width */}
+          <div className="w-full">
+            <DateFilter onDateChange={(v) => { setDateFilter(v); setCurrentPage(1); }} />
+          </div>
+
+          {/* Row 2: Dropdown selects */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <SelectField
               label="Report Type"
               value={reportType}
@@ -376,9 +418,20 @@ const SalesDashboard = () => {
                 {reportType === 'user' && users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </SelectField>
             )}
+
+            <SelectField
+              label="Product Model"
+              value={modelFilter}
+              onChange={(v) => { setModelFilter(v as any); setCurrentPage(1); }}
+            >
+              <option value="all">All Models</option>
+              <option value="mobiles">Mobiles</option>
+              <option value="accessories">Accessories</option>
+            </SelectField>
           </div>
         </div>
       )}
+
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
@@ -417,6 +470,154 @@ const SalesDashboard = () => {
           loading={loading}
         />
       </div>
+
+      {/* ── Performance Summary ── */}
+      {summaryData && (
+        <div className="flex flex-col gap-4">
+          {/* Header */}
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Performance Summary</p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+            {/* ── Column 1: Sales Breakdown ── */}
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-5 flex flex-col gap-4 shadow-sm">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Sales Breakdown</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {/* Mobiles Card */}
+                <div className="rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800/50 p-3.5 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0" />
+                    <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Mobiles</span>
+                  </div>
+                  <span className="text-base font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
+                    KES {(summaryData.totalMobileSales || 0).toLocaleString()}
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Profit:{' '}
+                    <span className={(summaryData.totalMobileProfit || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-red-600 dark:text-red-400 font-bold'}>
+                      KES {(summaryData.totalMobileProfit || 0).toLocaleString()}
+                    </span>
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Commission:{' '}
+                    <span className="text-slate-700 dark:text-slate-300 font-semibold">
+                      KES {(summaryData.totalMobileCommission || 0).toLocaleString()}
+                    </span>
+                  </span>
+                </div>
+
+                {/* Accessories Card */}
+                <div className="rounded-xl bg-violet-50 dark:bg-violet-900/30 border border-violet-100 dark:border-violet-800/50 p-3.5 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <div className="w-2.5 h-2.5 rounded-full bg-violet-500 flex-shrink-0" />
+                    <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">Accessories</span>
+                  </div>
+                  <span className="text-base font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
+                    KES {(summaryData.totalAccessorySales || 0).toLocaleString()}
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Profit:{' '}
+                    <span className={(summaryData.totalAccessoryProfit || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-red-600 dark:text-red-400 font-bold'}>
+                      KES {(summaryData.totalAccessoryProfit || 0).toLocaleString()}
+                    </span>
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Commission:{' '}
+                    <span className="text-slate-700 dark:text-slate-300 font-semibold">
+                      KES {(summaryData.totalAccessoryCommission || 0).toLocaleString()}
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Split bar */}
+              <div>
+                <div className="flex justify-between text-[10px] font-semibold mb-1.5">
+                  <span className="text-blue-600 dark:text-blue-400">
+                    Mobiles {Math.round(((summaryData.totalMobileSales || 0) / (summaryData.totalSales || 1)) * 100)}%
+                  </span>
+                  <span className="text-violet-600 dark:text-violet-400">
+                    Accessories {Math.round(((summaryData.totalAccessorySales || 0) / (summaryData.totalSales || 1)) * 100)}%
+                  </span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
+                  <div
+                    className="bg-blue-500 h-full rounded-l-full transition-all duration-700"
+                    style={{ width: `${((summaryData.totalMobileSales || 0) / (summaryData.totalSales || 1)) * 100}%` }}
+                  />
+                  <div
+                    className="bg-violet-500 h-full rounded-r-full transition-all duration-700"
+                    style={{ width: `${((summaryData.totalAccessorySales || 0) / (summaryData.totalSales || 1)) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ── Column 2: Commission & Finance ── */}
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-5 flex flex-col gap-4 shadow-sm">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-primary" />
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Commission & Finance</span>
+              </div>
+
+              {/* Finance Receivable */}
+              <div className="flex items-center justify-between rounded-xl bg-amber-50 dark:bg-amber-900/25 border border-amber-200 dark:border-amber-700/50 px-4 py-3">
+                <div>
+                  <p className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">Account Receivable</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Total financed (unpaid)</p>
+                </div>
+                <span className="text-lg font-extrabold text-amber-700 dark:text-amber-300">
+                  KES {parseFloat(summaryData.accountReceivable?.[0]?.totalFinanceAmount || '0').toLocaleString()}
+                </span>
+              </div>
+
+              {/* Commission breakdown */}
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex flex-col gap-3 bg-slate-50 dark:bg-slate-800/40">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Commissions</span>
+                  <span className="text-sm font-extrabold text-slate-800 dark:text-slate-100">KES {(summaryData.totalCommission || 0).toLocaleString()}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700/50 p-2.5 text-center">
+                    <span className="block text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1">Paid</span>
+                    <span className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">
+                      KES {parseFloat(summaryData.commissionAnalysis?.[0]?.totalCommissionPaid || '0').toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700/50 p-2.5 text-center">
+                    <span className="block text-[9px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider mb-1">Pending</span>
+                    <span className="text-sm font-extrabold text-rose-700 dark:text-rose-400">
+                      KES {parseFloat(summaryData.commissionAnalysis?.[0]?.totalCommissionPending || '0').toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Commission paid progress */}
+                <div>
+                  <div className="flex justify-between text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+                    <span>Paid</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      {Math.round((parseFloat(summaryData.commissionAnalysis?.[0]?.totalCommissionPaid || '0') / (summaryData.totalCommission || 1)) * 100)}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                    <div
+                      className="bg-emerald-500 h-full rounded-full transition-all duration-700"
+                      style={{ width: `${(parseFloat(summaryData.commissionAnalysis?.[0]?.totalCommissionPaid || '0') / (summaryData.totalCommission || 1)) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* ── Sales Table / Loading / Empty ── */}
       <div>

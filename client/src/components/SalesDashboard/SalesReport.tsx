@@ -21,7 +21,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { CircularProgress } from '@mui/material';
-import { getSalesReport, SalesReportParams } from '../../api/sales_dashboard_manager';
+import { getSalesReport, getSalesSummary, SalesReportParams } from '../../api/sales_dashboard_manager';
 import Message from '../alerts/Message';
 import SalesTable from './SalesTable';
 import PayCommissionModal from './PayCommissionModal';
@@ -56,6 +56,7 @@ interface Sale {
   category: string;
   sellername: string;
   shopname: string;
+  customerId?: number;
 }
 
 interface SalesData {
@@ -162,6 +163,8 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
 
   // State management
   const [salesData, setSalesData] = useState<SalesData | null>(null);
+  const [summaryData, setSummaryData] = useState<any>(null);
+  const [modelFilter, setModelFilter] = useState<'all' | 'mobiles' | 'accessories'>('all');
   const [message, setMessage] = useState<{ text: string; type: string } | null>(
     null,
   );
@@ -194,13 +197,26 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
         params.period = timeFrame as any;
       }
 
+      if (modelFilter !== 'all') {
+        params.model = modelFilter;
+      }
+
+      const summaryParams = { ...params };
+      delete summaryParams.page;
+      delete summaryParams.limit;
+      delete summaryParams.model;
+
       try {
-        const response = await getSalesReport(params);
-        if (response.data) {
+        const [salesRes, summaryRes] = await Promise.all([
+          getSalesReport(params),
+          getSalesSummary(summaryParams),
+        ]);
+
+        if (salesRes.data) {
           const salesPayload = {
-            ...response.data,
-            sales: response.data.sales || [],
-            totalPages: response.data.totalPages || 1,
+            ...salesRes.data,
+            sales: salesRes.data.sales || [],
+            totalPages: salesRes.data.totalPages || 1,
           };
           setSalesData(salesPayload);
           setTotalPages(salesPayload.totalPages);
@@ -208,6 +224,12 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
         } else {
           setSalesData(null);
           throw new Error('No sales data returned from the API.');
+        }
+
+        if (summaryRes.success && summaryRes.data) {
+          setSummaryData(summaryRes.data);
+        } else {
+          setSummaryData(null);
         }
       } catch (error: any) {
         setError(
@@ -228,33 +250,41 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
     };
 
     fetchSalesData();
-  }, [timeFrame, currentPage, itemsPerPage, date, reportType, id]);
+  }, [timeFrame, currentPage, itemsPerPage, date, reportType, id, modelFilter]);
 
   // Calculate metrics from sales data
   const calculateMetrics = () => {
-    if (!salesData || !salesData.sales || salesData.sales.length === 0) {
-      return {
-        totalSales: 0,
-        totalUnits: 0,
-        totalCommission: 0,
-        totalProfit: 0,
-        avgTicketSize: 0,
-        totalPendingFinance: 0,
-        productMetrics: [],
-        categoryMetrics: [],
-        financerMetrics: [],
-        mostProfitableProducts: [],
-      };
-    }
-
-    const totalUnits = salesData.sales.reduce(
+    const sales = salesData?.sales || [];
+    const totalUnits = sales.reduce(
       (sum, item) => sum + item.totaltransaction,
       0,
     );
 
-    const avgTicketSize = salesData.totalSales / totalUnits || 0;
+    let totalSales = 0;
+    let totalProfit = 0;
+    let totalCommission = 0;
+    let totalPendingFinance = 0;
 
-    const filteredSales = salesData.sales.filter((sale) => {
+    if (summaryData) {
+      if (modelFilter === 'mobiles') {
+        totalSales = summaryData.totalMobileSales || 0;
+        totalProfit = summaryData.totalMobileProfit || 0;
+        totalCommission = summaryData.totalMobileCommission || 0;
+      } else if (modelFilter === 'accessories') {
+        totalSales = summaryData.totalAccessorySales || 0;
+        totalProfit = summaryData.totalAccessoryProfit || 0;
+        totalCommission = summaryData.totalAccessoryCommission || 0;
+      } else {
+        totalSales = summaryData.totalSales || 0;
+        totalProfit = summaryData.totalProfit || 0;
+        totalCommission = summaryData.totalCommission || 0;
+      }
+      totalPendingFinance = parseFloat(summaryData.accountReceivable?.[0]?.totalFinanceAmount || '0');
+    }
+
+    const avgTicketSize = totalSales / totalUnits || 0;
+
+    const filteredSales = sales.filter((sale) => {
       if (financeFilter === 'all') return true;
       return sale.financeDetails.financeStatus === financeFilter;
     });
@@ -309,7 +339,7 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
 
     const financerData = new Map();
     filteredSales.forEach((item) => {
-      const financerKey = item.financeDetails.financer || 'None';
+      const financerKey = item.financeDetails?.financer || 'None';
       if (!financerData.has(financerKey)) {
         financerData.set(financerKey, {
           name: financerKey,
@@ -320,21 +350,17 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
       }
       const financer = financerData.get(financerKey);
       financer.count += 1;
-      financer.amount += item.financeDetails.financeAmount;
+      financer.amount += item.financeDetails?.financeAmount || 0;
       financer.sales += item.soldprice;
     });
 
     const financerMetrics = Array.from(financerData.values());
 
-    const totalPendingFinance = salesData.sales
-      .filter((sale) => sale.financeDetails.financeStatus === 'pending')
-      .reduce((sum, sale) => sum + sale.financeDetails.financeAmount, 0);
-
     return {
-      totalSales: salesData.totalSales,
+      totalSales,
       totalUnits,
-      totalCommission: salesData.totalCommission,
-      totalProfit: salesData.totalProfit,
+      totalCommission,
+      totalProfit,
       avgTicketSize,
       totalPendingFinance,
       productMetrics,
@@ -418,6 +444,21 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
                 <option value="week">Past Week</option>
                 <option value="month">Past Month</option>
                 <option value="year">Past Year</option>
+              </select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <select
+                value={modelFilter}
+                onChange={(e) => {
+                  setModelFilter(e.target.value as any);
+                  setCurrentPage(1);
+                }}
+                className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
+              >
+                <option value="all">All Models</option>
+                <option value="mobiles">Mobiles</option>
+                <option value="accessories">Accessories</option>
               </select>
             </div>
 

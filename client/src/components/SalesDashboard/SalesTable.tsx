@@ -48,6 +48,7 @@ interface Sale {
   createdAt: string;
   saleId: number;
   totalsoldunits: number;
+  customerId?: number;
 }
 
 interface SalesTableProps {
@@ -70,19 +71,19 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const s = (status || '').toLowerCase();
 
   const map: Record<string, { cls: string; icon: React.ReactNode }> = {
-    active: { cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: <CheckCircle2 className="w-3 h-3" /> },
-    completed: { cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: <CheckCircle2 className="w-3 h-3" /> },
-    paid: { cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: <CheckCircle2 className="w-3 h-3" /> },
-    returned: { cls: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400', icon: <XCircle className="w-3 h-3" /> },
-    reversed: { cls: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400', icon: <XCircle className="w-3 h-3" /> },
-    pending: { cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: <Clock className="w-3 h-3" /> },
-    unpaid: { cls: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: <AlertCircle className="w-3 h-3" /> },
+    active: { cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60', icon: <CheckCircle2 className="w-3 h-3" /> },
+    completed: { cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60', icon: <CheckCircle2 className="w-3 h-3" /> },
+    paid: { cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60', icon: <CheckCircle2 className="w-3 h-3" /> },
+    returned: { cls: 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200 dark:border-rose-900/60', icon: <XCircle className="w-3 h-3" /> },
+    reversed: { cls: 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200 dark:border-rose-900/60', icon: <XCircle className="w-3 h-3" /> },
+    pending: { cls: 'bg-violet-50 text-violet-700 dark:bg-violet-950/30 dark:text-violet-400 border-violet-200 dark:border-violet-900/60', icon: <Clock className="w-3 h-3" /> },
+    unpaid: { cls: 'bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400 border-orange-200 dark:border-orange-900/60', icon: <AlertCircle className="w-3 h-3" /> },
   };
 
-  const cfg = map[s] || { cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400', icon: null };
+  const cfg = map[s] || { cls: 'bg-slate-50 text-slate-600 dark:bg-slate-900 dark:text-slate-400 border-slate-200 dark:border-slate-800', icon: null };
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide ${cfg.cls}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${cfg.cls}`}>
       {cfg.icon}
       {status || '—'}
     </span>
@@ -102,13 +103,13 @@ const ExportButtons: React.FC<{ data: Sale[] }> = ({ data }) => {
       <CSVLink
         data={data}
         filename="sales_data.csv"
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
       >
         <Download className="w-3.5 h-3.5" /> CSV
       </CSVLink>
       <button
         onClick={handleExportExcel}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
       >
         <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
       </button>
@@ -121,7 +122,7 @@ const SaleRow: React.FC<{
   sale: Sale;
   showActions: boolean;
   showCostAndProfit: boolean;
-  onPayCommission: (sale: Sale) => void;
+  onPayCommission?: (sale: Sale) => void;
   onReverseSale?: (sale: Sale) => void;
   userRole?: string;
 }> = ({ sale, showActions, showCostAndProfit, onPayCommission, onReverseSale, userRole }) => {
@@ -135,26 +136,25 @@ const SaleRow: React.FC<{
     <div
       className={`rounded-xl border transition-all ${
         isPending
-          ? 'border-amber-200 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-900/10'
+          ? 'border-violet-200 dark:border-violet-800/50 bg-gradient-to-br from-violet-50/20 to-indigo-50/20 dark:from-violet-950/5 dark:to-indigo-950/5'
           : isReturned
           ? 'border-rose-200 dark:border-rose-800/60 bg-rose-50/30 dark:bg-rose-900/10'
-          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark'
-      } overflow-hidden`}
+          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark hover:border-slate-300 dark:hover:border-slate-600'
+      } overflow-hidden shadow-sm`}
     >
       {/* ── Primary Row ── */}
-      <div className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3 items-start">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4">
         {/* Left: main info */}
-        <div className="flex flex-col gap-1 min-w-0">
+        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate">
+            <span className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">
               {sale.productname}
             </span>
-            <span className="text-xs text-slate-400 dark:text-slate-500 truncate">
-              {sale.productmodel}
-              {sale.storage ? ` · ${sale.storage}` : ''}
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+              {sale.productmodel} {sale.storage ? `· ${sale.storage}` : ''}
             </span>
             {isPending && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 text-[10px] font-bold uppercase tracking-wider">
                 <Clock className="w-2.5 h-2.5" /> Finance Pending
               </span>
             )}
@@ -166,53 +166,82 @@ const SaleRow: React.FC<{
           </div>
 
           {/* Key metrics row */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
             <span>
-              <span className="font-medium text-slate-700 dark:text-slate-300">{ksh(sale.soldprice)}</span>
-              {' '}sold
+              Price: <span className="font-semibold text-slate-800 dark:text-slate-200">{ksh(sale.soldprice)}</span>
             </span>
             {showCostAndProfit && (
               <span>
-                Profit: <span className={`font-medium ${sale.netprofit > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>{ksh(sale.netprofit)}</span>
+                Profit: <span className={`font-semibold ${sale.netprofit > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>{ksh(sale.netprofit)}</span>
               </span>
             )}
             <span>
-              Commission: <span className={`font-medium ${commissionDue ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-300'}`}>{ksh(sale.commission)}</span>
-              {sale.commissionpaid > 0 && <span className="text-emerald-500"> ✓</span>}
+              Commission: <span className={`font-semibold ${commissionDue ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-300'}`}>{ksh(sale.commission)}</span>
+              {sale.commissionpaid > 0 && <span className="text-emerald-500 font-bold ml-0.5">✓</span>}
             </span>
-            <span className="text-slate-400">
+            <span className="text-slate-400 dark:text-slate-500">
               {new Date(sale.createdAt).toLocaleDateString('en-KE', { day: '2-digit', month: 'short', year: '2-digit' })}
             </span>
           </div>
 
           {/* Seller / Shop */}
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-400">
-            <Link to={`/user/sales?name=${sale.sellername}`} className="hover:text-primary flex items-center gap-0.5">
-              <ExternalLink className="w-2.5 h-2.5" /> {sale.sellername}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
+            <Link to={`/user/sales?name=${sale.sellername}`} className="hover:text-primary flex items-center gap-0.5 text-slate-500 dark:text-slate-400 font-medium">
+              <ExternalLink className="w-2.5 h-2.5 text-slate-400" /> {sale.sellername}
             </Link>
             <span>·</span>
-            <Link to={`/shop/sales?name=${sale.shopname}`} className="hover:text-primary">
+            <Link to={`/shop/sales?name=${sale.shopname}`} className="hover:text-primary text-slate-400">
               {sale.shopname}
             </Link>
           </div>
         </div>
 
-        {/* Right: status + expand toggle */}
-        <div className="flex flex-col items-end gap-2 flex-none">
-          <StatusBadge status={sale.status} />
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
-          >
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
+        {/* Right: Status badge & Action buttons ALWAYS visible in row */}
+        <div className="flex flex-wrap items-center gap-3 justify-between sm:justify-end flex-none border-t sm:border-t-0 pt-2 sm:pt-0">
+          <div className="flex items-center gap-2">
+            <StatusBadge status={sale.status} />
+          </div>
+
+          <div className="flex items-center gap-2">
+            {showActions && (
+              <>
+                <button
+                  onClick={() => onPayCommission && onPayCommission(sale)}
+                  disabled={sale.commission === 0 || (sale.commissionpaid || 0) >= sale.commission || isReturned}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  title="Pay Commission"
+                >
+                  <BadgeDollarSign className="w-3.5 h-3.5" />
+                  <span className="hidden xs:inline">Pay</span>
+                </button>
+                {userRole !== 'seller' && onReverseSale && (
+                  <button
+                    onClick={() => onReverseSale(sale)}
+                    disabled={isReturned}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-500 text-white text-xs font-semibold hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    title="Reverse Sale"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span className="hidden xs:inline">Reverse</span>
+                  </button>
+                )}
+              </>
+            )}
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="flex items-center justify-center w-8 h-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+              title="Toggle Details"
+            >
+              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ── Expanded Details ── */}
       {expanded && (
-        <div className="border-t border-slate-100 dark:border-slate-700 px-4 py-3 bg-slate-50/60 dark:bg-slate-800/20">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-2 text-xs">
+        <div className="border-t border-slate-100 dark:border-slate-700 px-4 py-3.5 bg-slate-50/60 dark:bg-slate-800/20">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3.5 text-xs">
             {showCostAndProfit && (
               <DetailItem label="Cost" value={ksh(sale.productcost)} />
             )}
@@ -231,12 +260,12 @@ const SaleRow: React.FC<{
             />
             <DetailItem label="Category" value={sale.category} />
             <DetailItem label="IMEI / Batch" value={sale.IMEI || sale.batchNumber || '—'} mono />
-            <DetailItem label="Payment Status" value={<StatusBadge status={sale.paymentstatus} variant="payment" />} />
+            <DetailItem label="Payment Status" value={<StatusBadge status={sale.paymentstatus} />} />
             <DetailItem
               label="Finance Status"
               value={
                 sale.financeDetails?.financeStatus ? (
-                  <StatusBadge status={sale.financeDetails.financeStatus} variant="finance" />
+                  <StatusBadge status={sale.financeDetails.financeStatus} />
                 ) : '—'
               }
             />
@@ -247,28 +276,6 @@ const SaleRow: React.FC<{
               <DetailItem label="Finance Amt" value={ksh(sale.financeDetails.financeAmount)} />
             )}
           </div>
-
-          {/* Action Buttons */}
-          {showActions && (
-            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-              <button
-                onClick={() => onPayCommission && onPayCommission(sale)}
-                disabled={sale.commission === 0 || (sale.commissionpaid || 0) >= sale.commission || isReturned}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition"
-              >
-                <BadgeDollarSign className="w-3.5 h-3.5" /> Pay Commission
-              </button>
-              {userRole === 'superuser' && onReverseSale && (
-                <button
-                  onClick={() => onReverseSale(sale)}
-                  disabled={isReturned}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500 text-white text-xs font-semibold hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" /> Reverse Sale
-                </button>
-              )}
-            </div>
-          )}
         </div>
       )}
     </div>
@@ -310,31 +317,31 @@ const PendingFinanceBanner: React.FC<{ pendingSales: Sale[] }> = ({
   );
 
   return (
-    <div className="rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/10 overflow-hidden mb-2">
+    <div className="rounded-xl border border-violet-200 dark:border-violet-850/50 bg-gradient-to-r from-violet-50/60 to-indigo-50/60 dark:from-violet-950/10 dark:to-indigo-950/10 overflow-hidden mb-2">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3 text-left"
       >
         <div className="flex items-center gap-3">
-          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-none" />
+          <AlertCircle className="w-4 h-4 text-violet-600 dark:text-violet-400 flex-none" />
           <div>
-            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+            <p className="text-sm font-semibold text-violet-800 dark:text-violet-300">
               {pendingSales.length} Pending Finance Sale{pendingSales.length !== 1 ? 's' : ''}
             </p>
-            <p className="text-xs text-amber-600 dark:text-amber-500">
+            <p className="text-xs text-violet-600 dark:text-violet-400">
               Total: KES {totalPending.toLocaleString()} awaiting settlement
             </p>
           </div>
         </div>
         {open ? (
-          <ChevronUp className="w-4 h-4 text-amber-500 flex-none" />
+          <ChevronUp className="w-4 h-4 text-violet-500 flex-none" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-amber-500 flex-none" />
+          <ChevronDown className="w-4 h-4 text-violet-500 flex-none" />
         )}
       </button>
 
       {open && (
-        <div className="border-t border-amber-200 dark:border-amber-800/60 divide-y divide-amber-100 dark:divide-amber-800/40">
+        <div className="border-t border-violet-200 dark:border-violet-800/60 divide-y divide-violet-100 dark:divide-violet-900/40">
           {pendingSales.map((sale, i) => (
             <div key={i} className="flex items-center justify-between px-4 py-2.5 gap-3">
               <div className="min-w-0">
@@ -344,7 +351,7 @@ const PendingFinanceBanner: React.FC<{ pendingSales: Sale[] }> = ({
                 </p>
               </div>
               <div className="flex items-center gap-3 flex-none">
-                <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                <span className="text-xs font-bold text-violet-700 dark:text-violet-300">
                   KES {(sale.financeDetails?.financeAmount || 0).toLocaleString()}
                 </span>
                 <span className="text-[10px] text-slate-400 truncate">{sale.financeDetails?.financer || '—'}</span>

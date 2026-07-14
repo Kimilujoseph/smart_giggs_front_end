@@ -42,6 +42,7 @@ const ReverseSaleModal: React.FC<ReverseSaleModalProps> = ({ sale, onClose, onSu
       refundAmount: Number(refundAmount),
       restock,
       quantity: Number(quantity),
+      customerId: sale.customerId,
     };
 
     try {
