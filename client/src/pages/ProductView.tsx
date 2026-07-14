@@ -459,8 +459,22 @@ const ProductView = () => {
                       }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{`${item.IMEI || item.serialNumber
-                        } - ${item.batchNumber} / ${item.id}`}</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{`${item.IMEI || item.serialNumber
+                          } - ${item.batchNumber} / ${item.id}`}</span>
+                        {product?.category === 'mobiles' && item.isConsignment && (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider">
+                              CONSIGNMENT
+                            </span>
+                            {item.Financer && (
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                ({item.Financer.name})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <CheckCircle
                         className={`w-5 h-5 ${selectedItems.some((i) => i.stockId === item.id)
                             ? 'text-primary'

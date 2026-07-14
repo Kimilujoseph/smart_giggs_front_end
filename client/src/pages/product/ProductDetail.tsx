@@ -15,6 +15,7 @@ import {
   User,
   ChevronUpIcon,
   ChevronDownIcon,
+  Store,
 } from 'lucide-react';
 import { Alert, Typography } from '@mui/material';
 import { Product } from '../../types/product';
@@ -104,6 +105,10 @@ const ProductDetail = ({
   const [supplierId, setSupplierId] = useState('');
   const [productType, setProductType] = useState('');
   const [storage, setStorage] = useState('');
+  const [isConsignment, setIsConsignment] = useState<boolean>(false);
+  const [margin, setMargin] = useState('');
+  const [financerId, setFinancerId] = useState('');
+  const [financers, setFinancers] = useState<any[]>([]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -139,7 +144,19 @@ const ProductDetail = ({
         console.error('Failed to fetch suppliers', error);
       }
     };
+    const fetchFinancers = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_SERVER_HEAD}/api/financer/all`,
+          { withCredentials: true },
+        );
+        setFinancers(response.data.data);
+      } catch (error) {
+        console.error('Failed to fetch financers', error);
+      }
+    };
     fetchSuppliers();
+    fetchFinancers();
   }, []);
 
   const handleDisabled = (fieldName: string, value: boolean) => {
@@ -183,7 +200,7 @@ const ProductDetail = ({
         CategoryId: productId,
         availableStock: Number(quantity),
         batchNumber: newBatchNumber,
-        productcost: Number(productcost),
+        productcost: product?.category === 'mobiles' && isConsignment ? 0 : Number(productcost),
         stockStatus: 'available',
         commission: Number(commission),
         discount: Number(discount),
@@ -200,11 +217,9 @@ const ProductDetail = ({
             IMEI,
             productType: productType,
             storage: storage,
-          },
-          financeDetails: {
-            financer: financer,
-            financeAmount: financer === 'augustusstores' ? productcost : 0,
-            financeStatus: financer === 'augustusstores' ? 'paid' : 'pending',
+            isConsignment,
+            margin: isConsignment ? Number(margin) : 0,
+            financerId: isConsignment ? Number(financerId) : null,
           },
         };
       } else {
@@ -520,11 +535,16 @@ const ProductDetail = ({
                             id="productcost"
                             min={0}
                             required
+                            disabled={product.category === 'mobiles' && isConsignment}
                             type="number"
-                            value={productcost}
+                            value={product.category === 'mobiles' && isConsignment ? '0' : productcost}
                             onChange={(e) => setCost(e.target.value)}
                             placeholder="Buying price"
-                            className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
+                            className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm transition-all duration-150 ${
+                              product.category === 'mobiles' && isConsignment
+                                ? 'bg-gray-100 dark:bg-boxdark text-gray-400 cursor-not-allowed border-gray-200 dark:border-strokedark'
+                                : 'bg-white dark:bg-form-input border-gray-200 dark:border-strokedark dark:text-white'
+                            }`}
                           />
                         </div>
 
@@ -628,27 +648,75 @@ const ProductDetail = ({
                             </select>
                           </div>
                         )}
-                        {/* Financer */}
+                        {/* Inventory Type (Only for Mobiles) */}
                         {product.category === 'mobiles' && (
+                          <div className="col-span-1">
+                            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Inventory Type*
+                            </label>
+                            <select
+                              value={isConsignment ? 'consignment' : 'regular'}
+                              onChange={(e) => {
+                                const val = e.target.value === 'consignment';
+                                setIsConsignment(val);
+                                if (val) {
+                                  setCost('0');
+                                } else {
+                                  setCost('');
+                                }
+                              }}
+                              className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
+                            >
+                              <option value="regular">Regular Stock</option>
+                              <option value="consignment">Consignment Stock</option>
+                            </select>
+                          </div>
+                        )}
+
+                        {/* Margin (Only for Consignment Mobiles) */}
+                        {product.category === 'mobiles' && isConsignment && (
+                          <div className="col-span-1">
+                            <label
+                              htmlFor="margin"
+                              className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                            >
+                              Expected Margin*
+                            </label>
+                            <input
+                              id="margin"
+                              required={isConsignment}
+                              type="number"
+                              min={0}
+                              value={margin}
+                              onChange={(e) => setMargin(e.target.value)}
+                              placeholder="Expected Margin"
+                              className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
+                            />
+                          </div>
+                        )}
+
+                        {/* Financer ID (Only for Consignment Mobiles) */}
+                        {product.category === 'mobiles' && isConsignment && (
                           <div className="col-span-1">
                             <label
                               className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                              htmlFor="financer"
+                              htmlFor="financerId"
                             >
                               Financer*
                             </label>
                             <select
-                              name="financer"
-                              id="financer"
-                              required
-                              placeholder="Select Financer"
-                              onChange={(e) => setFinancer(e.target.value)}
-                              className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black text-sm outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                              id="financerId"
+                              required={isConsignment}
+                              value={financerId}
+                              onChange={(e) => setFinancerId(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
                             >
-                              <option value="">Select a Financier</option>
-                              <option value="augustusstores">augustusstores</option>
-                              <option value="watu">Watu Simu</option>
-                              <option value="mkopa">M-Kopa</option>
+                              <option value="">Select a Financer</option>
+                              {financers.map((fin) => (
+                                <option key={fin.id} value={fin.id}>
+                                  {fin.name}
+                                </option>
+                              ))}
                             </select>
                           </div>
                         )}
@@ -801,8 +869,28 @@ const ProductDetail = ({
                           <React.Fragment key={item.id}>
                             <tr className="hover:bg-bodydark1 dark:hover:bg-meta-4">
                               {product.category === 'mobiles' && (
-                                <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                                  {item.IMEI}
+                                <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell font-medium">
+                                  <div className="flex flex-col gap-1">
+                                    <span>{item.IMEI}</span>
+                                    {item.isConsignment ? (
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider">
+                                          CONSIGNMENT
+                                        </span>
+                                        {item.Financer && (
+                                          <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                            ({item.Financer.name})
+                                          </span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div>
+                                        <span className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider font-medium">
+                                          REGULAR
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </td>
                               )}
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
@@ -817,11 +905,10 @@ const ProductDetail = ({
                                     {item.availableStock}
                                   </td>
                                   <td
-                                    className={`px-3 sm:px-4 py-3 whitespace-nowrap text-sm table-cell ${
-                                      item.faultyItems > 0
+                                    className={`px-3 sm:px-4 py-3 whitespace-nowrap text-sm table-cell ${item.faultyItems > 0
                                         ? 'text-red-500 font-bold'
                                         : 'text-gray-700 dark:text-gray-300'
-                                    }`}
+                                      }`}
                                   >
                                     {item.faultyItems || 0}
                                   </td>
@@ -889,7 +976,7 @@ const ProductDetail = ({
                                   )
                                   : 'N/A'}
                               </td>
-                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell font-medium">
                                 {user.role !== 'seller' && (
                                   <button
                                     onClick={() =>
@@ -903,33 +990,123 @@ const ProductDetail = ({
                                     Edit
                                   </button>
                                 )}
-                                {user.role !== 'seller' &&
-                                  product.category === 'accessories' && (
-                                    <button
-                                      onClick={() => toggleHistory(item.id)}
-                                      className="p-1 ml-2 text-gray-500 hover:text-primary"
-                                    >
-                                      <ChevronDownIcon
-                                        className={`w-4 h-4 transition-transform ${openHistories[item.id]
-                                          ? 'rotate-180'
-                                          : ''
-                                          }`}
-                                      />
-                                    </button>
-                                  )}
+                                {user.role !== 'seller' && (
+                                  <button
+                                    onClick={() => toggleHistory(item.id)}
+                                    className="p-1 ml-2 text-gray-500 hover:text-primary inline-block"
+                                    title="View Details"
+                                  >
+                                    <ChevronDownIcon
+                                      className={`w-4 h-4 transition-transform ${openHistories[item.id]
+                                        ? 'rotate-180'
+                                        : ''
+                                        }`}
+                                    />
+                                  </button>
+                                )}
                                 {user.role !== 'seller' &&
                                   product.category === 'mobiles' && (
                                     <button
                                       onClick={() =>
                                         handleOpenHistoryModal(item.id)
                                       }
-                                      className="p-1 ml-2 text-primary hover:underline"
+                                      className="p-1 ml-2 text-primary hover:underline font-semibold"
                                     >
                                       History
                                     </button>
                                   )}
                               </td>
                             </tr>
+                            {product.category === 'mobiles' &&
+                              openHistories[item.id] && (
+                                <tr
+                                  key={`${item.id}-details`}
+                                  className="bg-gray-50 dark:bg-boxdark-2"
+                                >
+                                  <td colSpan={10}>
+                                    <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                      <div className="border-r border-gray-200 dark:border-strokedark pr-4">
+                                        <h4 className="text-sm font-semibold mb-3 text-gray-800 dark:text-white flex items-center">
+                                          <Tag className="w-4 h-4 mr-2 text-primary" />
+                                          Stock & Financial Details
+                                        </h4>
+                                        <div className="space-y-2 text-xs text-gray-600 dark:text-gray-300">
+                                          <div className="flex justify-between pb-1 border-b border-gray-100 dark:border-strokedark">
+                                            <span className="font-medium text-gray-500">Inventory Type</span>
+                                            <span className={`font-semibold px-2 py-0.5 rounded text-[10px] ${
+                                              item.isConsignment
+                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
+                                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+                                            }`}>
+                                              {item.isConsignment ? 'Consignment Stock' : 'Regular Purchase'}
+                                            </span>
+                                          </div>
+                                          {item.isConsignment && (
+                                            <>
+                                              <div className="flex justify-between pb-1 border-b border-gray-100 dark:border-strokedark">
+                                                <span className="font-medium text-gray-500">Financer</span>
+                                                <span className="text-gray-800 dark:text-white font-semibold">{item.Financer?.name || 'Augustus Mutunga'}</span>
+                                              </div>
+                                              <div className="flex justify-between pb-1 border-b border-gray-100 dark:border-strokedark">
+                                                <span className="font-medium text-gray-500">Expected Margin</span>
+                                                <span className="text-gray-800 dark:text-white font-semibold">KSh {Number(item.margin || 0).toLocaleString()}</span>
+                                              </div>
+                                            </>
+                                          )}
+                                          <div className="flex justify-between pb-1 border-b border-gray-100 dark:border-strokedark">
+                                            <span className="font-medium text-gray-500">Buying Cost</span>
+                                            <span className="text-gray-800 dark:text-white font-semibold">KSh {Number(item.productcost || 0).toLocaleString()}</span>
+                                          </div>
+                                          <div className="flex justify-between pb-1 border-b border-gray-100 dark:border-strokedark">
+                                            <span className="font-medium text-gray-500">Commission</span>
+                                            <span className="text-gray-800 dark:text-white font-semibold">KSh {Number(item.commission || 0).toLocaleString()}</span>
+                                          </div>
+                                          <div className="flex justify-between pb-1 border-b border-gray-100 dark:border-strokedark">
+                                            <span className="font-medium text-gray-500">Discount Allowed</span>
+                                            <span className="text-gray-800 dark:text-white font-semibold">KSh {Number(item.discount || 0).toLocaleString()}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <h4 className="text-sm font-semibold mb-3 text-gray-800 dark:text-white flex items-center">
+                                          <Store className="w-4 h-4 mr-2 text-primary" />
+                                          Shops / Distribution History
+                                        </h4>
+                                        {item.mobileItems && item.mobileItems.length > 0 ? (
+                                          <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                                            {item.mobileItems.map((m: any, index: number) => (
+                                              <li
+                                                key={index}
+                                                className="flex justify-between items-center border-b border-gray-100 dark:border-strokedark pb-1.5"
+                                              >
+                                                <div>
+                                                  <div className="font-semibold text-gray-800 dark:text-white">
+                                                    {m.shops?.shopName}
+                                                  </div>
+                                                  <div className="text-gray-400 text-[10px]">
+                                                    {m.shops?.address}
+                                                  </div>
+                                                </div>
+                                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-semibold ${
+                                                  m.status === 'received' || m.status === 'ok'
+                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                                                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                                                }`}>
+                                                  {m.status}
+                                                </span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        ) : (
+                                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            No distribution history. Item is currently in Warehouse.
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
                             {product.category === 'accessories' &&
                               openHistories[item.id] && (
                                 <tr
@@ -989,110 +1166,6 @@ const ProductDetail = ({
             </div>
           )}
 
-          {/* {activeTab === 'batches' && (
-            <>
-              {setActiveTab('details')}
-              <div className="space-y-6">
-                <div className="flex gap-2 items-center">
-                  <AlertCircle className="h-4 w-4" />
-                  <Typography>
-                    Manage product batches and their status. Disabled batches
-                    won't be available for distribution.
-                  </Typography>
-                </div>
-
-                // Add New Batch Form 
-                <div className="p-4 border dark:border-strokedark rounded-lg">
-                  <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-                    Add New Batch
-                  </h3>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Batch Number
-                      </label>
-                      <input
-                        type="text"
-                        value={newBatchNumber}
-                        onChange={(e) => setNewBatchNumber(e.target.value)}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Quantity
-                      </label>
-                      <input
-                        type="number"
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="date"
-                        value={expiryDate}
-                        onChange={(e) => setExpiryDate(e.target.value)}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      onClick={handleAddBatch}
-                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90"
-                    >
-                      Add Batch
-                    </button>
-                  </div>
-                </div>
-
-                // Batch List
-                <div className="space-y-4">
-                  {batches.map((batch) => (
-                    <div
-                      key={batch.id}
-                      className={`p-4 border dark:border-strokedark rounded-lg ${
-                        batch.status === 'disabled' ? 'opacity-60' : ''
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium text-gray-800 dark:text-white">
-                            Batch #{batch.id}
-                          </h4>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {batch.quantity} {batch.unit} • Expires:{' '}
-                            {batch.expiryDate}
-                          </p>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleToggleBatchStatus(batch.id)}
-                            className={`p-2 rounded-lg ${
-                              batch.status === 'active'
-                                ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                                : 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20'
-                            }`}
-                          >
-                            {batch.status === 'active' ? (
-                              <Archive className="w-5 h-5" />
-                            ) : (
-                              <RotateCcw className="w-5 h-5" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )} */}
         </div>
       </div>
     </div>

@@ -37,6 +37,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const [formData, setFormData] = useState<any>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [financers, setFinancers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: string } | null>(
@@ -90,7 +91,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const [catRes, supRes] = await Promise.all([
+        const [catRes, supRes, finRes] = await Promise.all([
           axios.get(`${import.meta.env.VITE_SERVER_HEAD}/api/category/all`, {
             withCredentials: true,
           }),
@@ -98,11 +99,16 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             `${import.meta.env.VITE_SERVER_HEAD}/api/supplier/all`,
             { withCredentials: true },
           ),
+          axios.get(
+            `${import.meta.env.VITE_SERVER_HEAD}/api/financer/all`,
+            { withCredentials: true },
+          ),
         ]);
         setCategories(catRes.data.data);
         setSuppliers(supRes.data.data);
+        setFinancers(finRes.data.data);
       } catch (err) {
-        console.error('Failed to fetch categories or suppliers', err);
+        console.error('Failed to fetch categories, suppliers, or financers', err);
         setMessage({
           text: 'Failed to load necessary data.',
           type: 'error',
@@ -143,7 +149,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     const payload: any = {
       stockStatus: formData.stockStatus,
       commission: Number(formData.commission),
-      productCost: Number(formData.productCost),
+      productCost: formData.isConsignment ? 0 : Number(formData.productCost),
       discount: Number(formData.discount),
       color: formData.color,
       batchNumber: formData.batchNumber,
@@ -153,6 +159,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
     if (isMobile) {
       payload.IMEI = formData.IMEI;
+      payload.isConsignment = formData.isConsignment || false;
+      payload.margin = formData.isConsignment ? Number(formData.margin) : 0;
+      payload.financerId = formData.isConsignment ? (formData.financerId ? Number(formData.financerId) : null) : null;
     } else {
       payload.productType = formData.productType;
       payload.faultyItems = Number(formData.faultyItems);
@@ -223,9 +232,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   <input
                     type="number"
                     name="productCost"
-                    value={formData.productCost || ''}
+                    disabled={isMobile && formData.isConsignment}
+                    value={isMobile && formData.isConsignment ? 0 : (formData.productCost || '')}
                     onChange={handleChange}
-                    className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
+                    className={`w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark ${
+                      isMobile && formData.isConsignment ? 'bg-gray-100 dark:bg-boxdark text-gray-400 cursor-not-allowed border-gray-200 dark:border-form-strokedark' : ''
+                    }`}
                   />
                 </div>
                 <div>
@@ -339,18 +351,77 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 </div>
 
                 {isMobile && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      IMEI
-                    </label>
-                    <input
-                      type="text"
-                      name="IMEI"
-                      value={formData.IMEI || ''}
-                      onChange={handleChange}
-                      className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        IMEI
+                      </label>
+                      <input
+                        type="text"
+                        name="IMEI"
+                        value={formData.IMEI || ''}
+                        onChange={handleChange}
+                        className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Inventory Type
+                      </label>
+                      <select
+                        name="isConsignment"
+                        value={formData.isConsignment ? 'true' : 'false'}
+                        onChange={(e) => {
+                          const isCons = e.target.value === 'true';
+                          setFormData((prev: any) => ({
+                            ...prev,
+                            isConsignment: isCons,
+                            productCost: isCons ? 0 : prev.productCost,
+                            margin: isCons ? prev.margin : 0,
+                            financerId: isCons ? prev.financerId : null,
+                          }));
+                        }}
+                        className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
+                      >
+                        <option value="false">Regular Stock</option>
+                        <option value="true">Consignment Stock</option>
+                      </select>
+                    </div>
+                    {formData.isConsignment && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Margin
+                          </label>
+                          <input
+                            type="number"
+                            name="margin"
+                            value={formData.margin || ''}
+                            onChange={handleChange}
+                            className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Financer
+                          </label>
+                          <select
+                            name="financerId"
+                            value={formData.financerId || ''}
+                            onChange={handleChange}
+                            className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
+                          >
+                            <option value="">Select Financer</option>
+                            {financers.map((fin) => (
+                              <option key={fin.id} value={fin.id}>
+                                {fin.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    )}
+                  </>
                 )}
 
                 {!isMobile && (

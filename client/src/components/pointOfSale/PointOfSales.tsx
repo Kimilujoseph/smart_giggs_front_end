@@ -98,8 +98,46 @@ const PointOfSales: React.FC = () => {
     return !!item;
   };
 
+  // Check if cart has any consignment items
+  const cartHasConsignment = React.useMemo(
+    () => cart.some((item: any) => item.stock?.mobiles?.isConsignment),
+    [cart],
+  );
+
   // Add an item to the cart
   const addToCart = (category: any, item?: any) => {
+    const isItemConsignment = !!item?.mobiles?.isConsignment;
+
+    // Consignment-only rule enforcement
+    if (isItemConsignment && cart.length > 0 && !cartHasConsignment) {
+      setMessage({
+        text: 'A consignment product can only be sold alone. Please clear the cart first.',
+        type: 'error',
+      });
+      return;
+    }
+    if (!isItemConsignment && cartHasConsignment) {
+      setMessage({
+        text: 'Cannot add regular items to a cart containing a consignment product.',
+        type: 'error',
+      });
+      return;
+    }
+    if (isItemConsignment && cart.length > 0) {
+      setMessage({
+        text: 'A consignment product can only be sold alone. Please clear the cart first.',
+        type: 'error',
+      });
+      return;
+    }
+
+    if (isItemConsignment) {
+      setMessage({
+        text: `Consignment sale — financed by "${item.mobiles.Financer?.name || 'watu'}". Payment locked to M-Pesa.`,
+        type: 'info',
+      });
+    }
+
     setCart((prevCart: any) => {
       const existingItem = prevCart.find(
         (cartItem: any) => cartItem.stock.id === item.id,
@@ -123,7 +161,7 @@ const PointOfSales: React.FC = () => {
 
       setSoldPrice({
         ...soldprice,
-        [category.id]: soldprice[category.id] || category.minPrice,
+        [category.id]: soldprice[category.id] || (item?.mobiles?.isConsignment ? Number(item.mobiles.margin) : category.minPrice),
       });
 
       return [
@@ -147,10 +185,11 @@ const PointOfSales: React.FC = () => {
 
   const clearCart = () => {
     setCart([]);
+    setSoldPrice({});
     setFormData({ name: '', email: '', phonenumber: '' });
     setPayments([
       {
-        paymentMethod: 'cash',
+        paymentMethod: 'mpesa',
         amount: 0,
         transactionId: '',
       },
@@ -186,6 +225,14 @@ const PointOfSales: React.FC = () => {
       setPayments((prev) => [{ ...prev[0], amount: total }]);
     }
   }, [total]);
+
+  // When a consignment item is added, lock all payments to M-Pesa and collapse to one payment entry
+  useEffect(() => {
+    const hasConsignment = cart.some((item: any) => item.stock?.mobiles?.isConsignment);
+    if (hasConsignment) {
+      setPayments([{ paymentMethod: 'mpesa', amount: total, transactionId: '' }]);
+    }
+  }, [cart]);
 
   useEffect(() => {
     const pricesInvalid =
@@ -383,22 +430,29 @@ const PointOfSales: React.FC = () => {
 
       groupedCart.forEach((product: any) => {
         //console.log("products received", product)
-        const items = product.items.map((item: any) => ({
-          productId: item.stock.productId,
-          itemId: item.stock.id,
-          soldprice:
-            product.categoryId.itemType === 'accessories'
-              ? (soldprice[product.categoryId.id] || 0) * item.quantity
-              : soldprice[product.categoryId.id],
-          soldUnits:
-            product.categoryId.itemType === 'accessories' ? item.quantity : 1,
-          financeAmount:
-            financeDetails[product.categoryId.id]?.amount?.toString() || '0',
-          financeStatus:
-            financeDetails[product.categoryId.id]?.status || 'paid',
-          financeId:
-            Number(financeDetails[product.categoryId.id]?.financerId) || 1,
-        }));
+        const items = product.items.map((item: any) => {
+          const isCons = product.categoryId.itemType === 'mobiles' && item.stock.mobiles?.isConsignment;
+          return {
+            productId: item.stock.productId,
+            itemId: item.stock.id,
+            soldprice: isCons
+              ? Number(item.stock.mobiles.margin) || 0
+              : (
+                product.categoryId.itemType === 'accessories'
+                  ? (soldprice[product.categoryId.id] || 0) * item.quantity
+                  : (soldprice[product.categoryId.id] || 0)
+              ),
+            soldUnits:
+              product.categoryId.itemType === 'accessories' ? item.quantity : 1,
+            financeAmount: isCons
+              ? (item.stock.mobiles.margin?.toString() || '0')
+              : (financeDetails[product.categoryId.id]?.amount?.toString() || '0'),
+            financeStatus: isCons ? 'pending' : (financeDetails[product.categoryId.id]?.status || 'paid'),
+            financeId: isCons
+              ? (Number(item.stock.mobiles.Financer?.id) || Number(item.stock.mobiles.financerId) || null)
+              : (Number(financeDetails[product.categoryId.id]?.financerId) || null),
+          };
+        });
 
         // console.log(
         //   'Items structure for category:',
@@ -676,6 +730,7 @@ const PointOfSales: React.FC = () => {
                 checkoutDisabled={checkoutDisabled}
                 submitting={submitting}
                 formatPrice={formatPrice}
+                cartHasConsignment={cartHasConsignment}
               />
             )}
           </div>
