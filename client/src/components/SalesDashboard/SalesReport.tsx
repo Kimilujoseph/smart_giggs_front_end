@@ -579,9 +579,9 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
             <div className="flex justify-center items-center h-64">
               <p className="text-red-500">{error}</p>
             </div>
-          ) : salesData?.sales?.length > 0 ? (
+          ) : (salesData?.sales && salesData.sales.length > 0) ? (
             <SalesTable
-              sales={salesData.sales}
+              sales={salesData.sales as any}
               totalPages={totalPages}
               currentPage={currentPage}
               onPageChange={setCurrentPage}

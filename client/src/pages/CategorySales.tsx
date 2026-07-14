@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
+import Breadcrumb from '../components/Breadcrumbs/Breadcrumb';
 import {
   BarChart,
   Bar,
@@ -14,10 +14,10 @@ import {
 } from 'recharts';
 import { Card, CardContent } from '@mui/material';
 import { DollarSign, TrendingUp, Award, ShoppingCart } from 'lucide-react';
-import SuchEmpty from '../../components/suchEmpty';
-import SalesTable from '../../components/SalesDashboard/SalesTable';
-import { getSalesReport } from '../../api/sales_dashboard_manager';
-import DateFilter from '../../components/filters/DateFilter';
+import SuchEmpty from '../components/suchEmpty';
+import SalesTable from '../components/SalesDashboard/SalesTable';
+import { getSalesReport } from '../api/sales_dashboard_manager';
+import DateFilter from '../components/filters/DateFilter';
 
 const CategorySales: React.FC = () => {
   const [salesData, setSalesData] = useState<any>(null);

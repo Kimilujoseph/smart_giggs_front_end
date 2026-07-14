@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   TrendingUp,
   DollarSign,
@@ -6,6 +6,9 @@ import {
   ArrowUp,
   ArrowDown,
   CreditCard,
+  RefreshCw,
+  SlidersHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 import { CircularProgress } from '@mui/material';
 import { getSalesReport, SalesReportParams } from '../../api/sales_dashboard_manager';
@@ -41,11 +44,7 @@ export interface Sale {
   totalnetprice: number;
   totalsoldunits: number;
   totaltransaction: number;
-  _id: {
-    productId: number;
-    sellerId: number;
-    shopId: number;
-  };
+  _id: { productId: number; sellerId: number; shopId: number };
   financeDetails: FinanceDetails;
   CategoryId: number;
   createdAt: string;
@@ -67,6 +66,7 @@ interface SalesData {
   currentPage: number;
 }
 
+// ── Stat Card ──────────────────────────────────────────────────────────────
 interface StatCardProps {
   title: string;
   value: any;
@@ -74,60 +74,97 @@ interface StatCardProps {
   icon: any;
   trend?: number;
   valueType: string;
+  accent?: string;
+  loading?: boolean;
 }
 
-const SalesDashboard = () => {
-  const StatCard = ({
-    title,
-    value,
-    secondaryValue,
-    icon: Icon,
-    trend,
-    valueType,
-  }: StatCardProps) => (
-    <div className="bg-white rounded-lg shadow-card p-4 md:p-6 h-full border border-stroke dark:border-strokedark dark:bg-boxdark">
-      <div className="flex justify-between mb-4">
-        <span className="text-bodydark2 font-medium">{title}</span>
-        <Icon className="text-primary w-4 h-4" />
-      </div>
-      <div className="space-y-2">
-        {valueType === 'currency' && (
-          <span className="text-sm font-bold italic text-bodydark2">KES</span>
-        )}
-        <div className="text-title-md font-bold text-black dark:text-white">
-          {loading ? <CircularProgress size={24} /> : value}
-        </div>
-        {secondaryValue && (
-          <div className="text-bodydark text-sm">{secondaryValue}</div>
-        )}
-        {trend !== undefined && (
-          <div className="flex items-center mt-2">
-            {trend > 0 ? (
-              <ArrowUp className="text-meta-3 w-4 h-4" />
-            ) : (
-              <ArrowDown className="text-meta-1 w-4 h-4" />
-            )}
-            <span
-              className={`ml-1 ${trend > 0 ? 'text-meta-3' : 'text-meta-1'}`}>
-              {Math.abs(trend)}%
-            </span>
-          </div>
-        )}
+const StatCard = ({
+  title,
+  value,
+  secondaryValue,
+  icon: Icon,
+  trend,
+  valueType,
+  accent = 'from-primary/10 to-primary/5',
+  loading,
+}: StatCardProps) => (
+  <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
+    <div className={`absolute inset-0 bg-gradient-to-br ${accent} opacity-50 pointer-events-none`} />
+    <div className="relative flex items-start justify-between">
+      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{title}</p>
+      <div className="p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
+        <Icon className="w-4 h-4 text-primary" />
       </div>
     </div>
-  );
+    <div className="relative">
+      {loading ? (
+        <CircularProgress size={22} />
+      ) : (
+        <>
+          <div className="flex items-baseline gap-1">
+            {valueType === 'currency' && (
+              <span className="text-xs font-bold text-slate-400">KES</span>
+            )}
+            <span className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{value}</span>
+          </div>
+          {secondaryValue && (
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{secondaryValue}</p>
+          )}
+          {trend !== undefined && (
+            <div className="flex items-center gap-1 mt-1">
+              {trend > 0 ? (
+                <ArrowUp className="w-3.5 h-3.5 text-emerald-500" />
+              ) : (
+                <ArrowDown className="w-3.5 h-3.5 text-rose-500" />
+              )}
+              <span className={`text-xs font-semibold ${trend > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                {Math.abs(trend)}%
+              </span>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  </div>
+);
 
+// ── Custom select ──────────────────────────────────────────────────────────
+const SelectField: React.FC<{
+  value: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+  label?: string;
+}> = ({ value, onChange, children, label }) => (
+  <div className="relative flex-1 min-w-[140px]">
+    {label && <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{label}</label>}
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/30 transition cursor-pointer"
+      >
+        {children}
+      </select>
+      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+    </div>
+  </div>
+);
+
+// ── Main Dashboard ─────────────────────────────────────────────────────────
+
+const SalesDashboard = () => {
   const [salesData, setSalesData] = useState<SalesData | null>(null);
   const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [isPayCommissionModalOpen, setPayCommissionModalOpen] = useState(false);
   const [isReverseSaleModalOpen, setReverseSaleModalOpen] = useState(false);
   const [selectedSaleForReverse, setSelectedSaleForReverse] = useState<any>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const token = localStorage.getItem('tk');
   const decodedToken = token ? jwt_decode<DecodedToken>(token) : null;
@@ -146,19 +183,11 @@ const SalesDashboard = () => {
   useEffect(() => {
     const fetchFilterData = async () => {
       const usersRes = await getAllUsers();
-      if (usersRes && !usersRes.error) {
-        setUsers(usersRes.data || []);
-      }
-
+      if (usersRes && !usersRes.error) setUsers(usersRes.data || []);
       const categoriesRes = await getCategories();
-      if (categoriesRes && categoriesRes.success) {
-        setCategories(categoriesRes.data || []);
-      }
-
+      if (categoriesRes && categoriesRes.success) setCategories(categoriesRes.data || []);
       const financersRes = await getAllFinancers();
-      if (financersRes && !financersRes.error) {
-        setFinancers(financersRes.data || []);
-      }
+      if (financersRes && !financersRes.error) setFinancers(financersRes.data || []);
     };
     fetchFilterData();
   }, []);
@@ -166,10 +195,7 @@ const SalesDashboard = () => {
   useEffect(() => {
     const fetchSalesData = async () => {
       setLoading(true);
-      let params: SalesReportParams = {
-        page: currentPage,
-        limit: itemsPerPage,
-      };
+      let params: SalesReportParams = { page: currentPage, limit: itemsPerPage };
 
       if (dateFilter) {
         const dateParams = new URLSearchParams(dateFilter);
@@ -203,10 +229,7 @@ const SalesDashboard = () => {
       } catch (error: any) {
         const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch sales data';
         setError(errorMessage);
-        setMessage({
-          text: errorMessage,
-          type: 'error',
-        });
+        setMessage({ text: errorMessage, type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -217,70 +240,35 @@ const SalesDashboard = () => {
 
   const calculateMetrics = () => {
     if (!salesData || !salesData.sales || salesData.sales.length === 0) {
-      return {
-        totalSales: 0,
-        totalUnits: 0,
-        totalCommission: 0,
-        totalProfit: 0,
-        avgTicketSize: 0,
-        totalPendingFinance: 0,
-        productMetrics: [],
-        categoryMetrics: [],
-        financerMetrics: [],
-      };
+      return { totalSales: 0, totalUnits: 0, totalCommission: 0, totalProfit: 0, avgTicketSize: 0, totalPendingFinance: 0, productMetrics: [], categoryMetrics: [], financerMetrics: [] };
     }
 
-    const totalUnits = salesData.sales.reduce(
-      (sum, item) => sum + item.totaltransaction,
-      0,
-    );
-
+    const totalUnits = salesData.sales.reduce((sum, item) => sum + item.totaltransaction, 0);
     const avgTicketSize = salesData.totalSales / totalUnits || 0;
 
-    const productData = new Map();
+    const productData = new Map<string, any>();
     salesData.sales.forEach((item) => {
-      const productKey = item.productname;
-      if (!productData.has(productKey)) {
-        productData.set(productKey, {
-          name: item.productname,
-          sales: 0,
-          units: 0,
-          profit: 0,
-        });
-      }
-      const product = productData.get(productKey);
-      product.sales += item.soldprice;
-      product.units += item.totaltransaction;
-      product.profit += item.netprofit;
+      const k = item.productname;
+      if (!productData.has(k)) productData.set(k, { name: k, sales: 0, units: 0, profit: 0 });
+      const p = productData.get(k)!;
+      p.sales += item.soldprice;
+      p.units += item.totaltransaction;
+      p.profit += item.netprofit;
     });
 
-    const categoryData = new Map();
+    const financerData = new Map<string, any>();
     salesData.sales.forEach((item) => {
-      const categoryKey = item.category;
-      if (!categoryData.has(categoryKey)) {
-        categoryData.set(categoryKey, {
-          name: item.category,
-          sales: 0,
-        });
-      }
-      categoryData.get(categoryKey).sales += item.soldprice;
-    });
-
-    const financerData = new Map();
-    salesData.sales.forEach((item) => {
-        const financerKey = item.financeDetails.financer || 'None';
-        if (!financerData.has(financerKey)) {
-            financerData.set(financerKey, { name: financerKey, count: 0, amount: 0, sales: 0 });
-        }
-        const financer = financerData.get(financerKey);
-        financer.count += 1;
-        financer.amount += item.financeDetails.financeAmount;
-        financer.sales += item.soldprice;
+      const k = item.financeDetails.financer || 'None';
+      if (!financerData.has(k)) financerData.set(k, { name: k, count: 0, amount: 0, sales: 0 });
+      const f = financerData.get(k)!;
+      f.count += 1;
+      f.amount += item.financeDetails.financeAmount;
+      f.sales += item.soldprice;
     });
 
     const totalPendingFinance = salesData.sales
-      .filter((sale) => sale.financeDetails.financeStatus === 'pending')
-      .reduce((sum, sale) => sum + sale.financeDetails.financeAmount, 0);
+      .filter((s) => s.financeDetails.financeStatus === 'pending')
+      .reduce((sum, s) => sum + s.financeDetails.financeAmount, 0);
 
     return {
       totalSales: salesData.totalSales,
@@ -290,50 +278,23 @@ const SalesDashboard = () => {
       avgTicketSize,
       totalPendingFinance,
       productMetrics: Array.from(productData.values()),
-      categoryMetrics: Array.from(categoryData.values()),
       financerMetrics: Array.from(financerData.values()),
+      categoryMetrics: [],
     };
   };
 
   const metrics = calculateMetrics();
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  const handleOpenPayCommissionModal = (sale: any) => { setSelectedSale(sale); setPayCommissionModalOpen(true); };
+  const handleClosePayCommissionModal = () => { setSelectedSale(null); setPayCommissionModalOpen(false); };
+  const handleCommissionPaid = () => { handleClosePayCommissionModal(); setCurrentPage(1); };
+  const handleOpenReverseSaleModal = (sale: any) => { setSelectedSaleForReverse(sale); setReverseSaleModalOpen(true); };
+  const handleCloseReverseSaleModal = () => { setSelectedSaleForReverse(null); setReverseSaleModalOpen(false); };
+  const handleSaleReversed = () => { handleCloseReverseSaleModal(); setCurrentPage(1); };
 
-  const handleOpenPayCommissionModal = (sale: any) => {
-    setSelectedSale(sale);
-    setPayCommissionModalOpen(true);
-  };
-
-  const handleClosePayCommissionModal = () => {
-    setSelectedSale(null);
-    setPayCommissionModalOpen(false);
-  };
-
-  const handleCommissionPaid = () => {
-    handleClosePayCommissionModal();
+  const refresh = () => {
     setCurrentPage(1);
-  };
-
-  const handleOpenReverseSaleModal = (sale: any) => {
-    setSelectedSaleForReverse(sale);
-    setReverseSaleModalOpen(true);
-  };
-
-  const handleCloseReverseSaleModal = () => {
-    setSelectedSaleForReverse(null);
-    setReverseSaleModalOpen(false);
-  };
-
-  const handleSaleReversed = () => {
-    handleCloseReverseSaleModal();
-    setCurrentPage(1);
+    setSelectedId('');
   };
 
   if (loading && !salesData) {
@@ -345,176 +306,152 @@ const SalesDashboard = () => {
   }
 
   return (
-    <div className="md:px-4 py-8">
+    <div className="md:px-4 py-6 flex flex-col gap-6">
       {message && message.type === 'error' && (
-        <Message
-          message={message.text}
-          type={message.type}
-          onClose={() => setMessage(null)}
-        />
+        <Message message={message.text} type={message.type} onClose={() => setMessage(null)} />
       )}
 
-      <div className="mb-8">
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-title-lg font-bold text-black dark:text-white mb-2">
-            Sales Analytics Dashboard
-          </h1>
-          <p className="text-bodydark">
-            Comprehensive sales performance insights for your business
+          <h1 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Sales Dashboard</h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Last refreshed: {new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={refresh}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Refresh
+          </button>
+          <button
+            onClick={() => setFiltersOpen((v) => !v)}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border transition ${
+              filtersOpen
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" /> Filters
+            {(reportType !== 'all' || dateFilter !== 'period=month') && (
+              <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
+            )}
+          </button>
+        </div>
+      </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 gap-4">
-          <div className="flex w-full flex-col items-center gap-4 sm:flex-row sm:flex-wrap md:w-auto">
-            <div className="w-full sm:w-auto">
-              <DateFilter onDateChange={setDateFilter} />
+      {/* ── Filters Panel ── */}
+      {filtersOpen && (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-4 flex flex-col gap-3 shadow-sm">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Filter Options</p>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+            <div className="w-full sm:w-auto flex-1 min-w-[180px]">
+              <DateFilter onDateChange={(v) => { setDateFilter(v); setCurrentPage(1); }} />
             </div>
 
-            <select
+            <SelectField
+              label="Report Type"
               value={reportType}
-              onChange={(e) => {
-                setReportType(e.target.value as any);
-                setSelectedId('');
-              }}
-              className="w-full appearance-none border-stroke bg-transparent px-4 py-2 text-black outline-none focus:border-primary focus:ring-primary dark:border-strokedark dark:bg-boxdark dark:text-white sm:w-auto"
+              onChange={(v) => { setReportType(v as any); setSelectedId(''); setCurrentPage(1); }}
             >
               <option value="all">All Sales</option>
               <option value="category">By Category</option>
               <option value="financer">By Financer</option>
               <option value="user">By User</option>
-            </select>
+            </SelectField>
 
             {reportType !== 'all' && (
-              <select
+              <SelectField
+                label={reportType === 'category' ? 'Category' : reportType === 'financer' ? 'Financer' : 'User'}
                 value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-                className="w-full appearance-none border-stroke bg-transparent px-4 py-2 text-black outline-none focus:border-primary focus:ring-primary dark:border-strokedark dark:bg-boxdark dark:text-white sm:w-auto"
+                onChange={(v) => { setSelectedId(v); setCurrentPage(1); }}
               >
                 <option value="">
-                  {reportType === 'category' && 'Select Category'}
-                  {reportType === 'financer' && 'Select Financer'}
-                  {reportType === 'user' && 'Select User'}
+                  {reportType === 'category' ? 'Select Category' : reportType === 'financer' ? 'Select Financer' : 'Select User'}
                 </option>
-                {reportType === 'category' &&
-                  categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                {reportType === 'financer' &&
-                  financers.map((fin) => (
-                    <option key={fin.id} value={fin.id}>
-                      {fin.name}
-                    </option>
-                  ))}
-                {reportType === 'user' &&
-                  users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name}
-                    </option>
-                  ))}
-              </select>
+                {reportType === 'category' && categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {reportType === 'financer' && financers.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                {reportType === 'user' && users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </SelectField>
             )}
           </div>
-
-          <div className="rounded-md bg-gray-100 px-4 py-2 text-sm dark:bg-meta-4">
-            <span className="font-medium">Last Updated:</span>{' '}
-            {salesData ? formatDate(new Date().toISOString()) : 'N/A'}
-          </div>
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-2 text-sm md:text-lg lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         <StatCard
           title="Total Revenue"
           value={metrics.totalSales.toLocaleString()}
           valueType="currency"
           icon={DollarSign}
+          accent="from-blue-500/10 to-blue-400/5"
+          loading={loading}
         />
         <StatCard
           title="Net Profit"
           value={metrics.totalProfit.toLocaleString()}
           valueType="currency"
           icon={TrendingUp}
+          accent="from-emerald-500/10 to-emerald-400/5"
+          loading={loading}
         />
         <StatCard
           title="Products Sold"
-          value={`${metrics.productMetrics.length} / ${metrics.totalUnits?.toLocaleString()}`}
+          value={`${metrics.productMetrics.length} / ${metrics.totalUnits.toLocaleString()}`}
           valueType="number"
-          secondaryValue={`Avg. ticket: ${metrics.avgTicketSize?.toLocaleString()}`}
+          secondaryValue={`Avg. ticket: KES ${metrics.avgTicketSize.toLocaleString('en-KE', { maximumFractionDigits: 0 })}`}
           icon={Package}
+          accent="from-violet-500/10 to-violet-400/5"
+          loading={loading}
         />
         <StatCard
           title="Finance Pending"
           value={metrics.totalPendingFinance.toLocaleString()}
           valueType="currency"
-          secondaryValue={`${metrics.financerMetrics.length} financiers`}
+          secondaryValue={`${metrics.financerMetrics.filter((f) => f.name !== 'None').length} financer(s)`}
           icon={CreditCard}
+          accent="from-amber-500/10 to-amber-400/5"
+          loading={loading}
         />
       </div>
 
+      {/* ── Sales Table / Loading / Empty ── */}
       <div>
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <p>Loading...</p>
+        {loading && salesData ? (
+          <div className="flex items-center gap-2 text-sm text-slate-400 py-4">
+            <CircularProgress size={16} /> Refreshing…
           </div>
-        ) : error ? (
-          <div className="flex justify-center items-center h-64">
-            <p className="text-red-500">{error}</p>
-          </div>
-        ) : salesData?.sales?.length > 0 ? (
+        ) : null}
+
+        {!error && salesData?.sales && salesData.sales.length > 0 ? (
           <SalesTable
-            sales={salesData.sales}
+            sales={salesData.sales as any}
             totalPages={totalPages}
             currentPage={currentPage}
             onPageChange={setCurrentPage}
-            onSort={() => {}} // Sorting to be implemented if needed
+            onSort={() => {}}
             onPayCommission={handleOpenPayCommissionModal}
             onReverseSale={handleOpenReverseSaleModal}
             userRole={userRole}
           />
-        ) : (
-          <div className="flex justify-center items-center h-64">
-            <p>No sales data found. Try adjusting the filters.</p>
+        ) : !loading ? (
+          <div className="flex flex-col items-center justify-center h-48 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-slate-400 gap-2">
+            <Package className="w-8 h-8 opacity-30" />
+            <p className="text-sm">{error || 'No sales data. Try adjusting filters.'}</p>
           </div>
-        )}
+        ) : null}
       </div>
 
+      {/* Modals */}
       {isPayCommissionModalOpen && selectedSale && (
-        <PayCommissionModal
-          sale={selectedSale}
-          onClose={handleClosePayCommissionModal}
-          onSuccess={handleCommissionPaid}
-        />
+        <PayCommissionModal sale={selectedSale} onClose={handleClosePayCommissionModal} onSuccess={handleCommissionPaid} />
       )}
-
       {isReverseSaleModalOpen && selectedSaleForReverse && (
-        <ReverseSaleModal
-          sale={selectedSaleForReverse}
-          onClose={handleCloseReverseSaleModal}
-          onSuccess={handleSaleReversed}
-        />
+        <ReverseSaleModal sale={selectedSaleForReverse} onClose={handleCloseReverseSaleModal} onSuccess={handleSaleReversed} />
       )}
-
-      <div className="flex justify-center items-center space-x-4 mt-8">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className="px-4 py-2 font-medium bg-primary text-white rounded-md disabled:bg-gray-300 dark:disabled:bg-gray-500 disabled:cursor-not-allowed"
-        >
-          Previous
-        </button>
-        <span className="text-black dark:text-white">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages || totalPages === 0}
-          className="px-4 py-2 font-medium bg-primary text-white rounded-md disabled:bg-gray-300 dark:disabled:bg-gray-500 disabled:cursor-not-allowed"
-        >
-          Next
-        </button>
-      </div>
     </div>
   );
 };
