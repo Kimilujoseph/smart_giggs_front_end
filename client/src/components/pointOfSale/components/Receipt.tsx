@@ -34,15 +34,18 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-2 gap-2 md:gap-4 items-start border-b border-gray-200 pb-4 mb-4">
               {/* Left */}
+
+
               <div className="flex flex-col items-start">
                 <img
                   src={import.meta.env.VITE_RECEIPT_LOGO_PATH}
-                  alt="Captech Enterprise Logo"
-                  className="h-12 md:h-14 w-auto object-contain mb-1.5"
+                  alt={import.meta.env.VITE_RECEIPT_COMPANY_NAME}
+                  className="h-24 md:h-32 w-auto object-contain mb-1.5"
                 />
                 <h2 className="text-xs sm:text-sm md:text-base font-bold text-gray-800 leading-tight">
-                  <span className="hidden xs:inline">Captech Enterprise</span>
-                  <span className="xs:hidden">Captech</span>
+                  {/*design the company name on the receipt */}
+                  <span className="text-sm sm:text-sm md:text-base font-bold text-gray-800 leading-tight">{import.meta.env.VITE_RECEIPT_COMPANY_NAME}</span>
+                  <span className="xs:hidden">{import.meta.env.VITE_RECEIPT_COMPANY_NAME}</span>
                 </h2>
                 <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">Nairobi, Kenya</p>
               </div>
