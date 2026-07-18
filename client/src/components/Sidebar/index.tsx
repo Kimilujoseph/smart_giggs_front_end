@@ -94,9 +94,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           >
             {sidebarExpanded ? (
               <img
-                src="/mutunga_dark_mode.png"
-                alt="augustusstores Logo"
-                className={`object-contain h-[80px] w-auto mix-blend-difference`}
+                src={import.meta.env.VITE_RECEIPT_LOGO_PATH}
+                alt={import.meta.env.VITE_RECEIPT_COMPANY_NAME}
+                className={`object-contain h-[200px] w-auto mix-blend-difference`}
               />
             ) : (
               <svg width="20" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
