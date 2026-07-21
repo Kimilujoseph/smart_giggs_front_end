@@ -103,3 +103,53 @@ export const payCommission = async (commissionData: any) => {
   }
   return response.data;
 };
+
+export const queuePdfSalesReport = async (params: SalesReportParams) => {
+  const { reportType, id, filters, ...queryParams } = params;
+  const url = `${import.meta.env.VITE_SERVER_HEAD}/api/sales/report/generate`;
+
+  const query: any = { ...queryParams, ...filters };
+  if (reportType && reportType !== 'all' && id) {
+    if (reportType === 'user') query.userId = id;
+    else if (reportType === 'shop') query.shopId = id;
+    else if (reportType === 'category') query.categoryId = id;
+    else if (reportType === 'financer') query.financerId = id;
+  }
+
+  const response = await axios.post(url, null, {
+    params: query,
+    withCredentials: true,
+  });
+
+  if (response.status !== 200 && response.status !== 201 && response.status !== 202) {
+    throw new Error('Failed to queue PDF report');
+  }
+  return response.data;
+};
+
+export const pollPdfSalesReport = async (jobId: string) => {
+  const url = `${import.meta.env.VITE_SERVER_HEAD}/api/sales/report/status/${jobId}`;
+
+  const response = await axios.get(url, {
+    responseType: 'blob',
+    withCredentials: true,
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    },
+  });
+
+  if (response.status !== 200) {
+    throw new Error('Failed to poll PDF report status');
+  }
+
+  const contentType = response.headers['content-type'] || '';
+  if (contentType.includes('application/json')) {
+    const text = await response.data.text();
+    return JSON.parse(text);
+  }
+
+  return response.data; // Returns the PDF Blob
+};
+

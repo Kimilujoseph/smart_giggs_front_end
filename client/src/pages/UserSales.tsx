@@ -13,13 +13,14 @@ import {
   Cell,
 } from 'recharts';
 import { Card, CardContent } from '@mui/material';
-import { DollarSign, TrendingUp, Award, ShoppingCart } from 'lucide-react';
+import { DollarSign, TrendingUp, Award, ShoppingCart, FileDown, Loader2 } from 'lucide-react';
 import SuchEmpty from '../components/suchEmpty';
 import SalesTable from '../components/SalesDashboard/SalesTable';
 import { getSalesReport, getSalesSummary } from '../api/sales_dashboard_manager';
 import DateFilter from '../components/filters/DateFilter';
 import { useAppContext } from '../context/AppContext';
 import SellerKpis from '../components/users/SellerKpis';
+import { usePdfReport } from '../context/PdfReportContext';
 
 
 
@@ -37,6 +38,27 @@ const UserSales: React.FC = () => {
   const params = new URLSearchParams(location.search);
   const userId = params.get('userId');
   const { user } = useAppContext();
+  const { job, startPdfGeneration } = usePdfReport();
+
+  const isGenerating = job.status === 'queue' || job.status === 'active';
+
+  const handleGeneratePdf = () => {
+    if (!userId) return;
+    const filterParams = new URLSearchParams(dateFilter);
+    const filters = Object.fromEntries(filterParams.entries());
+
+    const pdfParams: any = {
+      reportType: 'user',
+      id: userId,
+      filters,
+    };
+
+    if (modelFilter !== 'all') {
+      pdfParams.model = modelFilter;
+    }
+
+    startPdfGeneration(pdfParams);
+  };
 
   useEffect(() => {
     // Only fetch sales data if the details tab is active
@@ -267,21 +289,44 @@ const UserSales: React.FC = () => {
         }`}
       />
       <div className="mx-auto max-w-7xl py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="flex-1">
             <DateFilter onDateChange={setDateFilter} />
           </div>
-          <div className="relative min-w-[180px]">
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Product Model</label>
-            <select
-              value={modelFilter}
-              onChange={(e) => { setModelFilter(e.target.value as any); setCurrentPage(1); }}
-              className="w-full appearance-none pl-3 pr-8 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/30 transition cursor-pointer"
+          <div className="flex flex-row items-end gap-3">
+            <div className="relative min-w-[180px]">
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Product Model</label>
+              <select
+                value={modelFilter}
+                onChange={(e) => { setModelFilter(e.target.value as any); setCurrentPage(1); }}
+                className="w-full appearance-none pl-3 pr-8 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/30 transition cursor-pointer"
+              >
+                <option value="all">All Models</option>
+                <option value="mobiles">Mobiles</option>
+                <option value="accessories">Accessories</option>
+              </select>
+            </div>
+            <button
+              onClick={handleGeneratePdf}
+              disabled={isGenerating}
+              className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-xl border transition cursor-pointer h-[38px] ${
+                isGenerating
+                  ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed dark:border-slate-700 dark:bg-slate-800'
+                  : 'border-primary bg-primary text-white hover:bg-opacity-90'
+              }`}
             >
-              <option value="all">All Models</option>
-              <option value="mobiles">Mobiles</option>
-              <option value="accessories">Accessories</option>
-            </select>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-4 h-4" />
+                  Generate PDF
+                </>
+              )}
+            </button>
           </div>
         </div>
 

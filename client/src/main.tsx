@@ -7,12 +7,15 @@ import './css/satoshi.css';
 import 'jsvectormap/dist/css/jsvectormap.css';
 import 'flatpickr/dist/flatpickr.min.css';
 import { AppProvider } from './context/AppContext';
+import { PdfReportProvider } from './context/PdfReportContext';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <Router>
       <AppProvider>
-        <App />
+        <PdfReportProvider>
+          <App />
+        </PdfReportProvider>
       </AppProvider>
     </Router>
   </React.StrictMode>,

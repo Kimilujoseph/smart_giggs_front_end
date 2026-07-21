@@ -9,6 +9,8 @@ import {
   RefreshCw,
   SlidersHorizontal,
   ChevronDown,
+  FileDown,
+  Loader2,
 } from 'lucide-react';
 import { CircularProgress } from '@mui/material';
 import { getSalesReport, getSalesSummary, SalesReportParams } from '../../api/sales_dashboard_manager';
@@ -25,6 +27,7 @@ import { Financer } from '../../types/financer';
 import jwt_decode from 'jwt-decode';
 import { DecodedToken } from '../../types/decodedToken';
 import ReverseSaleModal from '../../components/SalesDashboard/ReverseSaleModal';
+import { usePdfReport } from '../../context/PdfReportContext';
 
 // Interface definitions
 export interface FinanceDetails {
@@ -177,6 +180,33 @@ const SalesDashboard = () => {
   const [reportType, setReportType] = useState<'all' | 'category' | 'financer' | 'user'>('all');
   const [selectedId, setSelectedId] = useState<string>('');
   const [dateFilter, setDateFilter] = useState('period=month');
+
+  const { job, startPdfGeneration } = usePdfReport();
+  const isGenerating = job.status === 'queue' || job.status === 'active';
+
+  const handleGeneratePdf = () => {
+    let params: SalesReportParams = {};
+
+    if (dateFilter) {
+      const dateParams = new URLSearchParams(dateFilter);
+      params.period = dateParams.get('period') as any;
+      params.startDate = dateParams.get('startDate') || undefined;
+      params.endDate = dateParams.get('endDate') || undefined;
+    }
+
+    if (reportType !== 'all' && selectedId) {
+      params.reportType = reportType;
+      params.id = selectedId;
+    } else {
+      params.reportType = 'all';
+    }
+
+    if (modelFilter !== 'all') {
+      params.model = modelFilter;
+    }
+
+    startPdfGeneration(params);
+  };
 
   // Data for filters
   const [users, setUsers] = useState<User[]>([]);
@@ -376,6 +406,27 @@ const SalesDashboard = () => {
             <SlidersHorizontal className="w-3.5 h-3.5" /> Filters
             {(reportType !== 'all' || dateFilter !== 'period=month') && (
               <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
+            )}
+          </button>
+          <button
+            onClick={handleGeneratePdf}
+            disabled={isGenerating}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border transition cursor-pointer ${
+              isGenerating
+                ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed dark:border-slate-700 dark:bg-slate-800'
+                : 'border-primary bg-primary text-white hover:bg-opacity-90'
+            }`}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <FileDown className="w-3.5 h-3.5" />
+                Export PDF
+              </>
             )}
           </button>
         </div>

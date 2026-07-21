@@ -7,6 +7,7 @@ import { DecodedToken } from '../types/decodedToken';
 import { useAppContext } from '../context/AppContext';
 import Modal from '../components/alerts/Modal';
 import Footer from '@/components/footer/Footer';
+import PdfNotification from '../components/PdfReport/PdfNotification';
 
 const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -78,6 +79,7 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
             {/* <!-- ===== Content Area End ===== --> */}
           </div>
           {/* <!-- ===== Page Wrapper End ===== --> */}
+          <PdfNotification />
         </div>
       )}
     </>
