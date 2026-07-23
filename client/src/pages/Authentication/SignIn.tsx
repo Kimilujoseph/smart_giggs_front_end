@@ -67,12 +67,12 @@ const SignIn: React.FC = () => {
   return (
     <div className="w-[100vw] h-[100vh] dark flex flex-col justify-center items-center bg-black">
       {message && <Message message={message} type="error" onClose={() => setMessage('')} />}
-      <div className="flex flex-col items-center xl:hidden">
+      <div className="flex flex-col items-center xl:hidden px-4">
         {/* <CustomLogo /> */}
         <img
           src={import.meta.env.VITE_RECEIPT_LOGO_PATH}
           alt={`${import.meta.env.VITE_APP_NAME} Logo`}
-          className="object-contain w-full h-[150px] mix-blend-difference"
+          className="object-contain max-h-[150px] w-auto mx-auto mix-blend-difference"
         />
       </div>
       {loggedIn !== '' && <Modal message="Login success" onClose={() => { }} />}
@@ -84,7 +84,7 @@ const SignIn: React.FC = () => {
               <img
                 src={import.meta.env.VITE_RECEIPT_LOGO_PATH}
                 alt={`${import.meta.env.VITE_APP_NAME} Logo`}
-                className="object-contain w-full h-full mix-blend-difference"
+                className="object-contain max-h-[150px] w-auto mx-auto mix-blend-difference"
               />
               {/* <span className="mt-15 inline-block">
                 <svg

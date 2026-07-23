@@ -96,7 +96,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
               <img
                 src={import.meta.env.VITE_RECEIPT_LOGO_PATH}
                 alt={import.meta.env.VITE_RECEIPT_COMPANY_NAME}
-                className={`object-contain h-[200px] w-auto mix-blend-difference`}
+                className={`object-contain h-[50px] w-auto mix-blend-difference`}
               />
             ) : (
               <svg width="20" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -537,31 +537,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             {sidebarExpanded && 'My Sales'}
                           </NavLink>
                         </li>
-                        <li>
-                          <NavLink
-                            to="/payments"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('payments') &&
-                              'bg-meta-2 dark:bg-meta-4'
-                              }`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <svg
-                              className="fill-current"
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <rect x="2" y="4" width="20" height="16" rx="2" />
-                              <line x1="2" y1="10" x2="22" y2="10" />
-                            </svg>
-                            {sidebarExpanded && 'Payments'}
-                          </NavLink>
-                        </li>
+
                         <li>
                           <NavLink
                             to="/my-commissions"
