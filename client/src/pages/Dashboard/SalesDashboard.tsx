@@ -17,10 +17,12 @@ import { getSalesReport, getSalesSummary, SalesReportParams } from '../../api/sa
 import Message from '../../components/alerts/Message';
 import SalesTable from '../../components/SalesDashboard/SalesTable';
 import PayCommissionModal from '../../components/SalesDashboard/PayCommissionModal';
+import SalesPerformanceSummary from '../../components/SalesDashboard/SalesPerformanceSummary';
 import DateFilter from '../../components/filters/DateFilter';
 import { getCategories } from '../../api/category_manager';
 import { getAllFinancers } from '../../api/financer_manager';
 import { getAllUsers } from '../../api/user_manager';
+import { getOutlets } from '../../api/outlet_handlers';
 import { User } from '../../types/user';
 import { Category } from '../../types/category';
 import { Financer } from '../../types/financer';
@@ -159,7 +161,7 @@ const SelectField: React.FC<{
 const SalesDashboard = () => {
   const [salesData, setSalesData] = useState<SalesData | null>(null);
   const [summaryData, setSummaryData] = useState<any>(null);
-  const [modelFilter, setModelFilter] = useState<'all' | 'mobiles' | 'accessories'>('all');
+  const [itemTypeFilter, setItemTypeFilter] = useState<'all' | 'smartphones' | 'smallphones' | 'accessories' | 'simcards'>('all');
   const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -177,7 +179,7 @@ const SalesDashboard = () => {
   const userRole = decodedToken?.role;
 
   // Filters state
-  const [reportType, setReportType] = useState<'all' | 'category' | 'financer' | 'user'>('all');
+  const [reportType, setReportType] = useState<'all' | 'category' | 'financer' | 'user' | 'shop'>('all');
   const [selectedId, setSelectedId] = useState<string>('');
   const [dateFilter, setDateFilter] = useState('period=month');
 
@@ -201,8 +203,8 @@ const SalesDashboard = () => {
       params.reportType = 'all';
     }
 
-    if (modelFilter !== 'all') {
-      params.model = modelFilter;
+    if (itemTypeFilter !== 'all') {
+      params.itemType = itemTypeFilter;
     }
 
     startPdfGeneration(params);
@@ -212,6 +214,7 @@ const SalesDashboard = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [financers, setFinancers] = useState<Financer[]>([]);
+  const [shops, setShops] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchFilterData = async () => {
@@ -221,6 +224,8 @@ const SalesDashboard = () => {
       if (categoriesRes && categoriesRes.success) setCategories(categoriesRes.data || []);
       const financersRes = await getAllFinancers();
       if (financersRes && !financersRes.error) setFinancers(financersRes.data || []);
+      const shopsRes = await getOutlets();
+      if (shopsRes && !shopsRes.error) setShops(shopsRes.data || []);
     };
     fetchFilterData();
   }, []);
@@ -244,14 +249,13 @@ const SalesDashboard = () => {
         params.reportType = 'all';
       }
 
-      if (modelFilter !== 'all') {
-        params.model = modelFilter;
+      if (itemTypeFilter !== 'all') {
+        params.itemType = itemTypeFilter;
       }
 
       const summaryParams = { ...params };
       delete summaryParams.page;
       delete summaryParams.limit;
-      delete summaryParams.model;
 
       try {
         const [salesRes, summaryRes] = await Promise.all([
@@ -288,11 +292,11 @@ const SalesDashboard = () => {
     };
 
     fetchSalesData();
-  }, [reportType, selectedId, dateFilter, currentPage, itemsPerPage, modelFilter]);
+  }, [reportType, selectedId, dateFilter, currentPage, itemsPerPage, itemTypeFilter]);
 
   const calculateMetrics = () => {
     const sales = salesData?.sales || [];
-    const totalUnits = sales.reduce((sum, item) => sum + item.totaltransaction, 0);
+    let totalUnits = sales.reduce((sum, item) => sum + item.totaltransaction, 0);
 
     let totalSales = 0;
     let totalProfit = 0;
@@ -300,14 +304,26 @@ const SalesDashboard = () => {
     let totalPendingFinance = 0;
 
     if (summaryData) {
-      if (modelFilter === 'mobiles') {
-        totalSales = summaryData.totalMobileSales || 0;
-        totalProfit = summaryData.totalMobileProfit || 0;
-        totalCommission = summaryData.totalMobileCommission || 0;
-      } else if (modelFilter === 'accessories') {
+      if (itemTypeFilter === 'smartphones') {
+        totalSales = summaryData.totalSmartphoneSales || 0;
+        totalProfit = summaryData.totalSmartphoneProfit || 0;
+        totalCommission = summaryData.totalSmartphoneCommission || 0;
+        totalUnits = summaryData.totalSmartphoneUnitsSold || totalUnits;
+      } else if (itemTypeFilter === 'smallphones') {
+        totalSales = summaryData.totalSmallPhoneSales || 0;
+        totalProfit = summaryData.totalSmallPhoneProfit || 0;
+        totalCommission = summaryData.totalSmallPhoneCommission || 0;
+        totalUnits = summaryData.totalSmallPhoneUnitsSold || totalUnits;
+      } else if (itemTypeFilter === 'accessories') {
         totalSales = summaryData.totalAccessorySales || 0;
         totalProfit = summaryData.totalAccessoryProfit || 0;
         totalCommission = summaryData.totalAccessoryCommission || 0;
+        totalUnits = summaryData.totalAccessoryUnitsSold || totalUnits;
+      } else if (itemTypeFilter === 'simcards') {
+        totalSales = summaryData.totalSimCardSales || 0;
+        totalProfit = summaryData.totalSimCardProfit || 0;
+        totalCommission = summaryData.totalSimCardCommission || 0;
+        totalUnits = summaryData.totalSimCardUnitsSold || totalUnits;
       } else {
         totalSales = summaryData.totalSales || 0;
         totalProfit = summaryData.totalProfit || 0;
@@ -317,7 +333,7 @@ const SalesDashboard = () => {
       totalPendingFinance = parseFloat(summaryData.accountReceivable?.[0]?.totalFinanceAmount || '0');
     }
 
-    const avgTicketSize = totalSales / totalUnits || 0;
+    const avgTicketSize = totalSales / (totalUnits || 1);
 
     const productData = new Map<string, any>();
     sales.forEach((item) => {
@@ -453,31 +469,35 @@ const SalesDashboard = () => {
               <option value="category">By Category</option>
               <option value="financer">By Financer</option>
               <option value="user">By User</option>
+              <option value="shop">By Shop</option>
             </SelectField>
 
             {reportType !== 'all' && (
               <SelectField
-                label={reportType === 'category' ? 'Category' : reportType === 'financer' ? 'Financer' : 'User'}
+                label={reportType === 'category' ? 'Category' : reportType === 'financer' ? 'Financer' : reportType === 'shop' ? 'Shop' : 'User'}
                 value={selectedId}
                 onChange={(v) => { setSelectedId(v); setCurrentPage(1); }}
               >
                 <option value="">
-                  {reportType === 'category' ? 'Select Category' : reportType === 'financer' ? 'Select Financer' : 'Select User'}
+                  {reportType === 'category' ? 'Select Category' : reportType === 'financer' ? 'Select Financer' : reportType === 'shop' ? 'Select Shop' : 'Select User'}
                 </option>
                 {reportType === 'category' && categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 {reportType === 'financer' && financers.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
                 {reportType === 'user' && users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                {reportType === 'shop' && shops.map((s) => <option key={s.id} value={s.id}>{s.shopName}</option>)}
               </SelectField>
             )}
 
             <SelectField
-              label="Product Model"
-              value={modelFilter}
-              onChange={(v) => { setModelFilter(v as any); setCurrentPage(1); }}
+              label="Item Category"
+              value={itemTypeFilter}
+              onChange={(v) => { setItemTypeFilter(v as any); setCurrentPage(1); }}
             >
-              <option value="all">All Models</option>
-              <option value="mobiles">Mobiles</option>
+              <option value="all">All Item Categories</option>
+              <option value="smartphones">Smartphones</option>
+              <option value="smallphones">Small Phones</option>
               <option value="accessories">Accessories</option>
+              <option value="simcards">SIM Cards</option>
             </SelectField>
           </div>
         </div>
@@ -494,14 +514,25 @@ const SalesDashboard = () => {
           accent="from-blue-500/10 to-blue-400/5"
           loading={loading}
         />
-        <StatCard
-          title="Net Profit"
-          value={metrics.totalProfit.toLocaleString()}
-          valueType="currency"
-          icon={TrendingUp}
-          accent="from-emerald-500/10 to-emerald-400/5"
-          loading={loading}
-        />
+        {userRole !== 'seller' ? (
+          <StatCard
+            title="Net Profit"
+            value={metrics.totalProfit.toLocaleString()}
+            valueType="currency"
+            icon={TrendingUp}
+            accent="from-emerald-500/10 to-emerald-400/5"
+            loading={loading}
+          />
+        ) : (
+          <StatCard
+            title="Total Commission"
+            value={metrics.totalCommission.toLocaleString()}
+            valueType="currency"
+            icon={DollarSign}
+            accent="from-emerald-500/10 to-emerald-400/5"
+            loading={loading}
+          />
+        )}
         <StatCard
           title="Products Sold"
           value={`${metrics.productMetrics.length} / ${metrics.totalUnits.toLocaleString()}`}
@@ -524,149 +555,7 @@ const SalesDashboard = () => {
 
       {/* ── Performance Summary ── */}
       {summaryData && (
-        <div className="flex flex-col gap-4">
-          {/* Header */}
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Performance Summary</p>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-            {/* ── Column 1: Sales Breakdown ── */}
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-5 flex flex-col gap-4 shadow-sm">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Sales Breakdown</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {/* Mobiles Card */}
-                <div className="rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800/50 p-3.5 flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0" />
-                    <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Mobiles</span>
-                  </div>
-                  <span className="text-base font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
-                    KES {(summaryData.totalMobileSales || 0).toLocaleString()}
-                  </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Profit:{' '}
-                    <span className={(summaryData.totalMobileProfit || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-red-600 dark:text-red-400 font-bold'}>
-                      KES {(summaryData.totalMobileProfit || 0).toLocaleString()}
-                    </span>
-                  </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Commission:{' '}
-                    <span className="text-slate-700 dark:text-slate-300 font-semibold">
-                      KES {(summaryData.totalMobileCommission || 0).toLocaleString()}
-                    </span>
-                  </span>
-                </div>
-
-                {/* Accessories Card */}
-                <div className="rounded-xl bg-violet-50 dark:bg-violet-900/30 border border-violet-100 dark:border-violet-800/50 p-3.5 flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <div className="w-2.5 h-2.5 rounded-full bg-violet-500 flex-shrink-0" />
-                    <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">Accessories</span>
-                  </div>
-                  <span className="text-base font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
-                    KES {(summaryData.totalAccessorySales || 0).toLocaleString()}
-                  </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Profit:{' '}
-                    <span className={(summaryData.totalAccessoryProfit || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-red-600 dark:text-red-400 font-bold'}>
-                      KES {(summaryData.totalAccessoryProfit || 0).toLocaleString()}
-                    </span>
-                  </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Commission:{' '}
-                    <span className="text-slate-700 dark:text-slate-300 font-semibold">
-                      KES {(summaryData.totalAccessoryCommission || 0).toLocaleString()}
-                    </span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Split bar */}
-              <div>
-                <div className="flex justify-between text-[10px] font-semibold mb-1.5">
-                  <span className="text-blue-600 dark:text-blue-400">
-                    Mobiles {Math.round(((summaryData.totalMobileSales || 0) / (summaryData.totalSales || 1)) * 100)}%
-                  </span>
-                  <span className="text-violet-600 dark:text-violet-400">
-                    Accessories {Math.round(((summaryData.totalAccessorySales || 0) / (summaryData.totalSales || 1)) * 100)}%
-                  </span>
-                </div>
-                <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
-                  <div
-                    className="bg-blue-500 h-full rounded-l-full transition-all duration-700"
-                    style={{ width: `${((summaryData.totalMobileSales || 0) / (summaryData.totalSales || 1)) * 100}%` }}
-                  />
-                  <div
-                    className="bg-violet-500 h-full rounded-r-full transition-all duration-700"
-                    style={{ width: `${((summaryData.totalAccessorySales || 0) / (summaryData.totalSales || 1)) * 100}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* ── Column 2: Commission & Finance ── */}
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-5 flex flex-col gap-4 shadow-sm">
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-primary" />
-                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Commission & Finance</span>
-              </div>
-
-              {/* Finance Receivable */}
-              <div className="flex items-center justify-between rounded-xl bg-amber-50 dark:bg-amber-900/25 border border-amber-200 dark:border-amber-700/50 px-4 py-3">
-                <div>
-                  <p className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">Account Receivable</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Total financed (unpaid)</p>
-                </div>
-                <span className="text-lg font-extrabold text-amber-700 dark:text-amber-300">
-                  KES {parseFloat(summaryData.accountReceivable?.[0]?.totalFinanceAmount || '0').toLocaleString()}
-                </span>
-              </div>
-
-              {/* Commission breakdown */}
-              <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex flex-col gap-3 bg-slate-50 dark:bg-slate-800/40">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Commissions</span>
-                  <span className="text-sm font-extrabold text-slate-800 dark:text-slate-100">KES {(summaryData.totalCommission || 0).toLocaleString()}</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700/50 p-2.5 text-center">
-                    <span className="block text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1">Paid</span>
-                    <span className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">
-                      KES {parseFloat(summaryData.commissionAnalysis?.[0]?.totalCommissionPaid || '0').toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="rounded-lg bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700/50 p-2.5 text-center">
-                    <span className="block text-[9px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider mb-1">Pending</span>
-                    <span className="text-sm font-extrabold text-rose-700 dark:text-rose-400">
-                      KES {parseFloat(summaryData.commissionAnalysis?.[0]?.totalCommissionPending || '0').toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Commission paid progress */}
-                <div>
-                  <div className="flex justify-between text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                    <span>Paid</span>
-                    <span className="text-emerald-600 dark:text-emerald-400">
-                      {Math.round((parseFloat(summaryData.commissionAnalysis?.[0]?.totalCommissionPaid || '0') / (summaryData.totalCommission || 1)) * 100)}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                    <div
-                      className="bg-emerald-500 h-full rounded-full transition-all duration-700"
-                      style={{ width: `${(parseFloat(summaryData.commissionAnalysis?.[0]?.totalCommissionPaid || '0') / (summaryData.totalCommission || 1)) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SalesPerformanceSummary summaryData={summaryData} userRole={userRole} />
       )}
 
 

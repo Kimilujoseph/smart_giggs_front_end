@@ -34,6 +34,7 @@ import jwt_decode from 'jwt-decode';
 import { DecodedToken } from '../../types/decodedToken';
 import axios from 'axios';
 import { Avatar } from '@mui/material';
+import ShopPerformanceAnalytics from '../../components/Dashboard/ShopPerformanceAnalytics';
 
 // Helper to format currency
 const formatCurrency = (value: number | null | undefined) => {
@@ -443,7 +444,11 @@ const Dashboard: React.FC = () => {
 
       {/* Operational Insights */}
       <h2 className="text-2xl font-bold mb-4">Operational Insights</h2>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      {/* Shop Performance & Category Analytics */}
+      <ShopPerformanceAnalytics data={shopPerformance} />
+
+      <div className="mb-8">
         {/* Top Sellers */}
         <div className="bg-white dark:bg-boxdark rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -462,29 +467,6 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             )) : <p className="text-center text-gray-500">No seller data</p>}
-          </div>
-        </div>
-
-        {/* Shop Performance */}
-        <div className="bg-white dark:bg-boxdark rounded-xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Shop Performance</h3>
-            <Store className="w-6 h-6 text-blue-500" />
-          </div>
-          <div className="h-80">
-            {shopPerformance.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={shopPerformance} layout="vertical" margin={{ left: 80 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" tickFormatter={(val) => `${val / 1000}k`} />
-                  <YAxis dataKey="shopName" type="category" width={80} />
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Legend />
-                  <Bar dataKey="totalRevenue" fill="#8884d8" name="Revenue" />
-                  <Bar dataKey="grossProfit" fill="#82ca9d" name="Profit" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : <p className="text-center text-gray-500">No shop data</p>}
           </div>
         </div>
       </div>

@@ -13,9 +13,20 @@ export interface SalesReportParams {
   shopId?: string | number;
   categoryId?: string | number;
   financerId?: string | number;
+  itemType?: 'smartphones' | 'smallphones' | 'accessories' | 'simcards' | 'all';
   model?: 'mobiles' | 'accessories';
   filters?: { [key: string]: any };
 }
+
+const attachModelFromItemType = (query: any) => {
+  if (query.itemType && query.itemType !== 'all') {
+    if (query.itemType === 'smartphones' || query.itemType === 'smallphones') {
+      query.model = 'mobiles';
+    } else if (query.itemType === 'accessories' || query.itemType === 'simcards') {
+      query.model = 'accessory';
+    }
+  }
+};
 
 export const getSalesReport = async (params: SalesReportParams) => {
   const { reportType, id, filters, ...queryParams } = params;
@@ -28,6 +39,7 @@ export const getSalesReport = async (params: SalesReportParams) => {
     else if (reportType === 'category') query.categoryId = id;
     else if (reportType === 'financer') query.financerId = id;
   }
+  attachModelFromItemType(query);
 
   const response = await axios.get(url, {
     params: query,
@@ -56,6 +68,7 @@ export const getSalesSummary = async (params: SalesReportParams) => {
     else if (reportType === 'category') query.categoryId = id;
     else if (reportType === 'financer') query.financerId = id;
   }
+  attachModelFromItemType(query);
 
   // Summary endpoint doesn't need pagination parameters
   delete query.page;
@@ -115,6 +128,7 @@ export const queuePdfSalesReport = async (params: SalesReportParams) => {
     else if (reportType === 'category') query.categoryId = id;
     else if (reportType === 'financer') query.financerId = id;
   }
+  attachModelFromItemType(query);
 
   const response = await axios.post(url, null, {
     params: query,

@@ -21,13 +21,12 @@ import DateFilter from '../components/filters/DateFilter';
 import { useAppContext } from '../context/AppContext';
 import SellerKpis from '../components/users/SellerKpis';
 import { usePdfReport } from '../context/PdfReportContext';
-
-
+import SalesPerformanceSummary from '../components/SalesDashboard/SalesPerformanceSummary';
 
 const UserSales: React.FC = () => {
   const [salesData, setSalesData] = useState<any>(null);
   const [summaryData, setSummaryData] = useState<any>(null);
-  const [modelFilter, setModelFilter] = useState<'all' | 'mobiles' | 'accessories'>('all');
+  const [itemTypeFilter, setItemTypeFilter] = useState<'all' | 'smartphones' | 'smallphones' | 'accessories' | 'simcards'>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,18 +52,15 @@ const UserSales: React.FC = () => {
       filters,
     };
 
-    if (modelFilter !== 'all') {
-      pdfParams.model = modelFilter;
+    if (itemTypeFilter !== 'all') {
+      pdfParams.itemType = itemTypeFilter;
     }
 
     startPdfGeneration(pdfParams);
   };
 
   useEffect(() => {
-    // Only fetch sales data if the details tab is active
     if (activeTab !== 'details') {
-      // If we switch to KPIs, we might not need to clear old sales data,
-      // but we should not fetch new data.
       return;
     }
     const fetchSalesData = async () => {
@@ -87,14 +83,13 @@ const UserSales: React.FC = () => {
           filters,
         };
 
-        if (modelFilter !== 'all') {
-          salesParams.model = modelFilter;
+        if (itemTypeFilter !== 'all') {
+          salesParams.itemType = itemTypeFilter;
         }
 
         const summaryParams = { ...salesParams };
         delete summaryParams.page;
         delete summaryParams.limit;
-        delete summaryParams.model;
 
         const [salesRes, summaryRes] = await Promise.all([
           getSalesReport(salesParams),
@@ -115,7 +110,7 @@ const UserSales: React.FC = () => {
     };
 
     fetchSalesData();
-  }, [userId, currentPage, itemsPerPage, dateFilter, activeTab, modelFilter]);
+  }, [userId, currentPage, itemsPerPage, dateFilter, activeTab, itemTypeFilter]);
 
   const individualSalesChartData = useMemo(() => {
     if (!salesData || !salesData.sales) return [];
@@ -126,8 +121,6 @@ const UserSales: React.FC = () => {
       status: sale.status,
     }));
   }, [salesData]);
-
-
 
   const renderSalesDetails = () => {
     if (isLoading) {
@@ -155,14 +148,22 @@ const UserSales: React.FC = () => {
     let totalCommission = 0;
 
     if (summaryData) {
-      if (modelFilter === 'mobiles') {
-        totalSales = summaryData.totalMobileSales || 0;
-        totalProfit = summaryData.totalMobileProfit || 0;
-        totalCommission = summaryData.totalMobileCommission || 0;
-      } else if (modelFilter === 'accessories') {
+      if (itemTypeFilter === 'smartphones') {
+        totalSales = summaryData.totalSmartphoneSales || 0;
+        totalProfit = summaryData.totalSmartphoneProfit || 0;
+        totalCommission = summaryData.totalSmartphoneCommission || 0;
+      } else if (itemTypeFilter === 'smallphones') {
+        totalSales = summaryData.totalSmallPhoneSales || 0;
+        totalProfit = summaryData.totalSmallPhoneProfit || 0;
+        totalCommission = summaryData.totalSmallPhoneCommission || 0;
+      } else if (itemTypeFilter === 'accessories') {
         totalSales = summaryData.totalAccessorySales || 0;
         totalProfit = summaryData.totalAccessoryProfit || 0;
         totalCommission = summaryData.totalAccessoryCommission || 0;
+      } else if (itemTypeFilter === 'simcards') {
+        totalSales = summaryData.totalSimCardSales || 0;
+        totalProfit = summaryData.totalSimCardProfit || 0;
+        totalCommission = summaryData.totalSimCardCommission || 0;
       } else {
         totalSales = summaryData.totalSales || 0;
         totalProfit = summaryData.totalProfit || 0;
@@ -202,10 +203,10 @@ const UserSales: React.FC = () => {
     ].filter(Boolean);
 
     return (
-      <>
+      <div className="flex flex-col gap-6">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
-          {stats.map((stat, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((stat: any, index: number) => (
             <Card key={index} className="dark:bg-boxdark dark:text-bodydark">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -222,7 +223,12 @@ const UserSales: React.FC = () => {
           ))}
         </div>
 
-        <Card className="mb-6 dark:bg-boxdark dark:text-bodydark">
+        {/* Sales Performance & KPI Summary */}
+        {summaryData && (
+          <SalesPerformanceSummary summaryData={summaryData} userRole={user?.role} />
+        )}
+
+        <Card className="dark:bg-boxdark dark:text-bodydark">
           <CardContent>
             <h3 className="text-lg font-semibold mb-4">Individual Sales</h3>
             <div style={{ height: 300 }}>
@@ -234,7 +240,7 @@ const UserSales: React.FC = () => {
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="sales" name="Sales">
-                    {individualSalesChartData.map((entry, index) => (
+                    {individualSalesChartData.map((entry: any, index: number) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={
@@ -247,20 +253,22 @@ const UserSales: React.FC = () => {
                       />
                     ))}
                   </Bar>
-                  <Bar dataKey="profit" name="Profit">
-                    {individualSalesChartData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={
-                          entry.status === 'RETURNED'
-                            ? '#ff8042'
-                            : entry.status === 'PARTIALLY_RETURNED'
-                            ? '#ffc658'
-                            : '#82ca9d'
-                        }
-                      />
-                    ))}
-                  </Bar>
+                  {user?.role !== 'seller' && (
+                    <Bar dataKey="profit" name="Profit">
+                      {individualSalesChartData.map((entry: any, index: number) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={
+                            entry.status === 'RETURNED'
+                              ? '#ff8042'
+                              : entry.status === 'PARTIALLY_RETURNED'
+                              ? '#ffc658'
+                              : '#82ca9d'
+                          }
+                        />
+                      ))}
+                    </Bar>
+                  )}
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -277,7 +285,7 @@ const UserSales: React.FC = () => {
           showActions={false}
           showCostAndProfit={user?.role !== 'seller'}
         />
-      </>
+      </div>
     );
   };
 
@@ -295,15 +303,17 @@ const UserSales: React.FC = () => {
           </div>
           <div className="flex flex-row items-end gap-3">
             <div className="relative min-w-[180px]">
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Product Model</label>
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Item Category</label>
               <select
-                value={modelFilter}
-                onChange={(e) => { setModelFilter(e.target.value as any); setCurrentPage(1); }}
+                value={itemTypeFilter}
+                onChange={(e) => { setItemTypeFilter(e.target.value as any); setCurrentPage(1); }}
                 className="w-full appearance-none pl-3 pr-8 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/30 transition cursor-pointer"
               >
-                <option value="all">All Models</option>
-                <option value="mobiles">Mobiles</option>
+                <option value="all">All Item Categories</option>
+                <option value="smartphones">Smartphones</option>
+                <option value="smallphones">Small Phones</option>
                 <option value="accessories">Accessories</option>
+                <option value="simcards">SIM Cards</option>
               </select>
             </div>
             <button

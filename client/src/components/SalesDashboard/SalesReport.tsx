@@ -164,7 +164,7 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
   // State management
   const [salesData, setSalesData] = useState<SalesData | null>(null);
   const [summaryData, setSummaryData] = useState<any>(null);
-  const [modelFilter, setModelFilter] = useState<'all' | 'mobiles' | 'accessories'>('all');
+  const [itemTypeFilter, setItemTypeFilter] = useState<'all' | 'smartphones' | 'smallphones' | 'accessories' | 'simcards'>('all');
   const [message, setMessage] = useState<{ text: string; type: string } | null>(
     null,
   );
@@ -197,14 +197,13 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
         params.period = timeFrame as any;
       }
 
-      if (modelFilter !== 'all') {
-        params.model = modelFilter;
+      if (itemTypeFilter !== 'all') {
+        params.itemType = itemTypeFilter;
       }
 
       const summaryParams = { ...params };
       delete summaryParams.page;
       delete summaryParams.limit;
-      delete summaryParams.model;
 
       try {
         const [salesRes, summaryRes] = await Promise.all([
@@ -250,7 +249,7 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
     };
 
     fetchSalesData();
-  }, [timeFrame, currentPage, itemsPerPage, date, reportType, id, modelFilter]);
+  }, [timeFrame, currentPage, itemsPerPage, date, reportType, id, itemTypeFilter]);
 
   // Calculate metrics from sales data
   const calculateMetrics = () => {
@@ -449,16 +448,18 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
 
             <div className="flex items-center space-x-2">
               <select
-                value={modelFilter}
+                value={itemTypeFilter}
                 onChange={(e) => {
-                  setModelFilter(e.target.value as any);
+                  setItemTypeFilter(e.target.value as any);
                   setCurrentPage(1);
                 }}
                 className="border-stroke dark:border-strokedark bg-transparent rounded-md px-4 py-2 focus:border-primary focus:ring-primary dark:bg-boxdark text-black dark:text-white outline-none appearance-none"
               >
-                <option value="all">All Models</option>
-                <option value="mobiles">Mobiles</option>
+                <option value="all">All Item Categories</option>
+                <option value="smartphones">Smartphones</option>
+                <option value="smallphones">Small Phones</option>
                 <option value="accessories">Accessories</option>
+                <option value="simcards">SIM Cards</option>
               </select>
             </div>
 
