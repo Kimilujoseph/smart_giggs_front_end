@@ -36,17 +36,18 @@ const ITEM_TYPES = [
   { value: 'smartphones', label: '📱  Smartphones' },
   { value: 'smallphones', label: '📟  Smallphones' },
   { value: 'accessories', label: '🎧  Accessories' },
+  { value: 'simcards', label: " 📶 Simcards" }
 ];
 
 const CATEGORIES = [
-  { value: 'mobiles',     label: 'Mobiles' },
+  { value: 'mobiles', label: 'Mobiles' },
   { value: 'accessories', label: 'Accessories' },
 ];
 
 const STATUSES = [
   { value: 'AVAILABLE', label: 'Available', active: 'bg-emerald-500 text-white', dot: 'bg-emerald-500' },
-  { value: 'SUSPENDED', label: 'Suspended', active: 'bg-amber-500 text-white',   dot: 'bg-amber-500'  },
-  { value: 'MODIFIED',  label: 'Modified',  active: 'bg-blue-500 text-white',    dot: 'bg-blue-500'   },
+  { value: 'SUSPENDED', label: 'Suspended', active: 'bg-amber-500 text-white', dot: 'bg-amber-500' },
+  { value: 'MODIFIED', label: 'Modified', active: 'bg-blue-500 text-white', dot: 'bg-blue-500' },
 ];
 
 const EMPTY: FormData = {
@@ -137,7 +138,7 @@ const SelectField: React.FC<{
 
 const CategoryModal: React.FC<CategoryModalProps> = ({ open, onClose, onSave, category }) => {
   const [formData, setFormData] = useState<FormData>(EMPTY);
-  const [errors, setErrors]     = useState<FormErrors>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isSaving, setIsSaving] = useState(false);
   const [categoryAutoFilled, setCategoryAutoFilled] = useState(true);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -152,14 +153,14 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ open, onClose, onSave, ca
         category.itemType ?? (category.category === 'accessories' ? 'accessories' : 'smartphones');
 
       setFormData({
-        itemName:  category.itemName,
+        itemName: category.itemName,
         itemModel: category.itemModel,
-        brand:     category.brand,
-        minPrice:  category.minPrice,
-        maxPrice:  category.maxPrice,
-        itemType:  fallbackItemType,
-        category:  category.category,
-        status:    category.status ?? 'AVAILABLE',
+        brand: category.brand,
+        minPrice: category.minPrice,
+        maxPrice: category.maxPrice,
+        itemType: fallbackItemType,
+        category: category.category,
+        status: category.status ?? 'AVAILABLE',
       });
       setCategoryAutoFilled(
         category.category === deriveCategory(fallbackItemType),
@@ -191,10 +192,10 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ open, onClose, onSave, ca
 
   const validate = (): boolean => {
     const errs: FormErrors = {};
-    if (!formData.itemName.trim())           errs.itemName  = 'Model name is required.';
-    if (!formData.itemModel.trim())          errs.itemModel = 'Model code is required.';
-    if (!formData.brand.trim())              errs.brand     = 'Brand is required.';
-    if (formData.minPrice <= 0)              errs.minPrice  = 'Must be greater than 0.';
+    if (!formData.itemName.trim()) errs.itemName = 'Model name is required.';
+    if (!formData.itemModel.trim()) errs.itemModel = 'Model code is required.';
+    if (!formData.brand.trim()) errs.brand = 'Brand is required.';
+    if (formData.minPrice <= 0) errs.minPrice = 'Must be greater than 0.';
     if (formData.maxPrice <= formData.minPrice) errs.maxPrice = 'Must exceed minimum price.';
     setErrors(errs);
     return Object.keys(errs).length === 0;
