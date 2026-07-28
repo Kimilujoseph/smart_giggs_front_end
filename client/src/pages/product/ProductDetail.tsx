@@ -540,11 +540,10 @@ const ProductDetail = ({
                             value={product.category === 'mobiles' && isConsignment ? '0' : productcost}
                             onChange={(e) => setCost(e.target.value)}
                             placeholder="Buying price"
-                            className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm transition-all duration-150 ${
-                              product.category === 'mobiles' && isConsignment
+                            className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm transition-all duration-150 ${product.category === 'mobiles' && isConsignment
                                 ? 'bg-gray-100 dark:bg-boxdark text-gray-400 cursor-not-allowed border-gray-200 dark:border-strokedark'
                                 : 'bg-white dark:bg-form-input border-gray-200 dark:border-strokedark dark:text-white'
-                            }`}
+                              }`}
                           />
                         </div>
 
@@ -645,6 +644,7 @@ const ProductDetail = ({
                               className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
                             >
                               <option value="accessories">Accessories</option>
+                              <option value="simcards">Simcards</option>
                             </select>
                           </div>
                         )}
@@ -906,8 +906,8 @@ const ProductDetail = ({
                                   </td>
                                   <td
                                     className={`px-3 sm:px-4 py-3 whitespace-nowrap text-sm table-cell ${item.faultyItems > 0
-                                        ? 'text-red-500 font-bold'
-                                        : 'text-gray-700 dark:text-gray-300'
+                                      ? 'text-red-500 font-bold'
+                                      : 'text-gray-700 dark:text-gray-300'
                                       }`}
                                   >
                                     {item.faultyItems || 0}
@@ -1033,11 +1033,10 @@ const ProductDetail = ({
                                         <div className="space-y-2 text-xs text-gray-600 dark:text-gray-300">
                                           <div className="flex justify-between pb-1 border-b border-gray-100 dark:border-strokedark">
                                             <span className="font-medium text-gray-500">Inventory Type</span>
-                                            <span className={`font-semibold px-2 py-0.5 rounded text-[10px] ${
-                                              item.isConsignment
+                                            <span className={`font-semibold px-2 py-0.5 rounded text-[10px] ${item.isConsignment
                                                 ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
                                                 : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-                                            }`}>
+                                              }`}>
                                               {item.isConsignment ? 'Consignment Stock' : 'Regular Purchase'}
                                             </span>
                                           </div>
@@ -1087,11 +1086,10 @@ const ProductDetail = ({
                                                     {m.shops?.address}
                                                   </div>
                                                 </div>
-                                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-semibold ${
-                                                  m.status === 'received' || m.status === 'ok'
+                                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-semibold ${m.status === 'received' || m.status === 'ok'
                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
                                                     : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-                                                }`}>
+                                                  }`}>
                                                   {m.status}
                                                 </span>
                                               </li>
