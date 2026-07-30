@@ -27,19 +27,19 @@ import {
 } from 'lucide-react';
 
 export interface CategoryMetrics {
-  totalRevenue: number;
-  grossProfit: number;
-  totalUnitsSold: number;
-  totalCommission: number;
-  totalFinanceAmount: number;
+  totalRevenue: number | string;
+  grossProfit: number | string;
+  totalUnitsSold: number | string;
+  totalCommission: number | string;
+  totalFinanceAmount: number | string;
 }
 
 export interface RawShopPerformanceItem {
   shopId: number;
   shopName: string;
   categories?: Record<string, CategoryMetrics>;
-  totalRevenue?: number;
-  grossProfit?: number;
+  totalRevenue?: number | string;
+  grossProfit?: number | string;
 }
 
 export interface ProcessedShopPerformance {
@@ -65,7 +65,10 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const FALLBACK_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1'];
 
-const formatCurrency = (val: number) => `Ksh ${val.toLocaleString()}`;
+const formatCurrency = (val: number | string) => {
+  const num = typeof val === 'number' ? val : parseFloat(val) || 0;
+  return `Ksh ${num.toLocaleString()}`;
+};
 
 const formatCategoryName = (cat: string) => {
   if (!cat) return 'Uncategorized';
@@ -97,15 +100,15 @@ export const ShopPerformanceAnalytics: React.FC<ShopPerformanceAnalyticsProps> =
 
       if (entries.length > 0) {
         entries.forEach(([_, metrics]) => {
-          totalRevenue += metrics?.totalRevenue || 0;
-          grossProfit += metrics?.grossProfit || 0;
-          totalUnitsSold += metrics?.totalUnitsSold || 0;
-          totalCommission += metrics?.totalCommission || 0;
-          totalFinanceAmount += metrics?.totalFinanceAmount || 0;
+          totalRevenue += parseFloat(metrics?.totalRevenue as any) || 0;
+          grossProfit += parseFloat(metrics?.grossProfit as any) || 0;
+          totalUnitsSold += parseFloat(metrics?.totalUnitsSold as any) || 0;
+          totalCommission += parseFloat(metrics?.totalCommission as any) || 0;
+          totalFinanceAmount += parseFloat(metrics?.totalFinanceAmount as any) || 0;
         });
       } else {
-        totalRevenue = shop.totalRevenue || 0;
-        grossProfit = shop.grossProfit || 0;
+        totalRevenue = parseFloat(shop.totalRevenue as any) || 0;
+        grossProfit = parseFloat(shop.grossProfit as any) || 0;
       }
 
       const profitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
@@ -156,7 +159,7 @@ export const ShopPerformanceAnalytics: React.FC<ShopPerformanceAnalyticsProps> =
       const item: any = { shopName: shop.shopName };
       allCategoryNames.forEach((cat) => {
         const catData = shop.categories[cat] || shop.categories[Object.keys(shop.categories).find(k => k.toLowerCase() === cat) || ''];
-        item[cat] = catData ? catData[selectedMetric] || 0 : 0;
+        item[cat] = catData ? parseFloat(catData[selectedMetric] as any) || 0 : 0;
       });
       return item;
     });
@@ -169,7 +172,7 @@ export const ShopPerformanceAnalytics: React.FC<ShopPerformanceAnalyticsProps> =
     processedData.forEach((shop) => {
       Object.entries(shop.categories).forEach(([catKey, metrics]) => {
         const key = catKey.toLowerCase();
-        const val = metrics[selectedMetric] || 0;
+        const val = parseFloat(metrics[selectedMetric] as any) || 0;
         catMap[key] = (catMap[key] || 0) + val;
       });
     });
@@ -553,9 +556,15 @@ export const ShopPerformanceAnalytics: React.FC<ShopPerformanceAnalyticsProps> =
                             {categoriesList.length > 0 ? (
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 {categoriesList.map(([catName, catData]) => {
+                                  const catRev = parseFloat(catData.totalRevenue as any) || 0;
+                                  const catProf = parseFloat(catData.grossProfit as any) || 0;
+                                  const catUnits = parseFloat(catData.totalUnitsSold as any) || 0;
+                                  const catComm = parseFloat(catData.totalCommission as any) || 0;
+                                  const catFin = parseFloat(catData.totalFinanceAmount as any) || 0;
+
                                   const catMargin =
-                                    catData.totalRevenue > 0
-                                      ? ((catData.grossProfit / catData.totalRevenue) * 100).toFixed(1)
+                                    catRev > 0
+                                      ? ((catProf / catRev) * 100).toFixed(1)
                                       : '0';
 
                                   return (
@@ -568,7 +577,7 @@ export const ShopPerformanceAnalytics: React.FC<ShopPerformanceAnalyticsProps> =
                                           {formatCategoryName(catName)}
                                         </span>
                                         <span className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-md">
-                                          {catData.totalUnitsSold} units
+                                          {catUnits} units
                                         </span>
                                       </div>
 
@@ -576,28 +585,28 @@ export const ShopPerformanceAnalytics: React.FC<ShopPerformanceAnalyticsProps> =
                                         <div className="flex justify-between">
                                           <span className="text-slate-500">Revenue:</span>
                                           <span className="font-semibold text-slate-900 dark:text-white">
-                                            {formatCurrency(catData.totalRevenue)}
+                                            {formatCurrency(catRev)}
                                           </span>
                                         </div>
                                         <div className="flex justify-between">
                                           <span className="text-slate-500">Profit:</span>
                                           <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                                            {formatCurrency(catData.grossProfit)} ({catMargin}%)
+                                            {formatCurrency(catProf)} ({catMargin}%)
                                           </span>
                                         </div>
-                                        {catData.totalCommission > 0 && (
+                                        {catComm > 0 && (
                                           <div className="flex justify-between">
                                             <span className="text-slate-500">Commission:</span>
                                             <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                                              {formatCurrency(catData.totalCommission)}
+                                              {formatCurrency(catComm)}
                                             </span>
                                           </div>
                                         )}
-                                        {catData.totalFinanceAmount > 0 && (
+                                        {catFin > 0 && (
                                           <div className="flex justify-between">
                                             <span className="text-slate-500">Financed:</span>
                                             <span className="font-semibold text-purple-600 dark:text-purple-400">
-                                              {formatCurrency(catData.totalFinanceAmount)}
+                                              {formatCurrency(catFin)}
                                             </span>
                                           </div>
                                         )}

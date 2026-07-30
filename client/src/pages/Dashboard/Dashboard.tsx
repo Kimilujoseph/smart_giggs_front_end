@@ -35,94 +35,14 @@ import { DecodedToken } from '../../types/decodedToken';
 import axios from 'axios';
 import { Avatar } from '@mui/material';
 import ShopPerformanceAnalytics from '../../components/Dashboard/ShopPerformanceAnalytics';
+import DateFilter from '../../components/filters/DateFilter';
 
 // Helper to format currency
-const formatCurrency = (value: number | null | undefined) => {
+const formatCurrency = (value: number | string | null | undefined) => {
   if (value === null || value === undefined) return 'Ksh 0';
-  return `Ksh ${value.toLocaleString()}`;
+  const num = typeof value === 'number' ? value : parseFloat(value as string) || 0;
+  return `Ksh ${num.toLocaleString()}`;
 };
-
-// Date Filter Component
-const DateFilter: React.FC<{
-  onDateChange: (params: { period?: string; startDate?: string; endDate?: string }) => void;
-}> = ({ onDateChange }) => {
-  const [activePeriod, setActivePeriod] = useState('week');
-  const [customRange, setCustomRange] = useState({
-    start: new Date().toISOString().slice(0, 10),
-    end: new Date().toISOString().slice(0, 10),
-  });
-
-  const handlePeriodChange = (period: string) => {
-    setActivePeriod(period);
-    if (period !== 'custom') {
-      onDateChange({ period });
-    }
-  };
-
-  const handleCustomDateChange = () => {
-    onDateChange({
-      period: 'custom',
-      startDate: customRange.start,
-      endDate: customRange.end,
-    });
-  };
-
-  const periods = [
-    { key: 'day', label: 'Today' },
-    { key: 'week', label: 'This Week' },
-    { key: 'month', label: 'This Month' },
-    { key: 'year', label: 'This Year' },
-    { key: 'custom', label: 'Custom' },
-  ];
-
-  return (
-    <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-white p-4 dark:bg-boxdark">
-      <div className="flex items-center gap-2">
-        <Calendar className="text-blue-500" />
-        <h3 className="text-lg font-semibold">Filter by Period</h3>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {periods.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => handlePeriodChange(key)}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-              activePeriod === key
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-black hover:bg-gray-300 dark:bg-meta-4 dark:text-white dark:hover:bg-gray-600'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {activePeriod === 'custom' && (
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={customRange.start}
-            onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
-            className="rounded border border-gray-300 bg-white px-3 py-2 text-black dark:border-gray-600 dark:bg-meta-4 dark:text-white"
-          />
-          <span className="text-gray-500">to</span>
-          <input
-            type="date"
-            value={customRange.end}
-            onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
-            className="rounded border border-gray-300 bg-white px-3 py-2 text-black dark:border-gray-600 dark:bg-meta-4 dark:text-white"
-          />
-          <button
-            onClick={handleCustomDateChange}
-            className="rounded-md bg-green-500 px-4 py-2 text-white hover:bg-green-600"
-          >
-            Apply
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -149,14 +69,6 @@ const Dashboard: React.FC = () => {
 
   // State for filters
   const [filterParams, setFilterParams] = useState<string>('period=week');
-
-  const handleDateChange = useCallback((params: { period?: string; startDate?: string; endDate?: string }) => {
-    if (params.period === 'custom' && params.startDate && params.endDate) {
-      setFilterParams(`startDate=${params.startDate}&endDate=${params.endDate}`);
-    } else if (params.period) {
-      setFilterParams(`period=${params.period}`);
-    }
-  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -274,94 +186,103 @@ const Dashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center text-red-500">
-        <p className="mb-4 text-lg">{error}</p>
-        <DateFilter onDateChange={handleDateChange} />
+      <div className="flex h-screen flex-col items-center justify-center text-red-500 p-4">
+        <p className="mb-4 text-lg text-center">{error}</p>
+        <DateFilter onDateChange={setFilterParams} />
       </div>
     );
   }
 
   return (
-    <div className="w-full p-6">
-      <DateFilter onDateChange={handleDateChange} />
+    <div className="w-full min-h-screen p-3 sm:p-6 lg:p-8 flex flex-col gap-6 sm:gap-8">
+      {/* Date Filter Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-boxdark p-4 sm:p-5 rounded-2xl border border-stroke dark:border-strokedark shadow-sm">
+        <div className="flex items-center gap-2">
+          <Calendar className="text-blue-500 w-5 h-5 shrink-0" />
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">Dashboard Analytics</h2>
+        </div>
+        <div className="w-full sm:w-auto">
+          <DateFilter onDateChange={setFilterParams} />
+        </div>
+      </div>
 
       {/* Executive Financial Summary */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-2xl font-bold">Executive Financial Summary</h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <h2 className="mb-4 text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">Executive Financial Summary</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Net Operating Income */}
-          <div className={`rounded-xl p-6 shadow-sm ${netOperatingIncome >= 0 ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
+          <div className={`rounded-xl p-5 sm:p-6 shadow-sm border border-stroke dark:border-strokedark ${netOperatingIncome >= 0 ? 'bg-green-100/80 dark:bg-green-900/40' : 'bg-red-100/80 dark:bg-red-900/40'}`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm ${netOperatingIncome >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>Net Operating Income</p>
-                <h3 className={`mt-1 text-3xl font-bold ${netOperatingIncome >= 0 ? 'text-green-900 dark:text-green-100' : 'text-red-900 dark:text-red-100'}`}>{formatCurrency(netOperatingIncome)}</h3>
+                <p className={`text-xs sm:text-sm font-medium ${netOperatingIncome >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>Net Operating Income</p>
+                <h3 className={`mt-1 text-2xl sm:text-3xl font-bold ${netOperatingIncome >= 0 ? 'text-green-900 dark:text-green-100' : 'text-red-900 dark:text-red-100'}`}>{formatCurrency(netOperatingIncome)}</h3>
               </div>
-              {netOperatingIncome >= 0 ? <TrendingUp className="h-8 w-8 text-green-600" /> : <TrendingDown className="h-8 w-8 text-red-600" />}
+              {netOperatingIncome >= 0 ? <TrendingUp className="h-8 w-8 text-green-600 shrink-0" /> : <TrendingDown className="h-8 w-8 text-red-600 shrink-0" />}
             </div>
           </div>
           {/* Net Revenue */}
-          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
-            <p className="text-sm text-gray-500 dark:text-slate-400">Net Revenue</p>
+          <div className="rounded-xl bg-white p-5 sm:p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Net Revenue</p>
             <div className="mt-2 flex items-center justify-between">
-              <h3 className="text-2xl font-bold">{formatCurrency(netRevenue)}</h3>
-              <DollarSign className="h-6 w-6 text-blue-500" />
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{formatCurrency(netRevenue)}</h3>
+              <DollarSign className="h-6 w-6 text-blue-500 shrink-0" />
             </div>
           </div>
           {/* Gross Profit */}
-          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
-            <p className="text-sm text-gray-500 dark:text-slate-400">Gross Profit</p>
+          <div className="rounded-xl bg-white p-5 sm:p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Gross Profit</p>
             <div className="mt-2 flex items-center justify-between">
-              <h3 className="text-2xl font-bold">{formatCurrency(grossProfit)}</h3>
-              <Award className="h-6 w-6 text-yellow-500" />
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{formatCurrency(grossProfit)}</h3>
+              <Award className="h-6 w-6 text-yellow-500 shrink-0" />
             </div>
           </div>
           {/* Accrued Commissions */}
-          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
-            <p className="text-sm text-gray-500 dark:text-slate-400">Accrued Commissions</p>
+          <div className="rounded-xl bg-white p-5 sm:p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Accrued Commissions</p>
             <div className="mt-2 flex items-center justify-between">
-              <h3 className="text-2xl font-bold">{formatCurrency(accruedCommission)}</h3>
-              <Award className="h-6 w-6 text-indigo-500" />
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{formatCurrency(accruedCommission)}</h3>
+              <Award className="h-6 w-6 text-indigo-500 shrink-0" />
             </div>
           </div>
           {/* Total Sales */}
-          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
-            <p className="text-sm text-gray-500 dark:text-slate-400">Total Sales</p>
+          <div className="rounded-xl bg-white p-5 sm:p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Total Sales</p>
             <div className="mt-2 flex items-center justify-between">
-              <h3 className="text-2xl font-bold">{formatCurrency(totalSales)}</h3>
-              <TrendingUp className="h-6 w-6 text-green-500" />
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{formatCurrency(totalSales)}</h3>
+              <TrendingUp className="h-6 w-6 text-green-500 shrink-0" />
             </div>
           </div>
           {/* Returned Products */}
-          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
-            <p className="text-sm text-gray-500 dark:text-slate-400">Returned Products</p>
+          <div className="rounded-xl bg-white p-5 sm:p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Returned Products</p>
             <div className="mt-2 flex items-center justify-between">
-              <h3 className="text-2xl font-bold">{formatCurrency(totalReturns)}</h3>
-              <TrendingDown className="h-6 w-6 text-red-500" />
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{formatCurrency(totalReturns)}</h3>
+              <TrendingDown className="h-6 w-6 text-red-500 shrink-0" />
             </div>
           </div>
           {/* Operating Expenses */}
-          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
-            <p className="text-sm text-gray-500 dark:text-slate-400">Operating Expenses</p>
+          <div className="rounded-xl bg-white p-5 sm:p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Operating Expenses</p>
             <div className="mt-2 flex items-center justify-between">
-              <h3 className="text-2xl font-bold">{formatCurrency(operatingExpenses?.totalOperatingExpenses)}</h3>
-              <Briefcase className="h-6 w-6 text-orange-500" />
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{formatCurrency(operatingExpenses?.totalOperatingExpenses)}</h3>
+              <Briefcase className="h-6 w-6 text-orange-500 shrink-0" />
             </div>
           </div>
           {/* Accounts Receivable */}
-          <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark">
-            <p className="text-sm text-gray-500 dark:text-slate-400">Accounts Receivable</p>
+          <div className="rounded-xl bg-white p-5 sm:p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Accounts Receivable</p>
             <div className="mt-2 flex items-center justify-between">
-              <h3 className="text-2xl font-bold">{formatCurrency(accountsReceivable)}</h3>
-              <FileText className="h-6 w-6 text-purple-500" />
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{formatCurrency(accountsReceivable)}</h3>
+              <FileText className="h-6 w-6 text-purple-500 shrink-0" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Payments Summary */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-2xl font-bold">Payments Summary</h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div>
+        <h2 className="mb-4 text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">Payments Summary</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Total Payments */}
           <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-boxdark border border-stroke dark:border-strokedark">
             <p className="text-sm text-gray-500 dark:text-slate-400">Total Payments Received</p>
@@ -448,16 +369,16 @@ const Dashboard: React.FC = () => {
       {/* Shop Performance & Category Analytics */}
       <ShopPerformanceAnalytics data={shopPerformance} />
 
-      <div className="mb-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
         {/* Top Sellers */}
-        <div className="bg-white dark:bg-boxdark rounded-xl p-6 shadow-sm">
+        <div className="bg-white dark:bg-boxdark rounded-xl p-6 shadow-sm border border-stroke dark:border-strokedark">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Top Sellers</h3>
             <Award className="w-6 h-6 text-yellow-500" />
           </div>
-          <div className="space-y-4 max-h-80 overflow-y-auto">
+          <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
             {topSellers.length > 0 ? topSellers.map((seller: any, index) => (
-              <div key={index} className="flex items-center justify-between">
+              <div key={index} className="flex items-center justify-between border-b border-stroke dark:border-strokedark pb-3 last:border-0 last:pb-0">
                 <div className="flex items-center space-x-3">
                   <Avatar src="#" alt={seller.sellerName} className="w-10 h-10" />
                   <div>
@@ -466,7 +387,40 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
-            )) : <p className="text-center text-gray-500">No seller data</p>}
+            )) : <p className="text-center text-gray-500 py-4">No seller data</p>}
+          </div>
+        </div>
+
+        {/* Top Products */}
+        <div className="bg-white dark:bg-boxdark rounded-xl p-6 shadow-sm border border-stroke dark:border-strokedark">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Top Products</h3>
+            <Package className="w-6 h-6 text-blue-500" />
+          </div>
+          <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
+            {topProducts.length > 0 ? topProducts.map((product: any, index: number) => {
+              const unitsSold = parseFloat(product.totalUnitsSold) || 0;
+              const revenue = parseFloat(product.totalRevenue) || 0;
+              const profit = parseFloat(product.grossProfit) || 0;
+
+              return (
+                <div key={product._id || index} className="flex items-center justify-between border-b border-stroke dark:border-strokedark pb-3 last:border-0 last:pb-0">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-bold text-sm">
+                      #{index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium dark:text-slate-200">{product.itemName || product.productName || 'Unnamed Product'}</p>
+                      <p className="text-xs text-slate-400">{product.brand ? `Brand: ${product.brand} • ` : ''}{unitsSold} units sold</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold dark:text-slate-200">{formatCurrency(revenue)}</p>
+                    <p className="text-xs text-emerald-500 font-medium">Profit: {formatCurrency(profit)}</p>
+                  </div>
+                </div>
+              );
+            }) : <p className="text-center text-gray-500 py-4">No top products data</p>}
           </div>
         </div>
       </div>
