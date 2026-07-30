@@ -23,8 +23,7 @@ import {
   BarChart3,
   PieChart as PieChartIcon,
   Layers,
-  Sparkles,
-  CreditCard,
+  Sparkles
 } from 'lucide-react';
 
 export interface CategoryMetrics {
@@ -230,11 +229,10 @@ export const ShopPerformanceAnalytics: React.FC<ShopPerformanceAnalyticsProps> =
               <button
                 key={m}
                 onClick={() => setSelectedMetric(m)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                  selectedMetric === m
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${selectedMetric === m
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white'
-                }`}
+                  }`}
               >
                 {getMetricLabel(m)}
               </button>
@@ -246,27 +244,24 @@ export const ShopPerformanceAnalytics: React.FC<ShopPerformanceAnalyticsProps> =
             <button
               onClick={() => setViewMode('overview')}
               title="Shop Overview Bar Chart"
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'overview' ? 'bg-white dark:bg-boxdark text-blue-600 shadow-xs font-bold' : 'text-slate-500 hover:text-black dark:hover:text-white'
-              }`}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'overview' ? 'bg-white dark:bg-boxdark text-blue-600 shadow-xs font-bold' : 'text-slate-500 hover:text-black dark:hover:text-white'
+                }`}
             >
               <BarChart3 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('stacked')}
               title="Category Stacked Breakdown"
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'stacked' ? 'bg-white dark:bg-boxdark text-blue-600 shadow-xs font-bold' : 'text-slate-500 hover:text-black dark:hover:text-white'
-              }`}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'stacked' ? 'bg-white dark:bg-boxdark text-blue-600 shadow-xs font-bold' : 'text-slate-500 hover:text-black dark:hover:text-white'
+                }`}
             >
               <Layers className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('donut')}
               title="Category Distribution Share"
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'donut' ? 'bg-white dark:bg-boxdark text-blue-600 shadow-xs font-bold' : 'text-slate-500 hover:text-black dark:hover:text-white'
-              }`}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'donut' ? 'bg-white dark:bg-boxdark text-blue-600 shadow-xs font-bold' : 'text-slate-500 hover:text-black dark:hover:text-white'
+                }`}
             >
               <PieChartIcon className="w-4 h-4" />
             </button>
@@ -515,13 +510,12 @@ export const ShopPerformanceAnalytics: React.FC<ShopPerformanceAnalyticsProps> =
                       </td>
                       <td className="px-4 py-4">
                         <span
-                          className={`px-2.5 py-1 text-xs font-bold rounded-full ${
-                            shop.profitMargin >= 20
+                          className={`px-2.5 py-1 text-xs font-bold rounded-full ${shop.profitMargin >= 20
                               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                               : shop.profitMargin >= 10
-                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                              : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                          }`}
+                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                                : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                            }`}
                         >
                           {shop.profitMargin.toFixed(1)}%
                         </span>

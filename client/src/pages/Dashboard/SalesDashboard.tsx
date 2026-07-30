@@ -484,7 +484,11 @@ const SalesDashboard = () => {
                 {reportType === 'category' && categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 {reportType === 'financer' && financers.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
                 {reportType === 'user' && users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                {reportType === 'shop' && shops.map((s) => <option key={s.id} value={s.id}>{s.shopName}</option>)}
+                {reportType === 'shop' && shops.map((s) => (
+                  <option key={s.id || s._id} value={s.id || s._id}>
+                    {s.shopName || s.name}
+                  </option>
+                ))}
               </SelectField>
             )}
 
