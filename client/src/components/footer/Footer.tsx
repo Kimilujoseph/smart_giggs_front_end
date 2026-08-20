@@ -46,13 +46,13 @@ const Footer: React.FC = () => {
         {!isMinimized && (
           <div className="text-center md:text-left">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              &copy; {currentYear} augustusstores. All rights reserved.
+              &copy; {currentYear} Gamitch technologies . All rights reserved.
             </p>
             <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
               Built by{' '}
               <a
                 className="text-primary hover:underline transition-colors"
-                href="https://kiruiallan.me"
+                href="https://timothyjoseph.netlify.app"
                 target="_blank"
                 rel="noopener noreferrer"
               >
