@@ -13,7 +13,7 @@ interface ProductItemCardProps {
 }
 
 export const ProductItemCard: React.FC<ProductItemCardProps> = ({ product, isInCart, addToCart, formatPrice }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(product.items?.length === 1);
   const [itemPage, setItemPage] = useState(1);
 
   const totalItems = product.items.length;

@@ -334,8 +334,19 @@ const PointOfSales: React.FC = () => {
             }/api/shop/searchproducts/${shopName}?productName=${searchTerm}`,
             { withCredentials: true },
           );
-          mobileItems = searchResponse.data.products.phoneItems.items;
-          accessoryItems = searchResponse.data.products.stockItems.items;
+
+          const extractItems = (data: any) => {
+            if (!data) return [];
+            if (Array.isArray(data)) return data;
+            if (Array.isArray(data.items)) return data.items;
+            if (data.items && typeof data.items === 'object') return [data.items];
+            if (typeof data === 'object') return [data];
+            return [];
+          };
+
+          mobileItems = extractItems(searchResponse.data?.products?.phoneItems);
+          accessoryItems = extractItems(searchResponse.data?.products?.stockItems);
+          // console.log("products", JSON.stringify(searchResponse.data?.products?.stockItems, null, 2))
         } else {
           const mobileResponse = await axios.get(
             `${import.meta.env.VITE_SERVER_HEAD
@@ -347,46 +358,57 @@ const PointOfSales: React.FC = () => {
             }/api/shop/${shopName}?itemType=accessory&status=confirmed`,
             { withCredentials: true },
           );
-          mobileItems = mobileResponse.data.shop.filteredShop.mobileItems.items;
-          //console.log("transforimg item", mobileItems)
+          mobileItems = mobileResponse.data?.shop?.filteredShop?.mobileItems?.items || [];
           accessoryItems =
-            accessoryResponse.data.shop.filteredShop.accessoryItems.items;
+            accessoryResponse.data?.shop?.filteredShop?.accessoryItems?.items || [];
         }
 
-        const transformedMobiles = mobileItems.map((item: any) => ({
-          id: item.id,
-          productId: item.mobileID,
-          categoryId: item.mobiles.categories.id,
-          type: 'mobiles',
-          name: item.mobiles.categories.itemName,
-          brand: item.mobiles.categories.brand,
-          model: item.mobiles.categories.itemModel,
-          priceRange: {
-            min: item.mobiles.categories.minPrice,
-            max: item.mobiles.categories.maxPrice,
-          },
-          quantity: item.quantity,
-          IMEI: item.mobiles.IMEI,
-          transferId: item.transferId,
-          ...item,
-        }));
+        const transformedMobiles = mobileItems.map((item: any) => {
+          const mobileDetails = item.mobiles || item.mobile || item;
+          const categoryDetails = mobileDetails?.categories || item.categories || {};
+          return {
+            ...item,
+            id: item.id || mobileDetails?.id,
+            productId: item.mobileID || item.productId,
+            categoryId: categoryDetails.id || item.categoryId,
+            type: 'mobiles',
+            name: categoryDetails.itemName || item.name || '',
+            brand: categoryDetails.brand || item.brand || '',
+            model: categoryDetails.itemModel || item.model || '',
+            batchNumber: mobileDetails?.batchNumber || item.batchNumber || '',
+            priceRange: {
+              min: categoryDetails.minPrice || 0,
+              max: categoryDetails.maxPrice || 0,
+            },
+            quantity: item.quantity ?? 1,
+            IMEI: mobileDetails?.IMEI || item.IMEI || '',
+            transferId: item.transferId,
+            mobiles: mobileDetails,
+          };
+        });
 
-        const transformedAccessories = accessoryItems.map((item: any) => ({
-          id: item.id,
-          productId: item.accessoryID,
-          categoryId: item.accessories.categories.id,
-          type: 'accessories',
-          name: item.accessories.categories.itemName,
-          brand: item.accessories.categories.brand,
-          model: item.accessories.categories.itemModel,
-          priceRange: {
-            min: item.accessories.categories.minPrice,
-            max: item.accessories.categories.maxPrice,
-          },
-          quantity: item.quantity,
-          transferId: item.transferId,
-          ...item,
-        }));
+        const transformedAccessories = accessoryItems.map((item: any) => {
+          const accessoryDetails = item.accessories || item.accessory || item;
+          const categoryDetails = accessoryDetails?.categories || item.categories || {};
+          return {
+            ...item,
+            id: item.id || accessoryDetails?.id,
+            productId: item.accessoryID || item.productId,
+            categoryId: categoryDetails.id || item.categoryId,
+            type: 'accessories',
+            name: categoryDetails.itemName || item.name || '',
+            brand: categoryDetails.brand || item.brand || '',
+            model: categoryDetails.itemModel || item.model || '',
+            priceRange: {
+              min: categoryDetails.minPrice || 0,
+              max: categoryDetails.maxPrice || 0,
+            },
+            quantity: item.quantity ?? 1,
+            transferId: item.transferId,
+            batchNumber: accessoryDetails?.batchNumber || item.batchNumber || '',
+            accessories: accessoryDetails,
+          };
+        });
 
         setConsolidatedData((prevData) => ({
           ...prevData,
@@ -552,20 +574,17 @@ const PointOfSales: React.FC = () => {
   const groupedProducts = React.useMemo(() => {
     if (!allProducts) return [];
 
-    const grouped = allProducts.reduce((acc: any, product: Product & { mobiles?: any; accessories?: any }) => {
+    const grouped = allProducts.reduce((acc: any, product: Product & { mobiles?: any; accessories?: any; categoryId?: any }) => {
       const itemType = product.type;
 
-      // FIX: Get the correct category ID from the nested structure
       const realCategoryId =
         itemType === 'mobiles'
-          ? product.mobiles.categories.id
-          : product.accessories.categories.id;
+          ? (product.mobiles?.categories?.id || product.categoryId)
+          : (product.accessories?.categories?.id || product.categoryId);
 
-      // Create the unique internal ID using the REAL category ID
-      const categoryId =
-        itemType === 'mobiles'
-          ? `m-${realCategoryId}`
-          : `a-${realCategoryId}`;
+      const categoryId = realCategoryId
+        ? (itemType === 'mobiles' ? `m-${realCategoryId}` : `a-${realCategoryId}`)
+        : (product.id ? `${itemType === 'mobiles' ? 'm' : 'a'}-${product.id}` : null);
 
       if (!categoryId) return acc;
 
@@ -577,8 +596,8 @@ const PointOfSales: React.FC = () => {
             itemType: product.type,
             brand: product.brand,
             itemModel: product.model,
-            minPrice: product.priceRange.min,
-            maxPrice: product.priceRange.max,
+            minPrice: product.priceRange?.min ?? 0,
+            maxPrice: product.priceRange?.max ?? 0,
           },
           stock: product,
           items: [],
@@ -587,7 +606,7 @@ const PointOfSales: React.FC = () => {
       }
       acc[categoryId].items.push(product);
       if (itemType === 'accessories') {
-        acc[categoryId].quantity += product.quantity;
+        acc[categoryId].quantity += (product.quantity || 1);
       } else {
         acc[categoryId].quantity = acc[categoryId].items.length;
       }
@@ -599,19 +618,35 @@ const PointOfSales: React.FC = () => {
 
   const filteredProducts = React.useMemo(() => {
     return groupedProducts.filter((product: any) => {
-      const matchesSearch =
-        product.categoryId.itemName
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        product.categoryId.brand
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        product.categoryId.itemModel
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        product.stock?.IMEI?.toLowerCase().includes(searchTerm.toLowerCase());
+      const term = searchTerm.trim().toLowerCase();
+
       const matchesBrand =
         !selectedBrand || product.categoryId.brand === selectedBrand;
+
+      if (!term) return matchesBrand;
+
+      const matchesCategory =
+        product.categoryId.itemName?.toLowerCase().includes(term) ||
+        product.categoryId.brand?.toLowerCase().includes(term) ||
+        product.categoryId.itemModel?.toLowerCase().includes(term);
+
+      const matchesItem = product.items?.some((item: any) => {
+        const imei = item.IMEI || item.mobiles?.IMEI;
+        const batch = item.batchNumber || item.accessories?.batchNumber;
+        const itemId = String(item.id || '');
+        const productId = String(item.productId || '');
+        return (
+          (imei && String(imei).toLowerCase().includes(term)) ||
+          (batch && String(batch).toLowerCase().includes(term)) ||
+          (itemId && itemId.toLowerCase() === term) ||
+          (productId && productId.toLowerCase() === term)
+        );
+      });
+
+      // When a search term is present, products present in groupedProducts were returned by the backend API search.
+      // We accept any product matching category/item, or retain backend search results as fallback.
+      const matchesSearch = matchesCategory || matchesItem || (searchTerm.trim() !== '');
+
       return matchesSearch && matchesBrand;
     });
   }, [groupedProducts, searchTerm, selectedBrand]);
@@ -643,100 +678,98 @@ const PointOfSales: React.FC = () => {
     );
   }
 
-    return (
-      <>
-        {message && (
-          <Message
-            message={message.text}
-            type={message.type}
-            onClose={() => setMessage(null)}
-          />
-        )}
-        {saleResponse && <Receipt saleResponse={saleResponse} onClose={() => setSaleResponse(null)} />}
-        <div className="dark:bg-boxdark-2 min-h-screen mx-auto py-4">
-          <Breadcrumb pageName="Point of Sale" />
+  return (
+    <>
+      {message && (
+        <Message
+          message={message.text}
+          type={message.type}
+          onClose={() => setMessage(null)}
+        />
+      )}
+      {saleResponse && <Receipt saleResponse={saleResponse} onClose={() => setSaleResponse(null)} />}
+      <div className="dark:bg-boxdark-2 min-h-screen mx-auto py-4">
+        <Breadcrumb pageName="Point of Sale" />
 
-          {/* Shop Info Header */}
-          <ShopHeader shopInfo={consolidatedData.shopInfo} />
+        {/* Shop Info Header */}
+        <ShopHeader shopInfo={consolidatedData.shopInfo} />
 
-          {/* Navigation Tab */}
-          <div className="sticky flex justify-center mb-8 border-b dark:border-boxdark border-slate-300">
-            <button
-              className={`px-4 py-2 w-1/2 text-center outline-none ${
-                activeTab === 'products'
-                  ? 'text-lg font-bold border-b-2 border-primary/60'
-                  : 'text-sm text-gray-500'
+        {/* Navigation Tab */}
+        <div className="sticky flex justify-center mb-8 border-b dark:border-boxdark border-slate-300">
+          <button
+            className={`px-4 py-2 w-1/2 text-center outline-none ${activeTab === 'products'
+              ? 'text-lg font-bold border-b-2 border-primary/60'
+              : 'text-sm text-gray-500'
               }`}
-              onClick={() => setActiveTab('products')}
-            >
-              Products
-            </button>
-            <button
-              className={`px-4 py-2 w-1/2 text-center outline-none ${
-                activeTab === 'cart'
-                  ? 'text-lg font-bold border-b-2 border-primary/60'
-                  : 'text-sm text-gray-500'
+            onClick={() => setActiveTab('products')}
+          >
+            Products
+          </button>
+          <button
+            className={`px-4 py-2 w-1/2 text-center outline-none ${activeTab === 'cart'
+              ? 'text-lg font-bold border-b-2 border-primary/60'
+              : 'text-sm text-gray-500'
               }`}
-              onClick={() => setActiveTab('cart')}
-            >
-              Cart
-              <span className="ml-2 px-2 p-1 rounded-full bg-amber-400 text-black font-bold text-center text-sm">
-                {`${groupedCart.length} (${cart.length})`}
-              </span>
-            </button>
-          </div>
-
-          <div className="w-full flex justify-center mx-auto gap-6">
-            {/* Products Section */}
-            {activeTab === 'products' ? (
-              <ProductSection
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                selectedBrand={selectedBrand}
-                setSelectedBrand={setSelectedBrand}
-                brands={brands}
-                paginatedProducts={paginatedProducts}
-                filteredProducts={filteredProducts}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                totalPages={totalPages}
-                isInCart={isInCart}
-                addToCart={addToCart}
-                formatPrice={formatPrice}
-              />
-            ) : (
-              <CartSection
-                cart={cart}
-                groupedCart={groupedCart}
-                total={total}
-                totalPaid={totalPaid}
-                soldprice={soldprice}
-                setSoldPrice={setSoldPrice}
-                financeDetails={financeDetails}
-                setFinanceDetails={setFinanceDetails}
-                financers={financers}
-                showCustomerDetails={showCustomerDetails}
-                setShowCustomerDetails={setShowCustomerDetails}
-                formData={formData}
-                setFormData={setFormData}
-                payments={payments}
-                handlePaymentChange={handlePaymentChange}
-                addPayment={addPayment}
-                removePayment={removePayment}
-                updateQuantity={updateQuantity}
-                removeFromCart={removeFromCart}
-                clearCart={clearCart}
-                handleCheckout={handleCheckout}
-                checkoutDisabled={checkoutDisabled}
-                submitting={submitting}
-                formatPrice={formatPrice}
-                cartHasConsignment={cartHasConsignment}
-              />
-            )}
-          </div>
+            onClick={() => setActiveTab('cart')}
+          >
+            Cart
+            <span className="ml-2 px-2 p-1 rounded-full bg-amber-400 text-black font-bold text-center text-sm">
+              {`${groupedCart.length} (${cart.length})`}
+            </span>
+          </button>
         </div>
-      </>
-    );
+
+        <div className="w-full flex justify-center mx-auto gap-6">
+          {/* Products Section */}
+          {activeTab === 'products' ? (
+            <ProductSection
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              selectedBrand={selectedBrand}
+              setSelectedBrand={setSelectedBrand}
+              brands={brands}
+              paginatedProducts={paginatedProducts}
+              filteredProducts={filteredProducts}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalPages={totalPages}
+              isInCart={isInCart}
+              addToCart={addToCart}
+              formatPrice={formatPrice}
+            />
+          ) : (
+            <CartSection
+              cart={cart}
+              groupedCart={groupedCart}
+              total={total}
+              totalPaid={totalPaid}
+              soldprice={soldprice}
+              setSoldPrice={setSoldPrice}
+              financeDetails={financeDetails}
+              setFinanceDetails={setFinanceDetails}
+              financers={financers}
+              showCustomerDetails={showCustomerDetails}
+              setShowCustomerDetails={setShowCustomerDetails}
+              formData={formData}
+              setFormData={setFormData}
+              payments={payments}
+              handlePaymentChange={handlePaymentChange}
+              addPayment={addPayment}
+              removePayment={removePayment}
+              updateQuantity={updateQuantity}
+              removeFromCart={removeFromCart}
+              clearCart={clearCart}
+              handleCheckout={handleCheckout}
+              checkoutDisabled={checkoutDisabled}
+              submitting={submitting}
+              formatPrice={formatPrice}
+              cartHasConsignment={cartHasConsignment}
+            />
+          )}
+        </div>
+      </div>
+    </>
+  );
 };
 
 export default PointOfSales;
