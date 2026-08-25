@@ -5,14 +5,6 @@ import {
   Package,
   Share2,
   Edit,
-  X,
-  CheckCircle,
-  Shuffle,
-  List,
-  Bolt,
-  Store,
-  ShoppingBag,
-  ArrowRight,
   TrendingUp,
 } from 'lucide-react';
 import ProductTransferHistory from './product/TransferHistory';
@@ -25,14 +17,13 @@ import { getUserProfile } from '../api/user_manager';
 import { Shop } from '@/types/shop';
 import CategorySalesReport from '../components/inventory/CategorySalesReport';
 
-interface Outlet {
-  id: string;
-  name: string;
-  location?: string;
-  contact?: string;
-  address?: string;
-  availableStock?: number;
-}
+import ProductNavigationTabs, {
+  SectionItem,
+} from './product/components/ProductNavigationTabs';
+import MobileDistributeSection from './product/components/MobileDistributeSection';
+import AccessoriesDistributeSection from './product/components/AccessoriesDistributeSection';
+import ShopsInStockTable, { Outlet } from './product/components/ShopsInStockTable';
+import SuccessModal from './product/components/SuccessModal';
 
 interface SelectedItem {
   stockId: string;
@@ -50,7 +41,6 @@ const ProductView = () => {
     isMobile: string;
   }>();
   const token = localStorage.getItem('tk');
-  const [state, setState] = useState(useLocation().state as any);
   const user: DecodedToken | null = token ? jwt_decode(token) : null;
   const [currentUser, setCurrentUser] = useState<any>(null);
 
@@ -77,7 +67,6 @@ const ProductView = () => {
   const [selectionMode, setSelectionMode] = useState<'random' | 'manual'>(
     'random',
   );
-  const [availableItems, setAvailableItems] = useState<any[]>([]);
   const [openHistories, setOpenHistories] = useState<Record<string, boolean>>({});
 
   const handleCloseModal = () => setShowMessage('');
@@ -86,7 +75,7 @@ const ProductView = () => {
     setOpenHistories((prev) => ({ ...prev, [batchId]: !prev[batchId] }));
   };
 
-  const sections = [
+  const sections: SectionItem[] = [
     {
       name: user.role === 'manager' ? 'Distribute Product' : 'Transfer Product',
       key: 'distribute_product',
@@ -113,7 +102,7 @@ const ProductView = () => {
         setOutletListings(mappedOutlets);
       }
     } catch (error: any) {
-      alert(error.response.message || error.message || "An error occurred while fetching outlets")
+      alert(error.response?.message || error.message || "An error occurred while fetching outlets");
     }
   }, []);
 
@@ -123,18 +112,10 @@ const ProductView = () => {
     }
     try {
       setLoading(true);
-
-
-
-
-
       const response = await axios.get(
         currentUser?.role === 'seller'
-          ? `${import.meta.env.VITE_SERVER_HEAD
-          }/api/category/get-category/shop/${currentUser.assignedShop.shopName
-          }/${productId}`
-          : `${import.meta.env.VITE_SERVER_HEAD
-          }/api/category/get-category/${productId}`,
+          ? `${import.meta.env.VITE_SERVER_HEAD}/api/category/get-category/shop/${currentUser.assignedShop.shopName}/${productId}`
+          : `${import.meta.env.VITE_SERVER_HEAD}/api/category/get-category/${productId}`,
         {
           withCredentials: true,
         },
@@ -177,7 +158,7 @@ const ProductView = () => {
     } finally {
       setLoading(false);
     }
-  }, [productId, user?.role, currentUser]);
+  }, [productId, user?.role, currentUser, shopName]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -187,45 +168,42 @@ const ProductView = () => {
           setCurrentUser(user_res?.data.user);
         }
       } catch (error: any) {
-        alert(error.response.message || error.message || "An error occurred user data");
+        alert(error.response?.message || error.message || "An error occurred user data");
       }
     };
     fetchUserData();
-  }, [window.onload]);
+  }, []);
 
   useEffect(() => {
     fetchOutlets();
     fetchProduct();
-  }, [fetchProduct]);
+  }, [fetchProduct, fetchOutlets]);
 
-  // Added a function to handle quantity changes for accessories
   const handleQuantityChange = (stockId: string, newQuantity: number) => {
     setSelectedItems((prev) =>
       prev.map((item) =>
         item.stockId === stockId
           ? {
-            ...item,
-            quantity: Math.min(
-              newQuantity,
-              product.Items.find((i) => i.id === stockId)?.availableStock ||
-              0,
-            ),
-          }
+              ...item,
+              quantity: Math.min(
+                newQuantity,
+                product?.Items?.find((i) => i.id === stockId)?.availableStock || 0,
+              ),
+            }
           : item,
       ),
     );
   };
 
-  // Modified to handle accessories
   const selectRandomItems = useCallback(
     (n: number) => {
-      if (product?.category === 'mobiles') {
-        // Existing mobile logic
+      if (!product) return;
+      if (product.category === 'mobiles') {
+        // Mobile random selection logic can be placed here if needed
       } else {
-        // Accessories
-        const availableItems = product.Items.filter(
+        const availableItems = product.Items?.filter(
           (item) => (item.availableStock || 0) > 0,
-        );
+        ) || [];
         let remaining = n;
         const selected: SelectedItem[] = [];
         const shuffled = [...availableItems].sort(() => 0.5 - Math.random());
@@ -268,7 +246,6 @@ const ProductView = () => {
               { stockId: item.id, category: product.category, quantity: 1 },
             ];
           } else {
-            // Accessories
             const currentTotal = prev.reduce((sum, i) => sum + i.quantity, 0);
             if (currentTotal >= quantity!) return prev;
             const allocate = Math.min(
@@ -312,15 +289,14 @@ const ProductView = () => {
     try {
       const response = await axios.post(
         user?.role === 'manager' || user?.role === 'superuser'
-          ? `${import.meta.env.VITE_SERVER_HEAD
-          }/api/distribution/bulk-distribution`
+          ? `${import.meta.env.VITE_SERVER_HEAD}/api/distribution/bulk-distribution`
           : `${import.meta.env.VITE_SERVER_HEAD}/api/transfer/bulk-transfer`,
         {
           shopDetails: {
             mainShop:
               user.role === 'manager' || user.role === 'superuser'
                 ? 'Kahawa 2323'
-                : currentUser.assignedShop.shopName,
+                : currentUser?.assignedShop?.shopName,
             distributedShop: shopName,
           },
           category: product?.category,
@@ -340,14 +316,14 @@ const ProductView = () => {
         setQuantity(0);
         setRemarks('');
         setSelectedItems([]);
-        fetchProduct(); // Refresh product data
+        fetchProduct();
       }
     } catch (error: any) {
-      alert(error.response.message || error.message || "An error occurred during distribution");
+      alert(error.response?.message || error.message || "An error occurred during distribution");
       setDistributeError(
         error.response?.data?.message ||
-        error.message ||
-        'Failed to distribute product',
+          error.message ||
+          'Failed to distribute product',
       );
     } finally {
       setDistributing(false);
@@ -358,374 +334,56 @@ const ProductView = () => {
     if (quantity && selectionMode === 'random') {
       selectRandomItems(quantity);
     } else if (quantity && selectionMode === 'manual') {
-      setSelectedItems([]); // Reset selections when switching to manual mode
+      setSelectedItems([]);
     }
   }, [quantity, selectionMode, selectRandomItems]);
-  //
 
-  const renderDistributeSection = () => (
-    <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
-      <div className="p-4 bg-gray-50 dark:bg-meta-4 border-b dark:border-strokedark">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-          {user.role === 'manager' ? 'Distribute Product' : 'Transfer Product'}
-        </h2>
-      </div>
-
-      <form onSubmit={handleDistribute} className="p-6 space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Select Shop
-            </label>
-            <select
-              value={shopName}
-              onChange={(e) => setShopName(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
-            >
-              <option value="">Select a shop</option>
-              {outletListings.map((shop: Partial<Shop>) => (
-                <option key={shop.id} value={shop.shopName}>
-                  {shop.shopName} -- {shop.address}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Quantity
-            </label>
-            <input
-              min={1}
-              type="number"
-              max={product?.Items?.length}
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
-            />
-          </div>
-        </div>
-
-        <div className="flex space-x-4 items-center">
-          <button
-            type="button"
-            onClick={() => setSelectionMode('random')}
-            className={`flex items-center px-4 py-2 rounded-lg ${selectionMode === 'random'
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 dark:bg-meta-4 text-gray-700 dark:text-gray-300'
-              }`}
-          >
-            <Shuffle className="w-4 h-4 mr-2" />
-            Random Selection
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectionMode('manual')}
-            className={`flex items-center px-4 py-2 rounded-lg ${selectionMode === 'manual'
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 dark:bg-meta-4 text-gray-700 dark:text-gray-300'
-              }`}
-          >
-            <List className="w-4 h-4 mr-2" />
-            Manual Selection
-          </button>
-        </div>
-
-        {quantity! > 0 && (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
-              Selected Items ({selectedItems.length}/{quantity})
-            </h3>
-            <div className="max-h-60 overflow-y-auto">
-              <pre className="p-3">{`${product?.category === 'mobiles' ? 'IMEI' : 's/No'
-                } - Batch Number\n`}</pre>
-              {product?.Items?.filter(
-                (available: any) =>
-                  available.stockStatus?.toLowerCase() === 'available' ||
-                  available.stockStatus?.toLowerCase() === 'ok' ||
-                  available.stockStatus?.toLowerCase() === 'distributed',
-              )
-                .sort((a, b) =>
-                  selectedItems.some((i) => i.stockId === a.id) ? -1 : 1,
-                )
-                .map((item: any) => (
-                  <div
-                    key={item.id}
-                    onClick={() =>
-                      selectionMode === 'manual' && toggleItemSelection(item)
-                    }
-                    className={`p-3 border rounded-lg mb-2 cursor-pointer ${selectedItems.some((i) => i.stockId === item.id)
-                        ? 'border-primary bg-primary/10'
-                        : 'border-gray-200 dark:border-strokedark'
-                      }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{`${item.IMEI || item.serialNumber
-                          } - ${item.batchNumber} / ${item.id}`}</span>
-                        {product?.category === 'mobiles' && item.isConsignment && (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider">
-                              CONSIGNMENT
-                            </span>
-                            {item.Financer && (
-                              <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                                ({item.Financer.name})
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <CheckCircle
-                        className={`w-5 h-5 ${selectedItems.some((i) => i.stockId === item.id)
-                            ? 'text-primary'
-                            : 'text-gray-300 dark:text-gray-600'
-                          }`}
-                      />
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
-
-        {distributeError && (
-          <div className="text-red-500 text-sm mt-2">{distributeError}</div>
-        )}
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={distributing || selectedItems.length !== quantity}
-            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
-          >
-            {distributing
-              ? 'Processing...'
-              : user.role === 'manager'
-                ? 'Distribute'
-                : 'Transfer'}
-          </button>
-        </div>
-      </form>
-      {/* )} */}
-    </div>
-  );
-
-  const accessoriesDistributeSection = () => (
-    <div className="bg-white dark:bg-boxdark rounded-lg shadow-md">
-      <div className="p-4 bg-gray-50 dark:bg-meta-4 border-b dark:border-strokedark">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-          {user.role === 'manager'
-            ? 'Distribute Accessories'
-            : 'Transfer Accessories'}
-        </h2>
-      </div>
-
-      <form onSubmit={handleDistribute} className="p-6 space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Select Shop
-            </label>
-            <select
-              value={shopName}
-              onChange={(e) => setShopName(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
-            >
-              <option value="">Select a shop</option>
-              {outletListings.map((shop: Partial<Shop>) => (
-                <option key={shop.id} value={shop.shopName}>
-                  {shop.shopName} -- {shop.address}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Quantity
-            </label>
-            <input
-              min={1}
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
-            />
-          </div>
-        </div>
-
-        <div className="flex space-x-4 items-center">
-          <button
-            type="button"
-            onClick={() => setSelectionMode('random')}
-            className={`flex items-center px-4 py-2 rounded-lg ${selectionMode === 'random'
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 dark:bg-meta-4 text-gray-700 dark:text-gray-300'
-              }`}
-          >
-            <Shuffle className="w-4 h-4 mr-2" />
-            Random Selection
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectionMode('manual')}
-            className={`flex items-center px-4 py-2 rounded-lg ${selectionMode === 'manual'
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 dark:bg-meta-4 text-gray-700 dark:text-gray-300'
-              }`}
-          >
-            <List className="w-4 h-4 mr-2" />
-            Manual Selection
-          </button>
-        </div>
-
-        {quantity! > 0 && (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
-              Selected Items (
-              {selectedItems.reduce((sum, item) => sum + item.quantity, 0)}/
-              {quantity})
-            </h3>
-            <div className="max-h-72 overflow-y-auto">
-              {product?.Items?.filter(
-                (item) => (item.availableStock || 0) > 0,
-              ).map((item) => {
-                const selectedItem = selectedItems.find(
-                  (i) => i.stockId === item.id,
-                );
-                const isSelected = !!selectedItem;
-                return (
-                  <div
-                    key={item.id}
-                    className={`border rounded-lg mb-2 transition-all duration-300 ${isSelected
-                        ? 'border-primary bg-primary/10'
-                        : 'border-gray-200 dark:border-strokedark'
-                      }`}
-                  >
-                    <div
-                      onClick={() =>
-                        selectionMode === 'manual' && toggleItemSelection(item)
-                      }
-                      className="p-3 cursor-pointer flex items-center justify-between"
-                    >
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Batch: {item.batchNumber || item.serialNumber} - Stock:{' '}
-                        {item.availableStock}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {isSelected && (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              value={selectedItem.quantity}
-                              min={1}
-                              max={item.availableStock}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleQuantityChange(
-                                  item.id,
-                                  parseInt(e.target.value),
-                                );
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-20 px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-form-input dark:border-form-strokedark dark:text-white"
-                            />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleItemSelection(item);
-                              }}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                        {user.role !== 'seller' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleHistory(item.id);
-                            }}
-                            className="p-1 text-gray-500 hover:text-primary"
-                          >
-                            <List className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    {user.role !== 'seller' && openHistories[item.id] && (
-                      <div className="px-3 pb-3 mt-2 border-t border-gray-200 dark:border-strokedark">
-                        <h4 className="text-sm font-semibold my-2 text-gray-800 dark:text-white">
-                          Distribution History
-                        </h4>
-                        {item.accessoryItems &&
-                          item.accessoryItems.length > 0 ? (
-                          <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                            {item.accessoryItems.map(
-                              (dist: any, index: number) => (
-                                <li
-                                  key={index}
-                                  className="flex justify-between"
-                                >
-                                  <span>
-                                    {dist.quantity} units to{' '}
-                                    <strong>{dist.shops.shopName}</strong>
-                                  </span>
-                                  <span className="text-gray-500">
-                                    {new Date(
-                                      dist.createdAt,
-                                    ).toLocaleDateString()}{' '}
-                                    - {dist.status}
-                                  </span>
-                                </li>
-                              ),
-                            )}
-                          </ul>
-                        ) : (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            No distribution history for this batch.
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {distributeError && (
-          <div className="text-red-500 text-sm mt-2">{distributeError}</div>
-        )}
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={
-              distributing ||
-              selectedItems.reduce((sum, item) => sum + item.quantity, 0) !==
-              quantity
-            }
-            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
-          >
-            {distributing
-              ? 'Processing...'
-              : user.role === 'manager'
-                ? 'Distribute'
-                : 'Transfer'}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+  const handleSelectTab = (key: string) => {
+    setActiveSection(key);
+    navigate(`?tab=${key}`);
+  };
 
   const renderContent = () => {
     switch (activeSection) {
       case 'distribute_product':
-        return product?.category === 'mobiles'
-          ? renderDistributeSection()
-          : accessoriesDistributeSection();
+        return product?.category === 'mobiles' ? (
+          <MobileDistributeSection
+            user={user}
+            shopName={shopName}
+            setShopName={setShopName}
+            quantity={quantity}
+            setQuantity={setQuantity}
+            outletListings={outletListings}
+            selectionMode={selectionMode}
+            setSelectionMode={setSelectionMode}
+            product={product}
+            selectedItems={selectedItems}
+            toggleItemSelection={toggleItemSelection}
+            distributeError={distributeError}
+            distributing={distributing}
+            handleDistribute={handleDistribute}
+          />
+        ) : (
+          <AccessoriesDistributeSection
+            user={user}
+            shopName={shopName}
+            setShopName={setShopName}
+            quantity={quantity}
+            setQuantity={setQuantity}
+            outletListings={outletListings}
+            selectionMode={selectionMode}
+            setSelectionMode={setSelectionMode}
+            product={product}
+            selectedItems={selectedItems}
+            toggleItemSelection={toggleItemSelection}
+            handleQuantityChange={handleQuantityChange}
+            openHistories={openHistories}
+            toggleHistory={toggleHistory}
+            distributeError={distributeError}
+            distributing={distributing}
+            handleDistribute={handleDistribute}
+          />
+        );
 
       case 'transfer_history':
         return (
@@ -745,74 +403,10 @@ const ProductView = () => {
 
       case 'shops_in_stock':
         return (
-          <div className="bg-white dark:bg-boxdark rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-                Shops in Stock
-              </h2>
-            </div>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                      <th className="whitespace-nowrap px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
-                        <div className="flex items-center gap-2">
-                          <Store className="h-4 w-4" />
-                          <span>Shop Name</span>
-                        </div>
-                      </th>
-                      <th className="whitespace-nowrap px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
-                        <span>Address</span>
-                      </th>
-                      <th className="whitespace-nowrap px-6 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
-                        <span>Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {!outlets || outlets.length === 0 ? (
-                      <tr>
-                        <td colSpan={3} className="px-6 py-8">
-                          <div className="flex flex-col items-center justify-center gap-3">
-                            <ShoppingBag className="h-8 w-8 text-gray-400" />
-                            <p className="text-base text-gray-500 dark:text-gray-400">
-                              No shops are currently in stock
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      outlets.map((shop: Partial<Shop>) => (
-                        <tr
-                          key={shop.shopName}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
-                        >
-                          <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                            {shop.shopName}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                            {shop.address}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-2 text-sm">
-                            <button
-                              onClick={() =>
-                                navigate(`/outlets/${shop.shopName}`)
-                              }
-                              className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-colors duration-200"
-                            >
-                              View
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <ShopsInStockTable
+            outlets={outlets}
+            onNavigateOutlet={(shopNameStr) => navigate(`/outlets/${shopNameStr}`)}
+          />
         );
 
       case 'sales_report':
@@ -832,43 +426,13 @@ const ProductView = () => {
 
   return (
     <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <div className="flex items-center space-x-4 w-full justify-end">
-        {/* <div className="text-sm font-medium text-gray-600 dark:text-gray-300">
-          Available Stock:
-        </div>
-        <div className="bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
-          {product?.Items?.filter(
-            (item) => item.stockStatus.toLowerCase() !== 'sold',
-          ).length || 0}{' '}
-          {`${product?.Items?.length !== 1 ? 'Units' : 'Unit'}`}
-        </div> */}
-      </div>
       <Breadcrumb pageName="Product Details" header={product?.itemName} />
 
-      <div className="mb-6">
-        <div className="bg-white dark:bg-boxdark rounded-lg shadow-md overflow-x-auto">
-          <div className="flex">
-            {sections.map((section) => (
-              <button
-                key={section.key}
-                onClick={() => {
-                  setActiveSection(section.key);
-                  navigate(`?tab=${section.key}`);
-                }}
-                className={`w-full md:w-auto flex items-center justify-center md:justify-start p-4 border-b md:border-b-0 last:border-b-0 outline-none ${activeSection === section.key
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-meta-4'
-                  }`}
-              >
-                <section.icon className="mr-3 w-5 h-5 block" />
-                <div className="text-sm font-medium whitespace-nowrap">
-                  {section.name}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <ProductNavigationTabs
+        sections={sections}
+        activeSection={activeSection}
+        onSelectTab={handleSelectTab}
+      />
 
       {!product ? (
         <div className="bg-white dark:bg-boxdark rounded-lg shadow-md p-6">
@@ -882,41 +446,7 @@ const ProductView = () => {
         </div>
       )}
 
-      {showMessage && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
-          onClick={handleCloseModal}
-        >
-          <div
-            className="bg-white dark:bg-boxdark rounded-lg shadow-lg w-full max-w-sm mx-4 relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={handleCloseModal}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="p-6">
-              <div className="flex items-center space-x-4 mb-4">
-                <CheckCircle className="w-6 h-6 text-primary" />
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                  Success
-                </h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300">{showMessage}</p>
-              <div className="mt-6 flex justify-end">
-                <button
-                  onClick={handleCloseModal}
-                  className="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <SuccessModal showMessage={showMessage} onClose={handleCloseModal} />
     </div>
   );
 };

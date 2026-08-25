@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X } from 'lucide-react';
 import Message from '../../components/alerts/Message';
+import { generateBatchNumber } from '../../utils/batchGenerator';
 
 // Define types for the data we'll be fetching and using
 interface Category {
@@ -163,6 +164,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       payload.margin = formData.isConsignment ? Number(formData.margin) : 0;
       payload.financerId = formData.isConsignment ? (formData.financerId ? Number(formData.financerId) : null) : null;
     } else {
+      payload.modelName = formData.modelName;
       payload.productType = formData.productType;
       payload.faultyItems = Number(formData.faultyItems);
     }
@@ -276,6 +278,29 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                     className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
                   />
                 </div>
+                {!isMobile && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Model Name
+                    </label>
+                    <input
+                      type="text"
+                      name="modelName"
+                      value={formData.modelName || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const genBatch = generateBatchNumber(val);
+                        setFormData((prev: any) => ({
+                          ...prev,
+                          modelName: val,
+                          batchNumber: genBatch || prev.batchNumber,
+                        }));
+                      }}
+                      placeholder="e.g. hot 9"
+                      className="w-full mt-1 p-2 border rounded dark:bg-form-input dark:border-form-strokedark"
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Batch Number

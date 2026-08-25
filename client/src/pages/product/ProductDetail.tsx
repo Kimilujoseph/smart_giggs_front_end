@@ -28,6 +28,7 @@ import { DecodedToken } from '../../types/decodedToken';
 import jwt_decode from 'jwt-decode';
 import EditProductModal from './EditProductModal';
 import MobileHistoryModal from '../../components/modals/MobileHistoryModal';
+import { generateBatchNumber } from '../../utils/batchGenerator';
 
 const useQuery = () => new URLSearchParams(useLocation().search);
 
@@ -53,6 +54,7 @@ const ProductDetail = ({
   const [activeTab, setActiveTab] = useState(query.get('subtab') || 'details');
   const [selectedUnit, setSelectedUnit] = useState('');
   const [newBatchNumber, setNewBatchNumber] = useState('');
+  const [modelName, setModelName] = useState('');
   const [quantity, setQuantity] = useState<number>(1);
   const [unitPrice, setUnitPrice] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
@@ -112,6 +114,12 @@ const ProductDetail = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedStatus]);
   const { productId } = useParams<{ productId: string }>();
   const [message, setMessage] = useState<{ text: string; type: string } | null>(
     null,
@@ -225,6 +233,7 @@ const ProductDetail = ({
       } else {
         payload = {
           ...commonDetails,
+          modelName,
           productType: productType,
           faultyItems: 0,
         };
@@ -295,19 +304,30 @@ const ProductDetail = ({
     }
   };
 
-  const filteredUnits = product?.Items.filter((item) => {
+  const filteredUnits = (product?.Items || []).filter((item) => {
     if (!product?.Items) return [];
 
+    const queryLower = searchQuery.toLowerCase();
     const matchesSearch =
-      searchQuery.toLowerCase() === '' ||
-      item.serialNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.id?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.IMEI?.toLowerCase().includes(searchQuery.toLowerCase());
+      queryLower === '' ||
+      item.serialNumber?.toLowerCase().includes(queryLower) ||
+      item.id?.toString().toLowerCase().includes(queryLower) ||
+      item.IMEI?.toLowerCase().includes(queryLower) ||
+      item.ModelName?.toLowerCase().includes(queryLower) ||
+      item.modelName?.toLowerCase().includes(queryLower) ||
+      item.batchNumber?.toLowerCase().includes(queryLower) ||
+      item.color?.toLowerCase().includes(queryLower);
     const matchesStatus =
       selectedStatus === 'all' ||
-      item.stockStatus.toLowerCase() === selectedStatus;
+      item.stockStatus?.toLowerCase() === selectedStatus;
     return matchesSearch && matchesStatus;
   });
+
+  const totalPages = Math.ceil((filteredUnits?.length || 0) / itemsPerPage) || 1;
+  const paginatedUnits = filteredUnits?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  ) || [];
 
   return (
     <div className="bg-white dark:bg-boxdark rounded-lg shadow-md w-auto">
@@ -488,7 +508,30 @@ const ProductDetail = ({
                             />
                           </div>
                         )}
-                        {/* Batch Number */}
+                        {/* Model Name & Batch Number */}
+                        {product.category === 'accessories' && (
+                          <div>
+                            <label
+                              htmlFor="modelName"
+                              className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                            >
+                              Model Name*
+                            </label>
+                            <input
+                              id="modelName"
+                              required
+                              type="text"
+                              value={modelName}
+                              placeholder="e.g. hot 9"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setModelName(val);
+                                setNewBatchNumber(generateBatchNumber(val));
+                              }}
+                              className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
+                            />
+                          </div>
+                        )}
                         <div>
                           <label
                             htmlFor="batch"
@@ -502,7 +545,7 @@ const ProductDetail = ({
                             type="text"
                             value={newBatchNumber}
                             onChange={(e) => setNewBatchNumber(e.target.value)}
-                            placeholder="S20241230-XXXX-XXXXX"
+                            placeholder="e.g. H0T9-129394"
                             className="w-full px-4 py-2.5 bg-white dark:bg-form-input border border-gray-200 dark:border-strokedark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white text-sm transition-all duration-150"
                           />{' '}
                         </div>
@@ -780,7 +823,7 @@ const ProductDetail = ({
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder={`Search by Serial or ${product.category === 'mobiles' ? 'IMEI' : 'Batch Number'
+                    placeholder={`Search by Model Name, Serial, ${product.category === 'mobiles' ? 'IMEI' : 'Batch Number'
                       }...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -822,20 +865,26 @@ const ProductDetail = ({
                           </th>
                         )}
                         <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                          Model Name
+                        </th>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
                           Batch Number
                         </th>
                         <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
                           Color
                         </th>
                         {product.category === 'accessories' && (
-                          <>
-                            <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
-                              Units
-                            </th>
-                            <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
-                              Faulty
-                            </th>
-                          </>
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                            Units
+                          </th>
+                        )}
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                          Sold Units
+                        </th>
+                        {product.category === 'accessories' && (
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider table-cell">
+                            Faulty
+                          </th>
                         )}
                         <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Stock Status
@@ -855,17 +904,17 @@ const ProductDetail = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-strokedark">
-                      {!filteredUnits || filteredUnits.length === 0 ? (
+                      {!paginatedUnits || paginatedUnits.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={product.category === 'accessories' ? 10 : 9}
+                            colSpan={product.category === 'accessories' ? 11 : 10}
                             className="py-4 text-center text-sm text-gray-500 dark:text-gray-400"
                           >
                             No items available
                           </td>
                         </tr>
                       ) : (
-                        filteredUnits.map((item) => (
+                        paginatedUnits.map((item) => (
                           <React.Fragment key={item.id}>
                             <tr className="hover:bg-bodydark1 dark:hover:bg-meta-4">
                               {product.category === 'mobiles' && (
@@ -893,6 +942,9 @@ const ProductDetail = ({
                                   </div>
                                 </td>
                               )}
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell font-medium">
+                                {item.ModelName || item.modelName || '-'}
+                              </td>
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
                                 {item.batchNumber || '-'}
                               </td>
@@ -900,19 +952,22 @@ const ProductDetail = ({
                                 {item.color}
                               </td>
                               {product.category === 'accessories' && (
-                                <>
-                                  <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
-                                    {item.availableStock}
-                                  </td>
-                                  <td
-                                    className={`px-3 sm:px-4 py-3 whitespace-nowrap text-sm table-cell ${item.faultyItems > 0
-                                      ? 'text-red-500 font-bold'
-                                      : 'text-gray-700 dark:text-gray-300'
-                                      }`}
-                                  >
-                                    {item.faultyItems || 0}
-                                  </td>
-                                </>
+                                <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                  {item.availableStock}
+                                </td>
+                              )}
+                              <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 table-cell">
+                                {item.soldUnits ?? item.soldunit ?? 0}
+                              </td>
+                              {product.category === 'accessories' && (
+                                <td
+                                  className={`px-3 sm:px-4 py-3 whitespace-nowrap text-sm table-cell ${item.faultyItems > 0
+                                    ? 'text-red-500 font-bold'
+                                    : 'text-gray-700 dark:text-gray-300'
+                                    }`}
+                                >
+                                  {item.faultyItems || 0}
+                                </td>
                               )}
                               <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                                 <span
@@ -1023,7 +1078,7 @@ const ProductDetail = ({
                                   key={`${item.id}-details`}
                                   className="bg-gray-50 dark:bg-boxdark-2"
                                 >
-                                  <td colSpan={10}>
+                                  <td colSpan={11}>
                                     <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                                       <div className="border-r border-gray-200 dark:border-strokedark pr-4">
                                         <h4 className="text-sm font-semibold mb-3 text-gray-800 dark:text-white flex items-center">
@@ -1111,7 +1166,7 @@ const ProductDetail = ({
                                   key={`${item.id}-history`}
                                   className="bg-gray-50 dark:bg-boxdark-2"
                                 >
-                                  <td colSpan={9}>
+                                  <td colSpan={11}>
                                     <div className="p-4">
                                       <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-white">
                                         Distribution History
@@ -1161,6 +1216,55 @@ const ProductDetail = ({
                   </table>
                 </div>
               </div>
+
+              {/* Pagination Bar */}
+              {filteredUnits && filteredUnits.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-3 py-3 bg-gray-50 dark:bg-meta-4 rounded-lg border border-gray-200 dark:border-strokedark">
+                  <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                    <span>
+                      Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredUnits.length)} to{' '}
+                      {Math.min(currentPage * itemsPerPage, filteredUnits.length)} of {filteredUnits.length} items
+                    </span>
+                    <div className="flex items-center gap-1.5 ml-2">
+                      <label className="text-xs">Per page:</label>
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                          setItemsPerPage(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="px-2 py-1 border rounded text-xs dark:bg-form-input dark:border-form-strokedark dark:text-white"
+                      >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-boxdark disabled:opacity-50 disabled:cursor-not-allowed dark:border-strokedark dark:text-white"
+                    >
+                      Previous
+                    </button>
+                    <span className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-boxdark disabled:opacity-50 disabled:cursor-not-allowed dark:border-strokedark dark:text-white"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
