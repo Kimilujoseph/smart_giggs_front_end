@@ -10,6 +10,7 @@ const Receipt: React.FC<ReceiptProps> = ({ saleResponse, onClose }) => {
   const handlePrint = () => {
     window.print();
   };
+  // console.log(saleResponse)
 
   // Get payment data from the first sale response object
   const paymentData = saleResponse[0]?.paymentData || [];

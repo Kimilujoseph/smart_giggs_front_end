@@ -15,7 +15,7 @@ interface ProductItemCardProps {
 export const ProductItemCard: React.FC<ProductItemCardProps> = ({ product, isInCart, addToCart, formatPrice }) => {
   const [isExpanded, setIsExpanded] = useState(product.items?.length === 1);
   const [itemPage, setItemPage] = useState(1);
-
+  console.log("@@@product", product)
   const totalItems = product.items.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   const currentItems = product.items.slice((itemPage - 1) * ITEMS_PER_PAGE, itemPage * ITEMS_PER_PAGE);
@@ -78,19 +78,19 @@ export const ProductItemCard: React.FC<ProductItemCardProps> = ({ product, isInC
                     <div
                       key={item.id}
                       onClick={() => addToCart(product.categoryId, item)}
-                      className={`relative cursor-pointer rounded-lg p-3 text-xs border transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                        inCart
-                          ? 'border-primary/60 bg-primary/5 dark:bg-primary/10'
-                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark hover:border-primary/40'
-                      }`}
+                      className={`relative cursor-pointer rounded-lg p-3 text-xs border transition-all hover:scale-[1.02] active:scale-[0.98] ${inCart
+                        ? 'border-primary/60 bg-primary/5 dark:bg-primary/10'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark hover:border-primary/40'
+                        }`}
                     >
                       {inCart && <CheckCircle className="absolute top-2 right-2 w-3.5 h-3.5 text-primary" />}
                       {isMobile
                         ? <p className="font-mono text-slate-700 dark:text-slate-300 truncate">IMEI: {item.IMEI}</p>
                         : <>
-                            <p className="text-slate-600 dark:text-slate-300">Batch: {item.batchNumber}</p>
-                            <p className="text-slate-400 dark:text-slate-500">Qty: {item.quantity}</p>
-                          </>}
+                          <p className="text-slate-600 dark:text-slate-300">Model: {item.accessories.ModelName
+                          }</p>
+                          <p className="text-slate-400 dark:text-slate-500">Qty: {item.quantity}</p>
+                        </>}
                       {item.discount > 0 && (
                         <p className="text-green-500 mt-1">-{formatPrice(item.discount)}</p>
                       )}
