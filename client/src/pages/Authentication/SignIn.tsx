@@ -41,7 +41,8 @@ const SignIn: React.FC = () => {
           if (
             decoded.role === 'superuser' ||
             decoded.role === 'seller' ||
-            decoded.role === 'manager'
+            decoded.role === 'manager' ||
+            decoded.role === 'stockist'
           ) {
             setLoginSuccess(true);
             setUser({ ...decoded });

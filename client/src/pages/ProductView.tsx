@@ -288,14 +288,14 @@ const ProductView = () => {
     setDistributing(true);
     try {
       const response = await axios.post(
-        user?.role === 'manager' || user?.role === 'superuser'
+        user?.role === 'manager' || user?.role === 'superuser' || user?.role=== 'stockist'
           ? `${import.meta.env.VITE_SERVER_HEAD}/api/distribution/bulk-distribution`
           : `${import.meta.env.VITE_SERVER_HEAD}/api/transfer/bulk-transfer`,
         {
           shopDetails: {
             mainShop:
-              user.role === 'manager' || user.role === 'superuser'
-                ? 'Kahawa 2323'
+              user.role === 'manager' || user.role === 'superuser' || user.role==='stockist'
+                ? 'WareHouse'
                 : currentUser?.assignedShop?.shopName,
             distributedShop: shopName,
           },

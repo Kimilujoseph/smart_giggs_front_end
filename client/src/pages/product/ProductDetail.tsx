@@ -460,7 +460,7 @@ const ProductDetail = ({
           {activeTab === 'units' && (
             <div className="space-y-6 max-w-[80vw]">
               {/* Add New Unit Section - More Responsive */}
-              {(user.role === 'manager' || user.role === 'superuser') && (
+              {(user.role === 'manager' || user.role === 'superuser' || user.role === 'stockist') && (
                 <div className="bg-white dark:bg-boxdark rounded-xl shadow-sm border border-gray-100 dark:border-strokedark overflow-hidden">
                   {/* Header - Always visible */}
                   <button

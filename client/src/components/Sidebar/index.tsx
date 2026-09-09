@@ -34,7 +34,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       if (
         decoded.role === 'superuser' ||
         decoded.role === 'manager' ||
-        decoded.role === 'seller'
+        decoded.role === 'seller' ||
+        decoded.role === 'stockist'
       ) {
         setUserRole(decoded.role);
       }
@@ -124,58 +125,62 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   )}
                   {/* <!-- Menu Item Settings --> */}
                   <ul className="mb-6 flex flex-col gap-1.5">
-                    {(userRole === 'manager' || userRole === 'superuser') && (
+                    {(userRole === 'manager' || userRole === 'superuser' || userRole === 'stockist') && (
                       <>
-                        <li>
-                          <NavLink
-                            to="/"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('dashboard') &&
-                              'bg-meta-2 dark:bg-meta-4'
-                              }`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" stroke-linecap="round" stroke-linejoin="round">
-                              <rect x="3" y="3" width="7" height="7"></rect>
-                              <rect x="14" y="3" width="7" height="7"></rect>
-                              <rect x="14" y="14" width="7" height="7"></rect>
-                              <rect x="3" y="14" width="7" height="7"></rect>
-                            </svg>
-                            {sidebarExpanded && 'Dashboard'}
-                          </NavLink>
-                        </li>
+                        {(userRole === 'manager' || userRole === 'superuser') && (
+                          <>
+                            <li>
+                              <NavLink
+                                to="/"
+                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('dashboard') &&
+                                  'bg-meta-2 dark:bg-meta-4'
+                                  }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <rect x="3" y="3" width="7" height="7"></rect>
+                                  <rect x="14" y="3" width="7" height="7"></rect>
+                                  <rect x="14" y="14" width="7" height="7"></rect>
+                                  <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                                {sidebarExpanded && 'Dashboard'}
+                              </NavLink>
+                            </li>
 
-                        <li>
-                          <NavLink
-                            to="/users"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('users') &&
-                              'bg-meta-2 dark:bg-meta-4'
-                              }`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <svg
-                              className="fill-current"
-                              width="18"
-                              height="18"
-                              viewBox="0 0 22 22"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M7.18418 8.03751C9.31543 8.03751 11.0686 6.35313 11.0686 4.25626C11.0686 2.15938 9.31543 0.475006 7.18418 0.475006C5.05293 0.475006 3.2998 2.15938 3.2998 4.25626C3.2998 6.35313 5.05293 8.03751 7.18418 8.03751ZM7.18418 2.05626C8.45605 2.05626 9.52168 3.05313 9.52168 4.29063C9.52168 5.52813 8.49043 6.52501 7.18418 6.52501C5.87793 6.52501 4.84668 5.52813 4.84668 4.29063C4.84668 3.05313 5.9123 2.05626 7.18418 2.05626Z"
-                                fill=""
-                              />
-                              <path
-                                d="M15.8124 9.6875C17.6687 9.6875 19.1468 8.24375 19.1468 6.42188C19.1468 4.6 17.6343 3.15625 15.8124 3.15625C13.9905 3.15625 12.478 4.6 12.478 6.42188C12.478 8.24375 13.9905 9.6875 15.8124 9.6875ZM15.8124 4.7375C16.8093 4.7375 17.5999 5.49375 17.5999 6.45625C17.5999 7.41875 16.8093 8.175 15.8124 8.175C14.8155 8.175 14.0249 7.41875 14.0249 6.45625C14.0249 5.49375 14.8155 4.7375 15.8124 4.7375Z"
-                                fill=""
-                              />
-                              <path
-                                d="M15.9843 10.0313H15.6749C14.6437 10.0313 13.6468 10.3406 12.7874 10.8563C11.8593 9.61876 10.3812 8.79376 8.73115 8.79376H5.67178C2.85303 8.82814 0.618652 11.0625 0.618652 13.8469V16.3219C0.618652 16.975 1.13428 17.4906 1.7874 17.4906H20.2468C20.8999 17.4906 21.4499 16.9406 21.4499 16.2875V15.4625C21.4155 12.4719 18.9749 10.0313 15.9843 10.0313ZM2.16553 15.9438V13.8469C2.16553 11.9219 3.74678 10.3406 5.67178 10.3406H8.73115C10.6562 10.3406 12.2374 11.9219 12.2374 13.8469V15.9438H2.16553V15.9438ZM19.8687 15.9438H13.7499V13.8469C13.7499 13.2969 13.6468 12.7469 13.4749 12.2313C14.0937 11.7844 14.8499 11.5781 15.6405 11.5781H15.9499C18.0812 11.5781 19.8343 13.3313 19.8343 15.4625V15.9438H19.8687Z"
-                                fill=""
-                              />
-                            </svg>
-                            {sidebarExpanded && 'Users Manage'}
-                          </NavLink>
-                        </li>
+                            <li>
+                              <NavLink
+                                to="/users"
+                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('users') &&
+                                  'bg-meta-2 dark:bg-meta-4'
+                                  }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <svg
+                                  className="fill-current"
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 22 22"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M7.18418 8.03751C9.31543 8.03751 11.0686 6.35313 11.0686 4.25626C11.0686 2.15938 9.31543 0.475006 7.18418 0.475006C5.05293 0.475006 3.2998 2.15938 3.2998 4.25626C3.2998 6.35313 5.05293 8.03751 7.18418 8.03751ZM7.18418 2.05626C8.45605 2.05626 9.52168 3.05313 9.52168 4.29063C9.52168 5.52813 8.49043 6.52501 7.18418 6.52501C5.87793 6.52501 4.84668 5.52813 4.84668 4.29063C4.84668 3.05313 5.9123 2.05626 7.18418 2.05626Z"
+                                    fill=""
+                                  />
+                                  <path
+                                    d="M15.8124 9.6875C17.6687 9.6875 19.1468 8.24375 19.1468 6.42188C19.1468 4.6 17.6343 3.15625 15.8124 3.15625C13.9905 3.15625 12.478 4.6 12.478 6.42188C12.478 8.24375 13.9905 9.6875 15.8124 9.6875ZM15.8124 4.7375C16.8093 4.7375 17.5999 5.49375 17.5999 6.45625C17.5999 7.41875 16.8093 8.175 15.8124 8.175C14.8155 8.175 14.0249 7.41875 14.0249 6.45625C14.0249 5.49375 14.8155 4.7375 15.8124 4.7375Z"
+                                    fill=""
+                                  />
+                                  <path
+                                    d="M15.9843 10.0313H15.6749C14.6437 10.0313 13.6468 10.3406 12.7874 10.8563C11.8593 9.61876 10.3812 8.79376 8.73115 8.79376H5.67178C2.85303 8.82814 0.618652 11.0625 0.618652 13.8469V16.3219C0.618652 16.975 1.13428 17.4906 1.7874 17.4906H20.2468C20.8999 17.4906 21.4499 16.9406 21.4499 16.2875V15.4625C21.4155 12.4719 18.9749 10.0313 15.9843 10.0313ZM2.16553 15.9438V13.8469C2.16553 11.9219 3.74678 10.3406 5.67178 10.3406H8.73115C10.6562 10.3406 12.2374 11.9219 12.2374 13.8469V15.9438H2.16553V15.9438ZM19.8687 15.9438H13.7499V13.8469C13.7499 13.2969 13.6468 12.7469 13.4749 12.2313C14.0937 11.7844 14.8499 11.5781 15.6405 11.5781H15.9499C18.0812 11.5781 19.8343 13.3313 19.8343 15.4625V15.9438H19.8687Z"
+                                    fill=""
+                                  />
+                                </svg>
+                                {sidebarExpanded && 'Users Manage'}
+                              </NavLink>
+                            </li>
+                          </>
+                        )}
                         <li>
                           <NavLink
                             to="/outlets"
@@ -236,78 +241,82 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             {sidebarExpanded && 'Inventory Manage'}
                           </NavLink>
                         </li>
-                        <li>
-                          <NavLink
-                            to="/sales"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('/outlet/inventory') &&
-                              'bg-meta-2 dark:bg-meta-4'
-                              }`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <svg
-                              className="fill-current"
-                              width="18"
-                              height="18"
-                              viewBox="0 0 22 22"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M3 15l6-6 4 6 8-8"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                            {sidebarExpanded && 'Sales'}
-                          </NavLink>
-                        </li>
-                        <li>
-                          <NavLink
-                            to="/payments"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('payments') &&
-                              'bg-meta-2 dark:bg-meta-4'
-                              }`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <svg
-                              className="fill-current"
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <rect x="2" y="4" width="20" height="16" rx="2" />
-                              <line x1="2" y1="10" x2="22" y2="10" />
-                            </svg>
-                            {sidebarExpanded && 'Payments'}
-                          </NavLink>
-                        </li>
-                        <li>
-                          <NavLink
-                            to="/financers"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('financers') &&
-                              'bg-meta-2 dark:bg-meta-4'
-                              }`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M2 22h20" />
-                              <path d="M2 10L12 2l10 8" />
-                              <path d="M5 10v12" />
-                              <path d="M19 10v12" />
-                              <path d="M12 22V10" />
-                              <path d="M12 7h.01" />
-                              <path d="M12 14h.01" />
-                            </svg>
-                            {sidebarExpanded && 'Financers'}
-                          </NavLink>
-                        </li>
+                        {(userRole === 'manager' || userRole === 'superuser') && (
+                          <>
+                            <li>
+                              <NavLink
+                                to="/sales"
+                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('/outlet/inventory') &&
+                                  'bg-meta-2 dark:bg-meta-4'
+                                  }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <svg
+                                  className="fill-current"
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 22 22"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M3 15l6-6 4 6 8-8"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                                {sidebarExpanded && 'Sales'}
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink
+                                to="/payments"
+                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('payments') &&
+                                  'bg-meta-2 dark:bg-meta-4'
+                                  }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <svg
+                                  className="fill-current"
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                                  <line x1="2" y1="10" x2="22" y2="10" />
+                                </svg>
+                                {sidebarExpanded && 'Payments'}
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink
+                                to="/financers"
+                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('financers') &&
+                                  'bg-meta-2 dark:bg-meta-4'
+                                  }`}
+                                onClick={() => setSidebarOpen(false)}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M2 22h20" />
+                                  <path d="M2 10L12 2l10 8" />
+                                  <path d="M5 10v12" />
+                                  <path d="M19 10v12" />
+                                  <path d="M12 22V10" />
+                                  <path d="M12 7h.01" />
+                                  <path d="M12 14h.01" />
+                                </svg>
+                                {sidebarExpanded && 'Financers'}
+                              </NavLink>
+                            </li>
+                          </>
+                        )}
                         {userRole === 'superuser' && (
                           <>
                             <li>
@@ -362,25 +371,27 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             {sidebarExpanded && 'Suppliers'}
                           </NavLink>
                         </li>
-                        <li>
-                          <NavLink
-                            to="/expenses"
-                            className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('expenses') &&
-                              'bg-meta-2 dark:bg-meta-4'
-                              }`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                              <polyline points="14 2 14 8 20 8" />
-                              <line x1="16" y1="13" x2="8" y2="13" />
-                              <line x1="16" y1="17" x2="8" y2="17" />
-                              <polyline points="10 9 9 9 8 9" />
-                            </svg>
-                            {sidebarExpanded && 'Expenses'}
-                          </NavLink>
-                        </li>
-                        {(userRole === 'manager') && (
+                        {(userRole === 'manager' || userRole === 'superuser') && (
+                          <li>
+                            <NavLink
+                              to="/expenses"
+                              className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('expenses') &&
+                                'bg-meta-2 dark:bg-meta-4'
+                                }`}
+                              onClick={() => setSidebarOpen(false)}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                              </svg>
+                              {sidebarExpanded && 'Expenses'}
+                            </NavLink>
+                          </li>
+                        )}
+                        {(userRole === 'manager' || userRole === 'stockist') && (
                           <>
                             <li>
                               <NavLink
@@ -416,34 +427,36 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                 {sidebarExpanded && 'My Salary'}
                               </NavLink>
                             </li>
-                            <li>
-                              <NavLink
-                                to="/user/sales"
-                                className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('user/sales') &&
-                                  'bg-meta-2 dark:bg-meta-4'
-                                  }`}
-                                onClick={() => setSidebarOpen(false)}
-                              >
-                                <svg
-                                  className="fill-current"
-                                  width="18"
-                                  height="18"
-                                  viewBox="0 0 22 22"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M3 15l6-6 4 6 8-8"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
-                                {sidebarExpanded && 'My Sales'}
-                              </NavLink>
-                            </li>
                           </>
+                        )}
+                        {userRole === 'manager' && (
+                          <li>
+                            <NavLink
+                              to="/user/sales"
+                              className={`group relative flex items-center rounded-sm font-medium text-gray-400 dark:text-bodydark1 duration-300 ease-in-out hover:bg-meta-2 dark:hover:bg-meta-4 ${sidebarExpanded ? 'gap-2 py-1.5 px-3' : 'gap-0 py-1 px-1'} ${pathname.includes('user/sales') &&
+                                'bg-meta-2 dark:bg-meta-4'
+                                }`}
+                              onClick={() => setSidebarOpen(false)}
+                            >
+                              <svg
+                                className="fill-current"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 22 22"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M3 15l6-6 4 6 8-8"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                              {sidebarExpanded && 'My Sales'}
+                            </NavLink>
+                          </li>
                         )}
                       </>
                     )}

@@ -116,6 +116,8 @@ function App() {
                 element={
                   user?.role === 'seller' ? (
                     <Navigate to="/settings" replace />
+                  ) : user?.role === 'stockist' ? (
+                    <Navigate to="/inventory" replace />
                   ) : (
                     <>
                       <PageTitle title={`Dashboard | ${import.meta.env.VITE_APP_NAME}`} />

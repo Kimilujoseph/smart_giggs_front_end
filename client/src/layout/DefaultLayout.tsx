@@ -22,7 +22,8 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = () => {
       if (
         decoded.role === 'superuser' ||
         decoded.role === 'manager' ||
-        decoded.role === 'seller'
+        decoded.role === 'seller' ||
+        decoded.role === 'stockist'
       ) {
         setUser(decoded);
         setLoggedIn(true);
