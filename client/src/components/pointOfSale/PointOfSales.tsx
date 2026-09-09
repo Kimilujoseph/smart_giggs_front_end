@@ -444,13 +444,17 @@ const PointOfSales: React.FC = () => {
         return;
       }
 
-      const paymentsForApi = payments.map((p) => ({
-        paymentMethod: p.paymentMethod,
-        amount: p.amount,
-        transactionId: p.transactionId || null,
-      }));
+      // Calculate each category group's subtotal for proportional payment distribution
+      const groupSubtotals = groupedCart.map((product: any) => {
+        const price = soldprice?.[product.categoryId.id] ?? 0;
+        const units =
+          product.categoryId.itemType === 'mobiles'
+            ? product.items.length
+            : product.quantity;
+        return price * units;
+      });
 
-      groupedCart.forEach((product: any) => {
+      groupedCart.forEach((product: any, groupIndex: number) => {
         //console.log("products received", product)
         const items = product.items.map((item: any) => {
           const isCons = product.categoryId.itemType === 'mobiles' && item.stock.mobiles?.isConsignment;
@@ -476,17 +480,38 @@ const PointOfSales: React.FC = () => {
           };
         });
 
-        // console.log(
-        //   'Items structure for category:',
-        //   product.categoryId.itemName,
-        //   JSON.stringify(items, null, 2),
-        // );
+        // Proportionally distribute payments for this category group
+        const groupTotal = groupSubtotals[groupIndex];
+        const isLastGroup = groupIndex === groupedCart.length - 1;
+
+        const groupPayments = payments.map((p) => {
+          let amount: number;
+          if (total > 0) {
+            if (isLastGroup) {
+              // Last group absorbs rounding remainder so amounts sum exactly
+              const previousGroupsAmount = groupSubtotals
+                .slice(0, groupIndex)
+                .reduce((sum: number, sub: number) => sum + Math.round((sub / total) * p.amount), 0);
+              amount = p.amount - previousGroupsAmount;
+            } else {
+              amount = Math.round((groupTotal / total) * p.amount);
+            }
+          } else {
+            amount = 0;
+          }
+
+          return {
+            paymentMethod: p.paymentMethod,
+            amount,
+            transactionId: p.transactionId || null,
+          };
+        });
 
         bulkSales.push({
           CategoryId: product.categoryId.id.split('-')[1],
           itemType: product.categoryId.itemType,
           items: [...items],
-          payments: paymentsForApi,
+          payments: groupPayments,
         });
       });
 

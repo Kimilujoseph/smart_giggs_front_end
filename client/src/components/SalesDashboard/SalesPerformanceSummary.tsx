@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Smartphone,
   Phone,
@@ -9,6 +9,8 @@ import {
   XCircle,
   TrendingUp,
   Award,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { LinearProgress } from '@mui/material';
 
@@ -76,6 +78,9 @@ export const SalesPerformanceSummary: React.FC<SalesPerformanceSummaryProps> = (
   summaryData,
   userRole,
 }) => {
+  const [isKpiOpen, setIsKpiOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+
   if (!summaryData) return null;
 
   const isSeller = userRole === 'seller';
@@ -149,159 +154,189 @@ export const SalesPerformanceSummary: React.FC<SalesPerformanceSummaryProps> = (
       {/* ── KPI Achievement Section ── */}
       {kpi && (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-5 shadow-sm flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700 pb-3">
+          <div
+            onClick={() => setIsKpiOpen(!isKpiOpen)}
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700 pb-3 cursor-pointer hover:opacity-90 transition-opacity"
+          >
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-xl bg-primary/10 text-primary">
                 <Target className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-800 dark:text-white">KPI Achievement Performance</h3>
+                <h3 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                  KPI Achievement Performance
+                  <span className="text-xs text-primary font-normal bg-primary/10 px-2 py-0.5 rounded-md">
+                    {isKpiOpen ? 'Click to collapse' : 'Click to expand'}
+                  </span>
+                </h3>
                 <p className="text-xs text-slate-400">Target vs Actual unit sales progress</p>
               </div>
             </div>
 
-            {kpi.overall && (
-              <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 px-3.5 py-1.5 rounded-xl">
-                <div className="flex items-center gap-1.5">
-                  <Award className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Overall Progress:</span>
-                  <span className="text-sm font-extrabold text-slate-800 dark:text-white">
-                    {kpi.overall.actual} / {kpi.overall.target} ({kpi.overall.achievement}%)
+            <div className="flex items-center gap-3">
+              {kpi.overall && (
+                <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 px-3.5 py-1.5 rounded-xl">
+                  <div className="flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-amber-500" />
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Overall Progress:</span>
+                    <span className="text-sm font-extrabold text-slate-800 dark:text-white">
+                      {kpi.overall.actual} / {kpi.overall.target} ({kpi.overall.achievement}%)
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      kpi.overall.achieved
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                    }`}
+                  >
+                    {kpi.overall.achieved ? 'Achieved' : 'In Progress'}
                   </span>
                 </div>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    kpi.overall.achieved
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-                      : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
-                  }`}
-                >
-                  {kpi.overall.achieved ? 'Achieved' : 'In Progress'}
-                </span>
+              )}
+              <div className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">
+                {isKpiOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
               </div>
-            )}
+            </div>
           </div>
 
           {/* 4 Category KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            {categories.map((cat) => {
-              const itemKpi = cat.kpiData;
-              const Icon = cat.icon;
-              const target = itemKpi?.target || 0;
-              const actual = itemKpi?.actual || cat.units;
-              const achievement = itemKpi?.achievement || (target > 0 ? Number(((actual / target) * 100).toFixed(1)) : 0);
-              const achieved = itemKpi?.achieved || (target > 0 && actual >= target);
-              const remaining = itemKpi?.remaining ?? Math.max(0, target - actual);
-              const progressPct = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
+          {isKpiOpen && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-2">
+              {categories.map((cat) => {
+                const itemKpi = cat.kpiData;
+                const Icon = cat.icon;
+                const target = itemKpi?.target || 0;
+                const actual = itemKpi?.actual || cat.units;
+                const achievement = itemKpi?.achievement || (target > 0 ? Number(((actual / target) * 100).toFixed(1)) : 0);
+                const achieved = itemKpi?.achieved || (target > 0 && actual >= target);
+                const remaining = itemKpi?.remaining ?? Math.max(0, target - actual);
+                const progressPct = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
 
+                return (
+                  <div
+                    key={`kpi-${cat.id}`}
+                    className={`rounded-xl border p-4 flex flex-col justify-between gap-3 ${cat.bgLight} ${cat.border}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded-lg bg-white dark:bg-slate-800 shadow-sm ${cat.text}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">{cat.name}</span>
+                      </div>
+                      {achieved ? (
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full">
+                          <CheckCircle2 className="w-3 h-3" /> Done
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/50 px-2 py-0.5 rounded-full">
+                          <XCircle className="w-3 h-3" /> Pending
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-1">
+                        <span className="text-lg font-black text-slate-800 dark:text-white">
+                          {actual} <span className="text-xs font-normal text-slate-500">/ {target} units</span>
+                        </span>
+                        <span className={`text-xs font-extrabold ${achieved ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                          {achievement}%
+                        </span>
+                      </div>
+
+                      <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700/60 overflow-hidden mb-1.5">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-emerald-500' : cat.pill}`}
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {remaining > 0 ? `${remaining} unit${remaining !== 1 ? 's' : ''} remaining` : 'Target met!'}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Category Sales Breakdown Cards Grid ── */}
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-5 shadow-sm flex flex-col gap-4">
+        <div
+          onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+          className="flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity"
+        >
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+              Category Sales Breakdown
+              <span className="text-xs text-primary font-normal bg-primary/10 px-2 py-0.5 rounded-md">
+                {isCategoryOpen ? 'Click to collapse' : 'Click to expand'}
+              </span>
+            </h3>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-400 hidden sm:inline">Detailed breakdown by item category</span>
+            <div className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">
+              {isCategoryOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+          </div>
+        </div>
+
+        {isCategoryOpen && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+            {categories.map((cat) => {
+              const Icon = cat.icon;
               return (
                 <div
-                  key={`kpi-${cat.id}`}
-                  className={`rounded-xl border p-4 flex flex-col justify-between gap-3 ${cat.bgLight} ${cat.border}`}
+                  key={`cat-${cat.id}`}
+                  className={`rounded-xl border p-4 flex flex-col gap-2.5 ${cat.bgLight} ${cat.border}`}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className={`p-1.5 rounded-lg bg-white dark:bg-slate-800 shadow-sm ${cat.text}`}>
                         <Icon className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">{cat.name}</span>
                     </div>
-                    {achieved ? (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full">
-                        <CheckCircle2 className="w-3 h-3" /> Done
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/50 px-2 py-0.5 rounded-full">
-                        <XCircle className="w-3 h-3" /> Pending
-                      </span>
-                    )}
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                      {cat.units} {cat.units === 1 ? 'unit' : 'units'}
+                    </span>
                   </div>
 
-                  <div>
-                    <div className="flex justify-between items-baseline mb-1">
-                      <span className="text-lg font-black text-slate-800 dark:text-white">
-                        {actual} <span className="text-xs font-normal text-slate-500">/ {target} units</span>
-                      </span>
-                      <span className={`text-xs font-extrabold ${achieved ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>
-                        {achievement}%
+                  <div className="flex flex-col gap-1 mt-1">
+                    <span className="text-xs text-slate-400 uppercase font-medium tracking-wider">Revenue</span>
+                    <span className="text-lg font-black text-slate-800 dark:text-white leading-tight">
+                      {formatKsh(cat.sales)}
+                    </span>
+                  </div>
+
+                  <div className="border-t border-slate-200/60 dark:border-slate-700/60 pt-2 flex flex-col gap-1 text-[11px]">
+                    {!isSeller && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500 dark:text-slate-400">Profit:</span>
+                        <span className={`font-bold ${cat.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          {formatKsh(cat.profit)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 dark:text-slate-400">Commission:</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">
+                        {formatKsh(cat.commission)}
                       </span>
                     </div>
-
-                    <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700/60 overflow-hidden mb-1.5">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${achieved ? 'bg-emerald-500' : cat.pill}`}
-                        style={{ width: `${progressPct}%` }}
-                      />
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {remaining > 0 ? `${remaining} unit${remaining !== 1 ? 's' : ''} remaining` : 'Target met!'}
-                    </p>
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
-
-      {/* ── Category Sales Breakdown Cards Grid ── */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-boxdark p-5 shadow-sm flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">Category Sales Breakdown</h3>
-          </div>
-          <span className="text-xs text-slate-400">Detailed breakdown by item category</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          {categories.map((cat) => {
-            const Icon = cat.icon;
-            return (
-              <div
-                key={`cat-${cat.id}`}
-                className={`rounded-xl border p-4 flex flex-col gap-2.5 ${cat.bgLight} ${cat.border}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg bg-white dark:bg-slate-800 shadow-sm ${cat.text}`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">{cat.name}</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
-                    {cat.units} {cat.units === 1 ? 'unit' : 'units'}
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-1 mt-1">
-                  <span className="text-xs text-slate-400 uppercase font-medium tracking-wider">Revenue</span>
-                  <span className="text-lg font-black text-slate-800 dark:text-white leading-tight">
-                    {formatKsh(cat.sales)}
-                  </span>
-                </div>
-
-                <div className="border-t border-slate-200/60 dark:border-slate-700/60 pt-2 flex flex-col gap-1 text-[11px]">
-                  {!isSeller && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500 dark:text-slate-400">Profit:</span>
-                      <span className={`font-bold ${cat.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                        {formatKsh(cat.profit)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-500 dark:text-slate-400">Commission:</span>
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                      {formatKsh(cat.commission)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        )}
       </div>
     </div>
   );

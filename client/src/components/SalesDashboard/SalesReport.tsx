@@ -25,6 +25,7 @@ import { getSalesReport, getSalesSummary, SalesReportParams } from '../../api/sa
 import Message from '../alerts/Message';
 import SalesTable from './SalesTable';
 import PayCommissionModal from './PayCommissionModal';
+import SalesPerformanceSummary from './SalesPerformanceSummary';
 
 // Interface definitions
 interface FinanceDetails {
@@ -265,19 +266,9 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
     let totalPendingFinance = 0;
 
     if (summaryData) {
-      if (modelFilter === 'mobiles') {
-        totalSales = summaryData.totalMobileSales || 0;
-        totalProfit = summaryData.totalMobileProfit || 0;
-        totalCommission = summaryData.totalMobileCommission || 0;
-      } else if (modelFilter === 'accessories') {
-        totalSales = summaryData.totalAccessorySales || 0;
-        totalProfit = summaryData.totalAccessoryProfit || 0;
-        totalCommission = summaryData.totalAccessoryCommission || 0;
-      } else {
-        totalSales = summaryData.totalSales || 0;
-        totalProfit = summaryData.totalProfit || 0;
-        totalCommission = summaryData.totalCommission || 0;
-      }
+      totalSales = summaryData.totalSales || 0;
+      totalProfit = summaryData.totalProfit || 0;
+      totalCommission = summaryData.totalCommission || 0;
       totalPendingFinance = parseFloat(summaryData.accountReceivable?.[0]?.totalFinanceAmount || '0');
     }
 
@@ -526,6 +517,12 @@ const SalesReport = ({ reportType, id, title }: SalesReportProps) => {
           icon={CreditCard}
         />
       </div>
+
+      {summaryData && (
+        <div className="mb-6">
+          <SalesPerformanceSummary summaryData={summaryData} />
+        </div>
+      )}
 
       <div className="border-b border-stroke dark:border-strokedark mb-6">
         <div className="flex space-x-4 overflow-x-auto">
