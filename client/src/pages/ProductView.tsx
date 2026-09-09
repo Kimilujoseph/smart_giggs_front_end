@@ -77,13 +77,13 @@ const ProductView = () => {
 
   const sections: SectionItem[] = [
     {
-      name: user.role === 'manager' ? 'Distribute Product' : 'Transfer Product',
+      name: user.role === 'seller' ? 'Transfer Product' : 'Distribute Product',
       key: 'distribute_product',
       icon: Share2,
     },
     { name: 'Product Details', key: 'product_details', icon: Edit },
     { name: 'Shops in Stock', key: 'shops_in_stock', icon: Package },
-    { name: 'Sales Report', key: 'sales_report', icon: TrendingUp },
+    ...(user.role === 'superuser' || user.role === 'manager' ? [{ name: 'Sales Report', key: 'sales_report', icon: TrendingUp }] : []),
   ];
 
   const fetchOutlets = useCallback(async () => {
@@ -184,12 +184,12 @@ const ProductView = () => {
       prev.map((item) =>
         item.stockId === stockId
           ? {
-              ...item,
-              quantity: Math.min(
-                newQuantity,
-                product?.Items?.find((i) => i.id === stockId)?.availableStock || 0,
-              ),
-            }
+            ...item,
+            quantity: Math.min(
+              newQuantity,
+              product?.Items?.find((i) => i.id === stockId)?.availableStock || 0,
+            ),
+          }
           : item,
       ),
     );
@@ -288,13 +288,13 @@ const ProductView = () => {
     setDistributing(true);
     try {
       const response = await axios.post(
-        user?.role === 'manager' || user?.role === 'superuser' || user?.role=== 'stockist'
+        user?.role === 'manager' || user?.role === 'superuser' || user?.role === 'stockist'
           ? `${import.meta.env.VITE_SERVER_HEAD}/api/distribution/bulk-distribution`
           : `${import.meta.env.VITE_SERVER_HEAD}/api/transfer/bulk-transfer`,
         {
           shopDetails: {
             mainShop:
-              user.role === 'manager' || user.role === 'superuser' || user.role==='stockist'
+              user.role === 'manager' || user.role === 'superuser' || user.role === 'stockist'
                 ? 'WareHouse'
                 : currentUser?.assignedShop?.shopName,
             distributedShop: shopName,
@@ -322,8 +322,8 @@ const ProductView = () => {
       alert(error.response?.message || error.message || "An error occurred during distribution");
       setDistributeError(
         error.response?.data?.message ||
-          error.message ||
-          'Failed to distribute product',
+        error.message ||
+        'Failed to distribute product',
       );
     } finally {
       setDistributing(false);
