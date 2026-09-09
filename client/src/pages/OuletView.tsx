@@ -105,7 +105,8 @@ const OutletView: React.FC = () => {
   const sections = [
     currentUser ||
       userPermissions === 'manager' ||
-      userPermissions === 'superuser'
+      userPermissions === 'superuser' ||
+      userPermissions === 'stockist'
       ? {
         name: 'Overview',
         key: 'Overview',
@@ -122,7 +123,7 @@ const OutletView: React.FC = () => {
       key: 'Low Stock',
       icon: AlertTriangle,
     },
-    userPermissions !== 'seller'
+    userPermissions !== 'seller' && userPermissions !== 'stockist'
       ? {
         name: 'Expenses',
         key: 'Expenses',
@@ -617,7 +618,7 @@ const OutletView: React.FC = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'Overview': {
-        if (!currentUser && userPermissions !== 'manager' && userPermissions !== 'superuser') return null;
+        if (!currentUser && userPermissions !== 'manager' && userPermissions !== 'superuser' && userPermissions !== 'stockist') return null;
         if (!overviewData) return <CircularProgress />;
 
         return (
@@ -702,8 +703,8 @@ const OutletView: React.FC = () => {
                   </div>
                   <div className="p-4">
                     <div className="flex space-x-4 border-b mb-4">
-                        <button onClick={() => setPendingStockTab('mobiles')} className={`px-4 py-2 rounded-t-lg ${pendingStockTab === 'mobiles' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Mobiles</button>
-                        <button onClick={() => setPendingStockTab('accessories')} className={`px-4 py-2 rounded-t-lg ${pendingStockTab === 'accessories' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Accessories</button>
+                      <button onClick={() => setPendingStockTab('mobiles')} className={`px-4 py-2 rounded-t-lg ${pendingStockTab === 'mobiles' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Mobiles</button>
+                      <button onClick={() => setPendingStockTab('accessories')} className={`px-4 py-2 rounded-t-lg ${pendingStockTab === 'accessories' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-boxdark-2'}`}>Accessories</button>
                     </div>
 
                     {pendingStockTab === 'mobiles' && (
